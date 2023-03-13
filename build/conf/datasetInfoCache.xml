@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<globalDatasetInfo datasetTypeNum="5">
+    <FEATURE typeID="1">
+        <FEATURE_-HRRP_simulate_128xN_c5-_36xN_c6 nameID="1">
+            <PATH>D:/lyh/GUI207_V2.0/build/db/datasets/FEATURE_-HRRP_simulate_128xN_c5-_36xN_c6</PATH>
+        </FEATURE_-HRRP_simulate_128xN_c5-_36xN_c6>
+        <FEATURE_simualtepure_39xN_c6 nameID="2">
+            <PATH>D:/lyh/GUI207_V2.0/db/datasets/FEATURE_simualtepure_39xN_c6</PATH>
+            <azimuthAngle>[0, 90, 1]</azimuthAngle>
+            <claNum>6</claNum>
+            <datasetName>FEATURE_simualtepure_39xN_c6</datasetName>
+            <freq>10GHz</freq>
+            <incidentMode>水平入射</incidentMode>
+            <note>未定义</note>
+            <pitchAngle>0</pitchAngle>
+            <samplingNum>512</samplingNum>
+            <targetNumEachCla>未定义001</targetNumEachCla>
+        </FEATURE_simualtepure_39xN_c6>
+    </FEATURE>
+    <HRRP typeID="2">
+        <HRRP_RADIO_simualte_101xN_c6 nameID="3">
+            <PATH>D:/lyh/GUI207_V2.0/db/datasets/RADIO_simualte_101xN_c6_HRRP</PATH>
+        </HRRP_RADIO_simualte_101xN_c6>
+        <HRRP_simulate_128xN_c5 nameID="4">
+            <PATH>D:/lyh/GUI207_V2.0/db/datasets/HRRP_simulate_128xN_c5</PATH>
+        </HRRP_simulate_128xN_c5>
+        <HRRP_simulate_128xN_c6 nameID="5">
+            <PATH>D:/lyh/GUI207_V2.0/db/datasets/HRRP_simulate_128xN_c6</PATH>
+            <azimuthAngle>[0, 90, 1]</azimuthAngle>
+            <claNum>6</claNum>
+            <datasetName>未定义</datasetName>
+            <freq>10GHz</freq>
+            <incidentMode>水平入射</incidentMode>
+            <note>未定义</note>
+            <pitchAngle>0</pitchAngle>
+            <samplingNum>512</samplingNum>
+            <targetNumEachCla>未定义001</targetNumEachCla>
+        </HRRP_simulate_128xN_c6>
+        <HRRP_simulate_128xN_c6_-14dB nameID="6">
+            <PATH>D:/lyh/GUI207_V2.0/db/datasets/data/HRRP_simulate_128xN_c6_-14dB</PATH>
+        </HRRP_simulate_128xN_c6_-14dB>
+        <HRRP_simulate_128xN_c6_-15dB nameID="7">
+            <PATH>D:/lyh/GUI207_V2.0/db/datasets/data/HRRP_simulate_128xN_c6_-15dB</PATH>
+        </HRRP_simulate_128xN_c6_-15dB>
+        <HRRP_simulate_test_512xN_c5 nameID="8">
+            <PATH>D:/lyh/GUI207_V2.0/db/datasets/data/HRRP_simulate_test_512xN_c5</PATH>
+        </HRRP_simulate_test_512xN_c5>
+        <HRRP_simulate_train_512xN_c5 nameID="9">
+            <PATH>D:/lyh/GUI207_V2.0/db/datasets/data/HRRP_simulate_train_512xN_c5</PATH>
+        </HRRP_simulate_train_512xN_c5>
+    </HRRP>
+    <IMAGE typeID="3" />
+    <RADIO typeID="4">
+        <RADIO_simualte_101xN_c6 nameID="10">
+            <PATH>D:/lyh/GUI207_V2.0/db/datasets/RADIO_simualte_101xN_c6</PATH>
+            <azimuthAngle>未定义</azimuthAngle>
+            <claNum>6</claNum>
+            <datasetName>未定义</datasetName>
+            <freq>未定义</freq>
+            <incidentMode>未定义</incidentMode>
+            <note>未定义</note>
+            <pitchAngle>0</pitchAngle>
+            <samplingNum>101</samplingNum>
+            <targetNumEachCla>未定义001</targetNumEachCla>
+        </RADIO_simualte_101xN_c6>
+    </RADIO>
+    <RCS typeID="5">
+        <RCS_random_x_c6 nameID="11">
+            <PATH>D:/lyh/GUI207_V2.0/db/datasets/RCS_random_x_c6</PATH>
+            <azimuthAngle>未定义</azimuthAngle>
+            <claNum>6</claNum>
+            <datasetName>未定义</datasetName>
+            <freq>未定义</freq>
+            <incidentMode>未定义</incidentMode>
+            <note>未定义</note>
+            <pitchAngle>0</pitchAngle>
+            <samplingNum>101</samplingNum>
+            <targetNumEachCla>未定义001</targetNumEachCla>
+        </RCS_random_x_c6>
+    </RCS>
+</globalDatasetInfo>
