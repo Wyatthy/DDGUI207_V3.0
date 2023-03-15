@@ -18,14 +18,15 @@ DEFINES += _CRT_SECURE_NO_WARNINGS #avoid monitorPage.cpp's localtime waring
 HEADERS += \
     build/conf/QRibbon/QRibbon.h \
     core/MainWindow.h \
-    core/datasetsWindow/chart.h \
-    core/datasetsWindow/datasetDock.h \
+    core/projectsWindow/chart.h \
+    core/projectsWindow/projectDock.h \
+    #core/datasetsWindow/datasetDock.h \
     core/modelCAMPage.h \
     core/modelChoicePage.h \
     core/modelEvalPage.h \
     core/modelTrainPage.h \
     core/modelVisPage.h \
-    core/modelsWindow/modelDock.h \
+    #core/modelsWindow/modelDock.h \
     core/monitorPage.h \
     core/sensePage.h \
     build/lib/algorithm/inferthread.h \
@@ -37,6 +38,7 @@ HEADERS += \
     build/lib/dataprocess/matdataprocess_rcs.h \
     build/lib/guiLogic/bashTerminal.h \
     build/lib/guiLogic/customWidget/imagewidget.h \
+    build/lib/guiLogic/projectsInfo.h \
     build/lib/guiLogic/datasetInfo.h \
     build/lib/guiLogic/modelInfo.h \
     build/lib/guiLogic/tinyXml/tinystr.h \
@@ -59,13 +61,14 @@ SOURCES += \
     main.cpp \
     build/conf/QRibbon/QRibbon.cpp \
     core/MainWindow.cpp \
-    core/datasetsWindow/chart.cpp \
-    core/datasetsWindow/datasetDock.cpp \
+    core/projectsWindow/chart.cpp \
+    core/projectsWindow/projectDock.cpp \
+    #core/datasetsWindow/datasetDock.cpp \
     core/modelChoicePage.cpp \
     core/modelEvalPage.cpp \
     core/modelTrainPage.cpp \
     core/monitorPage.cpp \
-    core/modelsWindow/modelDock.cpp \
+    #core/modelsWindow/modelDock.cpp \
     core/sensePage.cpp \
     build/lib/dataprocess/matdataprocess.cpp \
     build/lib/dataprocess/matdataprocess_abfc.cpp \
@@ -73,6 +76,7 @@ SOURCES += \
     build/lib/algorithm/trtinfer.cpp \
     build/lib/guiLogic/tools/guithreadrun.cpp \
     build/lib/guiLogic/bashTerminal.cpp \
+    build/lib/guiLogic/projectsInfo.cpp \
     build/lib/guiLogic/datasetInfo.cpp \
     build/lib/guiLogic/modelInfo.cpp \
     build/lib/guiLogic/tinyXml/tinystr.cpp \

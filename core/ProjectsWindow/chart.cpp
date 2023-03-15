@@ -93,6 +93,7 @@ points.clear();
     pMxArray = matGetVariable(pMatFile,matVariable.c_str());
     if(!pMxArray){
         qDebug()<<"(Chart::readHRRPmat)pMxArray变量没找到！！！！！！";
+        QMessageBox::information(NULL, "绘制错误", "mat文件变量名不合适");
         return;
     }
     matdata = (double*)mxGetData(pMxArray);

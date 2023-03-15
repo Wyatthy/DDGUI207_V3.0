@@ -8,7 +8,7 @@
 #include "ui_MainWindow.h"
 #include "./lib/guiLogic/bashTerminal.h"
 #include "./lib/guiLogic/datasetInfo.h"
-#include "./core/datasetsWindow/chart.h"
+#include "./core/projectsWindow/chart.h"
 
 #include "./lib/guiLogic/tools/searchFolder.h"
 

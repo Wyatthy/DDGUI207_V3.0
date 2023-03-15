@@ -2,7 +2,7 @@
 
 #include "./lib/guiLogic/tinyXml/tinyxml.h"
 #include "./lib/guiLogic/tools/convertTools.h"
-#include "./core/datasetsWindow/chart.h"
+#include "./core/projectsWindow/chart.h"
 #include <QGraphicsScene>
 #include <QMessageBox>
 #include <QFileDialog>

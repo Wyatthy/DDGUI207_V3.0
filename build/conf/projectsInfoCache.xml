@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<globalProjectInfo datasetTypeNum="4">
+    <FEATURE typeID="1">
+        <FEATURE_ABFC nameID="1">
+            <Framework>keras</Framework>
+            <Project_Path>N:/207/GUI207_V3.0/db/projects/HRRP_Densenet121</Project_Path>
+            <Target_Num>5</Target_Num>
+            <Train_Acc>65</Train_Acc>
+            <Visualize>yes</Visualize>
+        </FEATURE_ABFC>
+    </FEATURE>
+    <HRRP typeID="2">
+        <HRRP_Densenet121 nameID="2">
+            <Framework>keras</Framework>
+            <Project_Path>N:/207/GUI207_V3.0/db/projects/HRRP_Densenet121</Project_Path>
+            <Target_Num>5</Target_Num>
+            <Train_Acc>99</Train_Acc>
+            <Visualize>yes</Visualize>
+        </HRRP_Densenet121>
+        <HRRP_Resnet50 nameID="3">
+            <Project_Path>N:/207/GUI207_V3.0/db/projects/HRRP_Resnet50</Project_Path>
+        </HRRP_Resnet50>
+    </HRRP>
+    <IMAGE typeID="3">
+        <IMAGE_Densenet121 nameID="4">
+            <Framework>keras</Framework>
+            <Project_Path>N:/207/GUI207_V3.0/db/projects/HRRP_Densenet121</Project_Path>
+            <Target_Num>5</Target_Num>
+            <Train_Acc>65</Train_Acc>
+            <Visualize>yes</Visualize>
+        </IMAGE_Densenet121>
+    </IMAGE>
+    <RCS typeID="4">
+        <RCS_Densenet121 nameID="5">
+            <Framework>keras</Framework>
+            <Project_Path>N:/207/GUI207_V3.0/db/projects/HRRP_Densenet121</Project_Path>
+            <Target_Num>5</Target_Num>
+            <Train_Acc>65</Train_Acc>
+            <Visualize>yes</Visualize>
+        </RCS_Densenet121>
+    </RCS>
+</globalProjectInfo>

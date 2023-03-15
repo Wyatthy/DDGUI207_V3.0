@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include <thread>
-#include "./core/datasetsWindow/chart.h"
+#include "./core/projectsWindow/chart.h"
 #include "ui_MainWindow.h"
 #include "./lib/guiLogic/bashTerminal.h"
 #include "./lib/guiLogic/modelInfo.h"

@@ -11,6 +11,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent){
     // 全局数据记录设置
     this->globalDatasetInfo = new DatasetInfo("./conf/datasetInfoCache.xml");
     this->globalModelInfo = new ModelInfo("./conf/modelInfoCache.xml");
+    this->globalProjectsInfo = new ProjectsInfo("./conf/projectsInfoCache.xml");
 
 	// 悬浮窗设置
 	setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
@@ -26,10 +27,8 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent){
     connect(ui->action_ModelVis, &QAction::triggered, this, &MainWindow::switchPage);
     connect(ui->action_ModelCAM, &QAction::triggered, this, &MainWindow::switchPage);
 
-
     // 视图设置
 	connect(ui->actionFullScreen, &QAction::triggered, this, &MainWindow::fullScreen);
-
 
     // 帮助
 	connect(ui->action_aboutApp, &QAction::triggered, this, &MainWindow::aboutApp);
@@ -43,9 +42,11 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent){
     connect(ui->pushButton_bashCommit, &QPushButton::clicked, terminal, &BashTerminal::commitBash);
     connect(ui->pushButton_bashClean, &QPushButton::clicked, terminal, &BashTerminal::cleanBash);
 
-    // 数据集悬浮窗设置
-    this->datasetDock = new DatasetDock(this->ui, this->terminal, this->globalDatasetInfo);
-    this->modelDock = new ModelDock(this->ui, this->terminal, this->globalModelInfo);
+    // // 数据集悬浮窗设置
+    // this->datasetDock = new DatasetDock(this->ui, this->terminal, this->globalDatasetInfo);
+    // this->modelDock = new ModelDock(this->ui, this->terminal, this->globalModelInfo);
+    // 工程管理悬浮窗设置
+    this->projectDock = new ProjectDock(this->ui, this->terminal, this->globalProjectsInfo);
 
     // 场景选择页面
     this->senseSetPage = new SenseSetPage(this->ui, this->terminal, this->globalDatasetInfo);

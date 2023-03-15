@@ -4,6 +4,7 @@
 // 数据记录类
 #include "./lib/guiLogic/datasetInfo.h"
 #include "./lib/guiLogic/modelInfo.h"
+#include "./lib/guiLogic/projectsInfo.h"
 // 主页面类
 #include "./core/sensePage.h"
 #include "./core/modelChoicePage.h"
@@ -16,6 +17,7 @@
 
 //#include "./lib/guiLogic/modelEval.h"
 // 悬浮窗部件类
+#include "./core/projectsWindow/projectDock.h"
 #include "./core/datasetsWindow/datasetDock.h"
 #include "./core/modelsWindow/modelDock.h"
 #include "./lib/guiLogic/bashTerminal.h"
@@ -50,7 +52,8 @@ class MainWindow: public QMainWindow{
         void showManual();      //文档信息
     private:
         Ui::MainWindow *ui; 
-        
+
+        ProjectDock *projectDock;
         DatasetDock *datasetDock;
         ModelDock *modelDock;
 
@@ -63,6 +66,7 @@ class MainWindow: public QMainWindow{
         ModelVisPage *modelVisPage;
         ModelCAMPage *modelCAMPage;
 
+        ProjectsInfo *globalProjectsInfo;
         DatasetInfo *globalDatasetInfo;
         ModelInfo *globalModelInfo;
 
