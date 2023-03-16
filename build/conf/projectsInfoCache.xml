@@ -20,9 +20,12 @@
         <HRRP_Resnet50 nameID="3">
             <Project_Path>N:/207/GUI207_V3.0/db/projects/HRRP_Resnet50</Project_Path>
         </HRRP_Resnet50>
+        <一维距离像_Densenet121 nameID="4">
+            <Project_Path>N:/207/GUI207_V3.0/db/projects/一维距离像_Densenet121</Project_Path>
+        </一维距离像_Densenet121>
     </HRRP>
     <IMAGE typeID="3">
-        <IMAGE_Densenet121 nameID="4">
+        <IMAGE_Densenet121 nameID="5">
             <Framework>keras</Framework>
             <Project_Path>N:/207/GUI207_V3.0/db/projects/HRRP_Densenet121</Project_Path>
             <Target_Num>5</Target_Num>
@@ -31,7 +34,7 @@
         </IMAGE_Densenet121>
     </IMAGE>
     <RCS typeID="4">
-        <RCS_Densenet121 nameID="5">
+        <RCS_Densenet121 nameID="6">
             <Framework>keras</Framework>
             <Project_Path>N:/207/GUI207_V3.0/db/projects/HRRP_Densenet121</Project_Path>
             <Target_Num>5</Target_Num>

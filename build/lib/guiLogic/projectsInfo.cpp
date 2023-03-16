@@ -4,9 +4,19 @@ using namespace std;
 
 ProjectsInfo::ProjectsInfo(string xmlPath):defaultXmlPath(xmlPath)
 {
+    // 中文名称对照表
+    var2TypeName["HRRP"] = "一维距离像";
+    var2TypeName["RCS"] = "雷达散射截面积";
+    var2TypeName["FEATURE"] = "特征";
+    var2TypeName["IMAGE"] = "历程图";
+    for(auto &item: var2TypeName){
+        typeName2Var[item.second] = item.first;
+    }
     loadFromXML(this->defaultXmlPath);
-    this->selectedType = "";
-    this->selectedProjectName = "";
+    this->dataTypeOfSelectedProject = "";
+    this->nameOfSelectedProject = "";
+    this->pathOfSelectedDataset;//需要界面指定设定是训练还是测试集然后给它赋值，形式应为"xxx/train"
+    this->classNamesOfSelectedDataset;//TODO 根据pathOfSelectedDataset处理后得到这个
 }
 
 ProjectsInfo::~ProjectsInfo(){

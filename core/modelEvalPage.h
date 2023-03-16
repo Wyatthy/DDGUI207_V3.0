@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <QDir>
 #include <QObject>
 #include <QThread>
 #include <QGraphicsView>
@@ -12,6 +13,7 @@
 
 #include "./lib/guiLogic/modelInfo.h"
 #include "./lib/guiLogic/datasetInfo.h"
+#include "./lib/guiLogic/projectsInfo.h"
 #include "./core/projectsWindow/chart.h"
 #include "./lib/guiLogic/tools/searchFolder.h"
 #include "./lib/guiLogic/customWidget/imagewidget.h"
@@ -26,7 +28,7 @@
 class ModelEvalPage:public QObject{
     Q_OBJECT
 public:
-    ModelEvalPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, DatasetInfo *globalDatasetInfo, ModelInfo *globalModelInfo);
+    ModelEvalPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, DatasetInfo *globalDatasetInfo, ModelInfo *globalModelInfo, ProjectsInfo *globalProjectInfo);
     ~ModelEvalPage();
 
     std::map<int, std::string> label2class;
@@ -43,6 +45,8 @@ public:
 public slots:
     void refreshGlobalInfo();
 
+    void on_comboBox_sampleType(QString s);
+    void on_comboBox_chosFile(QString s);
     // 针对全部样本
     void testAllSample();
     void execuCmdProcess(QProcess *processInfer, QString cmd);
@@ -59,11 +63,14 @@ signals:
 private:
     DatasetInfo *datasetInfo;
     ModelInfo *modelInfo;
+    ProjectsInfo *projectsInfo;
 
     std::string choicedDatasetPATH="";
     std::string choicedModelPATH="";
     std::string choicedSamplePATH;
 
+    std::string choicedClass;
+    std::string choicedFileInClass;
     // 不同平台下文件夹搜索工具
     SearchFolder *dirTools = new SearchFolder();
 

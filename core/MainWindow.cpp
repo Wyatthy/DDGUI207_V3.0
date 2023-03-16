@@ -11,7 +11,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent){
     // 全局数据记录设置
     this->globalDatasetInfo = new DatasetInfo("./conf/datasetInfoCache.xml");
     this->globalModelInfo = new ModelInfo("./conf/modelInfoCache.xml");
-    this->globalProjectsInfo = new ProjectsInfo("./conf/projectsInfoCache.xml");
+    this->globalProjectInfo = new ProjectsInfo("./conf/projectsInfoCache.xml");
 
 	// 悬浮窗设置
 	setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
@@ -42,26 +42,23 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent){
     connect(ui->pushButton_bashCommit, &QPushButton::clicked, terminal, &BashTerminal::commitBash);
     connect(ui->pushButton_bashClean, &QPushButton::clicked, terminal, &BashTerminal::cleanBash);
 
-    // // 数据集悬浮窗设置
-    // this->datasetDock = new DatasetDock(this->ui, this->terminal, this->globalDatasetInfo);
-    // this->modelDock = new ModelDock(this->ui, this->terminal, this->globalModelInfo);
     // 工程管理悬浮窗设置
-    this->projectDock = new ProjectDock(this->ui, this->terminal, this->globalProjectsInfo);
+    this->projectDock = new ProjectDock(this->ui, this->terminal, this->globalProjectInfo);
+    connect(projectDock, SIGNAL(projectChanged()),this, SLOT(refreshPages()));
 
     // 场景选择页面
     this->senseSetPage = new SenseSetPage(this->ui, this->terminal, this->globalDatasetInfo);
 
     this->modelChoicePage = new ModelChoicePage(this->ui, this->terminal, this->globalModelInfo);
 
-    this->modelEvalPage = new ModelEvalPage(this->ui, this->terminal,this->globalDatasetInfo, this->globalModelInfo);
+    this->modelEvalPage = new ModelEvalPage(this->ui, this->terminal,this->globalDatasetInfo, this->globalModelInfo, this->globalProjectInfo);
 
-    this->modelTrainPage = new ModelTrainPage(this->ui, this->terminal,this->globalDatasetInfo, this->globalModelInfo, this->modelDock);
+    this->modelTrainPage = new ModelTrainPage(this->ui, this->terminal,this->globalDatasetInfo, this->globalModelInfo);
 
     this->monitorPage = new MonitorPage(this->ui, this->terminal,this->globalDatasetInfo,this->globalModelInfo);
 
     this->modelVisPage = new ModelVisPage(this->ui, this->terminal, this->globalDatasetInfo, this->globalModelInfo);
     this->modelCAMPage = new ModelCAMPage(this->ui, this->terminal, this->globalDatasetInfo, this->globalModelInfo);
-
 }
 
 
@@ -99,6 +96,9 @@ void MainWindow::switchPage(){
     }
 }
 
+void MainWindow::refreshPages(){
+    this->modelEvalPage->refreshGlobalInfo();
+}
 
 void MainWindow::fullScreen(){
 	auto full = ui->actionFullScreen->isChecked();

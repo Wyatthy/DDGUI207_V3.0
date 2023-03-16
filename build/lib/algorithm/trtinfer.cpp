@@ -10,9 +10,8 @@ TrtInfer::TrtInfer(std::map<std::string, int> class2label):class2label(class2lab
 
 }
 
-
-
-bool readTrtFile(const std::string& engineFile, IHostMemory*& trtModelStream, ICudaEngine*& engine){
+bool readTrtFile(const std::string& engineFile_, IHostMemory*& trtModelStream, ICudaEngine*& engine){
+    std::wstring engineFile = QString::fromStdString(engineFile_).toStdWString();
     std::fstream file;
     //std::cout << "(TrtInfer:read_TRT_File)loading filename from:" << engineFile << std::endl;
     nvinfer1::IRuntime* trtRuntime;
@@ -151,6 +150,8 @@ QString TrtInfer::testOneSample(
 bool TrtInfer::testAllSample(
         std::string dataset_path,std::string modelPath,int inferBatch, bool dataProcess,
         float &Acc,std::vector<std::vector<int>> &confusion_matrix,std::string flag){
+    qDebug()<< "(TrtInfer::testAllSample) modelPath old = " << QString::fromStdString(modelPath);
+    //modelPath = "D:/lyh/GUI207_V2.0/db/models/HRRP_128_densenet121_c6_keras/HRRP_128_densenet121_c6_keras.trt";
     if (readTrtFile(modelPath,modelStream, engine)) qDebug()<< "(TrtInfer::testAllSample)tensorRT engine created successfully.";
     else qDebug()<< "(TrtInfer::testAllSample)tensorRT engine created failed." ;
     context = engine->createExecutionContext();

@@ -27,10 +27,23 @@ public:
     int addProjectFromXML(std::string xmlPath);        // 从.xml文件中导入新数据集
     void deleteProject(std::string type, std::string name);
 
-    std::string selectedType;
-    std::string selectedProjectName;
-    std::vector<std::string> selectedClassNames;
+    //当前活动工程的Type和Name,在Dock中被赋值
+    std::string pathOfSelectedProject;
+    std::string dataTypeOfSelectedProject;      //HRRP\RCS\featrue\image
+    std::string modelTypeOfSelectedProject;     //TRA_DL\FEA_RELE\FEA_OPTI\INCRE
+    std::string nameOfSelectedProject;
 
+    //TODO 下面变量在哪里被赋值要写上
+    std::string pathOfSelectedDataset;
+    std::string pathOfSelectedModel_forInfer;
+    std::string pathOfSelectedModel_forVis;
+    std::string nameOfSelectedDataset;      //暂时在Dock Shot被赋值
+    std::string nameOfSelectedModel_forInfer;
+    std::string nameOfSelectedModel_forVis;
+    std::vector<std::string> classNamesOfSelectedDataset;
+
+    std::map<std::string, std::string> var2TypeName;
+    std::map<std::string, std::string> typeName2Var;
     void modifyAttri(std::string Type, std::string Name, std::string Attri, std::string AttriValue);   //修改某一数据集的属性
 
     bool checkMap(std::string type, std::string name="NULL", std::string attri="NULL");

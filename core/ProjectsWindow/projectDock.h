@@ -35,6 +35,9 @@ public:
 //     void importDataset(std::string type);
 //     void deleteDataset();
 
+signals:
+    void projectChanged();
+
 private slots:
     // void handleTreeViewClick(const QModelIndex &index, const QPoint &pos, int mouseButton);
     void treeItemClicked(const QModelIndex &index);
@@ -57,6 +60,11 @@ private:
     QModelIndex findModelIndexByName(QStandardItem *item, const QString &name);
     std::string getPathByItemClicked(); 
     void drawExample();
+
+    //保存上一个活动工程在treemodel的index和工程路径，方便作判断
+    QModelIndex lastProjectIndex = QModelIndex();
+    QString lastProjectPath = "";
+    QString lastProjectDataType = "";
     // 不同平台下文件夹搜索工具
     SearchFolder *dirTools = new SearchFolder();
 };

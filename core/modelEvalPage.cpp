@@ -12,14 +12,18 @@
 #include<Windows.h>  //for Sleep func
 using namespace std;
 
-ModelEvalPage::ModelEvalPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, DatasetInfo *globalDatasetInfo, ModelInfo *globalModelInfo):
+ModelEvalPage::ModelEvalPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, DatasetInfo *globalDatasetInfo, ModelInfo *globalModelInfo, ProjectsInfo *globalProjectInfo):
     ui(main_ui),
     terminal(bash_terminal),
     datasetInfo(globalDatasetInfo),
-    modelInfo(globalModelInfo)
+    modelInfo(globalModelInfo),
+    projectsInfo(globalProjectInfo)
 {
     GuiThreadRun::inst();
-    // 随机选取样本按钮
+    // 下拉框
+    connect(ui->comboBox_sampleType, SIGNAL(textActivated(QString)), this, SLOT(on_comboBox_sampleType(QString)));
+    connect(ui->comboBox_chosFile, SIGNAL(textActivated(QString)), this, SLOT(on_comboBox_chosFile(QString)));
+    // 取样按钮
     connect(ui->pushButton_mE_randone, &QPushButton::clicked, this, &ModelEvalPage::randSample);
     // 测试按钮
     connect(ui->pushButton_testOneSample, &QPushButton::clicked, this, &ModelEvalPage::testOneSample);
@@ -30,6 +34,7 @@ ModelEvalPage::ModelEvalPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal
     connect(processDatasetInfer, &QProcess::readyReadStandardOutput, this, &ModelEvalPage::processDatasetInferFinished);
     processSampleInfer = new QProcess();
     connect(processSampleInfer, &QProcess::readyReadStandardOutput, this, &ModelEvalPage::processSampleInferFinished);
+
     //cmd调用python做优化模型的推理
     this->condaEnvName = "PT";
     this->pythonApiPath = "./lib/algorithm/optimizeInfer/optimizeInfer.py";
@@ -43,23 +48,36 @@ ModelEvalPage::ModelEvalPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal
     pModule_drawConfusionMatrix = PyImport_ImportModule("EvalPageConfusionMatrix");
     pFunc_drawConfusionMatrix = PyObject_GetAttrString(pModule_drawConfusionMatrix, "draw_confusion_matrix");
 
-    // PyRun_SimpleString("sys.path.append('./lib/algorithm/optimizeInfer/')");
-    // pModule_optimizeInfer = PyImport_ImportModule("optimizeInfer");
-    // pFunc_optimizeInfer = PyObject_GetAttrString(pModule_optimizeInfer, "inferMain");
-    // if(pModule_optimizeInfer==NULL) qDebug()<<"pModule_optimizeInfer NULL";
-    // if(pFunc_optimizeInfer==NULL) qDebug()<<"pFunc_optimizeInfer NULL";
-
 }
 
 ModelEvalPage::~ModelEvalPage(){
 
 }
 
+void ModelEvalPage::on_comboBox_sampleType(QString choicedClassq){
+    this->choicedClass = choicedClassq.toStdString();
+    this->choicedFileInClass = "NULL";
+    string datasetPath = projectsInfo->pathOfSelectedDataset;
+    datasetPath += "/"+choicedClass;
+    QStringList files;
+    QStringList filters;
+    filters << "*.mat"; 
+    files = QDir(QString::fromStdString(datasetPath)).entryList(filters, QDir::Files);
+    ui->comboBox_chosFile->clear();
+    ui->comboBox_chosFile->addItems(files);
+}
+
+void ModelEvalPage::on_comboBox_chosFile(QString choicedFileName){
+    this->choicedFileInClass = choicedFileName.toStdString();
+    this->choicedSamplePATH = 
+        projectsInfo->pathOfSelectedDataset + "/" + this->choicedClass + "/" + this->choicedFileInClass;
+}
+
 void ModelEvalPage::refreshGlobalInfo(){
     label2class.clear();
     class2label.clear();
     // 单样本测试下拉框刷新
-    vector<string> comboBoxContents = datasetInfo->selectedClassNames;
+    vector<string> comboBoxContents = projectsInfo->classNamesOfSelectedDataset;
     ui->comboBox_sampleType->clear();
     for(auto &item: comboBoxContents){
         ui->comboBox_sampleType->addItem(QString::fromStdString(item));
@@ -79,60 +97,69 @@ void ModelEvalPage::refreshGlobalInfo(){
         for(auto &item: label2class)   class2label[item.second] = item.first;
     }
     // 基本信息更新
-    ui->label_mE_dataset->setText(QString::fromStdString(datasetInfo->selectedName));
-    ui->label_mE_model->setText(QString::fromStdString(modelInfo->selectedName));
+    ui->label_mE_dataset->setText(QString::fromStdString(projectsInfo->nameOfSelectedDataset));
+    ui->label_mE_model->setText(QString::fromStdString(projectsInfo->nameOfSelectedModel_forInfer));
     //ui->label_mE_batch->setText(QString::fromStdString(modelInfo->getAttri(modelInfo->selectedType, modelInfo->selectedName, "batch")));
-    if((modelInfo->getAttri(modelInfo->selectedType,modelInfo->selectedName,"PATH")!=choicedModelPATH)||
-    (datasetInfo->getAttri(datasetInfo->selectedType,datasetInfo->selectedName,"PATH")!=choicedDatasetPATH)){//保证模型切换后trt对象重新构建
+    if((projectsInfo->pathOfSelectedModel_forInfer!=choicedModelPATH) ||
+       (projectsInfo->pathOfSelectedDataset!=choicedDatasetPATH)){//保证模型切换后trt对象重新构建
         trtInfer = new TrtInfer(class2label);
-        choicedDatasetPATH = datasetInfo->getAttri(datasetInfo->selectedType,datasetInfo->selectedName,"PATH");
-        choicedModelPATH=modelInfo->getAttri(modelInfo->selectedType,modelInfo->selectedName,"PATH");
+        choicedDatasetPATH = projectsInfo->pathOfSelectedDataset;
+        choicedModelPATH = projectsInfo->pathOfSelectedModel_forInfer;
+        //TODO 
+        this->choicedClass = "NULL";
+        this->choicedFileInClass = "NULL";
+        ui->comboBox_chosFile->clear();
+        // ui->comboBox_sampleType->clear();
     }
 }
 
 void ModelEvalPage::randSample(){
-    // 获取下拉框类别内容
-    string selectedClass = ui->comboBox_sampleType->currentText().toStdString();
-    // 已选类别的随机取样
-    if(!selectedClass.empty()){
-        string classPath = choicedDatasetPATH +"/" +selectedClass;
-        // string datafileFormat =datasetInfo->getAttri(datasetInfo->selectedType, datasetInfo->selectedName, "dataFileFormat");
-        srand((unsigned)time(NULL));
-        Chart *previewChart;
 
-        vector<string> allMatFile;
-        if(dirTools->getFiles(allMatFile, ".mat", classPath)){
-            QString matFilePath = QString::fromStdString(classPath + "/" + allMatFile[0]);
-            this->choicedSamplePATH = matFilePath.toStdString();
+    Chart *previewChart;
+    string nameOfMatFile = this->choicedFileInClass;
 
-            QString imgPath = QString::fromStdString(choicedDatasetPATH +"/"+ selectedClass +".png");
-            //下面这部分代码都是为了让randomIdx在合理的范围内（
-            MATFile* pMatFile = NULL;
-            mxArray* pMxArray = NULL;
-            pMatFile = matOpen(matFilePath.toStdString().c_str(), "r");
-            if(!pMatFile){qDebug()<<"(ModelEvalPage::randSample)文件指针空！！！！！！";return;}
-            std::string matVariable=allMatFile[0].substr(0,allMatFile[0].find_last_of('.')).c_str();//假设数据变量名同文件名的话
-
-            QString chartTitle="Temporary Title";
-            if(datasetInfo->selectedType=="HRRP") {chartTitle="HRRP(Ephi),Polarization HP(1)[Magnitude in dB]";}// matVariable="hrrp128";}
-            else if (datasetInfo->selectedType=="RADIO") {chartTitle="RADIO Temporary Title";}// matVariable="radio101";}
-
-            pMxArray = matGetVariable(pMatFile,matVariable.c_str());
-            if(!pMxArray){qDebug()<<"(ModelEvalPage::randSample)pMxArray变量没找到！！！！！！";return;}
-            int N = mxGetN(pMxArray);  //N 列数
-            int randomIdx = N-(rand())%N;
-
-            this->emIndex=randomIdx;
-            // 可视化所选样本
-            ui->label_mE_choicedSample->setText("Index:"+QString::number(randomIdx));
-            ui->label_mE_imgGT->setPixmap(QPixmap(imgPath).scaled(QSize(100,100), Qt::KeepAspectRatio));
-            //绘图
-            previewChart = new Chart(ui->label_mE_chartGT,chartTitle,matFilePath);
-            previewChart->drawImage(ui->label_mE_chartGT,datasetInfo->selectedType,randomIdx);
+    QString matFilePath = QString::fromStdString(this->choicedSamplePATH);
+    // std::filesystem::exists(this->choicedSamplePATH)
+    qDebug()<<"ModelEvalPage::randSample matFilePath = "<<matFilePath;
+    
+    // if(dirTools->exist(this->choicedSamplePATH)){
+    if(std::filesystem::exists(std::filesystem::u8path(this->choicedSamplePATH))){
+        QString examIdx_str = ui->lineEdit_evalSampleIdx->text();
+        int examIdx = 1;
+        if(examIdx_str==""){
+            examIdx=1;
+            ui->lineEdit_evalSampleIdx->setText("1");
         }
+        else examIdx = examIdx_str.toInt();
+
+        QString imgPath = QString::fromStdString(choicedDatasetPATH +"/"+ this->choicedClass +".png");
+        //下面这部分代码都是为了让randomIdx在合理的范围内（
+        MATFile* pMatFile = NULL;
+        mxArray* pMxArray = NULL;
+        pMatFile = matOpen(matFilePath.toStdString().c_str(), "r");
+        if(!pMatFile){qDebug()<<"(ModelEvnameOfMatFilealPage::randSample)文件指针空！！！！！！";return;}
+        std::string matVariable=nameOfMatFile.substr(0,nameOfMatFile.find_last_of('.')).c_str();//假设数据变量名同文件名的话
+
+        QString chartTitle="Temporary Title";
+        if(projectsInfo->dataTypeOfSelectedProject=="HRRP") {chartTitle="HRRP(Ephi),Polarization HP(1)[Magnitude in dB]";}// matVariable="hrrp128";}
+        else if (projectsInfo->dataTypeOfSelectedProject=="RADIO") {chartTitle="RADIO Temporary Title";}// matVariable="radio101";}
+
+        pMxArray = matGetVariable(pMatFile,matVariable.c_str());
+        if(!pMxArray){qDebug()<<"(ModelEvalPage::randSample)pMxArray变量没找到！！！！！！";return;}
+        int N = mxGetN(pMxArray);  //N 列数
+        examIdx = examIdx>N?N-1:examIdx;
+
+        this->emIndex=examIdx;
+        // 可视化所选样本
+        // ui->label_mE_choicedSample->setText("Index:"+QString::number(randomIdx));
+        ui->label_mE_imgGT->setPixmap(QPixmap(imgPath).scaled(QSize(100,100), Qt::KeepAspectRatio));
+        //绘图
+        previewChart = new Chart(ui->label_mE_chartGT,chartTitle,matFilePath);
+        previewChart->drawImage(ui->label_mE_chartGT,projectsInfo->dataTypeOfSelectedProject,examIdx);
     }
+    
     else{
-    QMessageBox::warning(NULL, "数据取样", "数据取样失败，请指定数据集类型!");
+        QMessageBox::warning(NULL, "数据取样", "数据取样失败，未指定数据样本或其不存在!");
     }
 
 
@@ -166,18 +193,18 @@ void  ModelEvalPage::testOneSample(){
         std::cout<<"(ModelEvalPage::testOneSample)choicedSamplePATH"<<choicedSamplePATH<<endl;
         std::vector<float> degrees; int predIdx;
         //classnum==(datasetInfo->selectedClassNames.size())
-        std::cout<<"(ModelEvalPage::testOneSample)datasetInfo->selectedType="<<datasetInfo->selectedType<<endl;//HRRP
-        std::cout<<"(ModelEvalPage::testOneSample)modelInfo->selectedType="<<modelInfo->selectedType<<endl;//TRA_DL
+        std::cout<<"(ModelEvalPage::testOneSample)projectsInfo->dataTypeOfSelectedProject="<<projectsInfo->dataTypeOfSelectedProject<<endl;//HRRP
+        std::cout<<"(ModelEvalPage::testOneSample)projectsInfo->modelTypeOfSelectedProject="<<projectsInfo->modelTypeOfSelectedProject<<endl;//TRA_DL
         bool dataProcess=true;std::string flag="";
-        if(datasetInfo->selectedType=="HRRP" && modelInfo->selectedType=="FEA_RELE"){
+        if(projectsInfo->dataTypeOfSelectedProject=="HRRP" && projectsInfo->modelTypeOfSelectedProject=="FEA_RELE"){
             QMessageBox::warning(NULL, "提示", "特征关联模型输入应为特征数据");
             return;
         }
-        if(datasetInfo->selectedType=="RCS") {
+        if(projectsInfo->dataTypeOfSelectedProject=="RCS") {
             dataProcess=false;
             flag="RCS_";
         }
-        if(modelInfo->selectedType=="FEA_OPTI"){   
+        if(projectsInfo->modelTypeOfSelectedProject=="FEA_OPTI"){   
             if(modelFormat!="pth"){
                 QMessageBox::warning(NULL, "提示", "优化模型文件需为.pth模型!");
                 return;
@@ -195,8 +222,8 @@ void  ModelEvalPage::testOneSample(){
             this->execuCmdProcess(processSampleInfer,command);
             return;
         }
-        if(modelInfo->selectedType=="INCRE") dataProcess=false; //目前的增量模型接受的数据是没做预处理的
-        if(modelInfo->selectedType=="FEA_RELE"){
+        if(projectsInfo->modelTypeOfSelectedProject=="INCRE") dataProcess=false; //目前的增量模型接受的数据是没做预处理的
+        if(projectsInfo->modelTypeOfSelectedProject=="FEA_RELE"){
             std::string feaWeightTxtPath=choicedModelPATH.substr(0, choicedModelPATH.rfind("/"))+"/attention.txt";
             if(this->dirTools->exist(feaWeightTxtPath)){//判断是abfc还是atec,依据就是有没有attention文件
                 int modelIdx=1,tempi=0;std::vector<int> dataOrder;std::string line;
@@ -248,21 +275,29 @@ void ModelEvalPage::testAllSample(){
     qDebug()<<"(ModelEvalPage::testAllSample)batchsize=="<<inferBatch;
     /*这里涉及到的全局变量有除了模型数据集路径，还有准确度和混淆矩阵*/
     if(!choicedDatasetPATH.empty() && !choicedModelPATH.empty() ){
+        qDebug()<<"(ModelEvalPage::testAllSample)choicedDatasetPATH=="<<QString::fromStdString(choicedDatasetPATH);
+        qDebug()<<"(ModelEvalPage::testAllSample)choicedModelPATH=="<<QString::fromStdString(choicedModelPATH);
+        // QMessageBox::warning(NULL, "提示", "就先止步于此叭~");
+        // return;
+        qDebug()<<"(ModelEvalPage::testAllSample)dataTypeOfSelectedProject=="<<QString::fromStdString(projectsInfo->dataTypeOfSelectedProject);
+        qDebug()<<"(ModelEvalPage::testAllSample)modelTypeOfSelectedProject=="<<QString::fromStdString(projectsInfo->modelTypeOfSelectedProject);
+
         float acc = 0.6;
         int classNum=label2class.size();
         std::vector<std::vector<int>> confusion_matrix(classNum, std::vector<int>(classNum, 0));
         bool dataProcess=true;
         std::string flag="";
-        if(datasetInfo->selectedType=="HRRP" && modelInfo->selectedType=="FEA_RELE"){
+        //V3版本下面这个判断应该不需要了
+        if(projectsInfo->dataTypeOfSelectedProject=="HRRP" && projectsInfo->modelTypeOfSelectedProject=="FEA_RELE"){
             QMessageBox::warning(NULL, "提示", "特征关联模型输入应为特征数据");
             return;
         }
-        if(datasetInfo->selectedType=="RCS") {
+        if(projectsInfo->dataTypeOfSelectedProject=="RCS") {
             dataProcess=false;
             flag="RCS_";
         }
-        if(modelInfo->selectedType=="INCRE") dataProcess=false; //目前增量模型接受的数据是不做预处理的
-        if(modelInfo->selectedType=="FEA_RELE"){
+        if(projectsInfo->modelTypeOfSelectedProject=="INCRE") dataProcess=false; //目前增量模型接受的数据是不做预处理的
+        if(projectsInfo->modelTypeOfSelectedProject=="FEA_RELE"){
             std::string feaWeightTxtPath=choicedModelPATH.substr(0, choicedModelPATH.rfind("/"))+"/attention.txt";
             if(this->dirTools->exist(feaWeightTxtPath)){//判断是abfc还是atec,依据就是有没有attention文件
                 int modelIdx=1,tempi=0;std::vector<int> dataOrder;std::string line;
@@ -280,7 +315,7 @@ void ModelEvalPage::testAllSample(){
                 dataProcess=false;
             }
         }
-        if(modelInfo->selectedType=="FEA_OPTI"){
+        if(projectsInfo->modelTypeOfSelectedProject=="FEA_OPTI"){
             if(modelFormat!="pth"){
                 QMessageBox::warning(NULL, "提示", "优化模型文件需为.pth模型!");
                 return;

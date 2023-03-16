@@ -1,9 +1,9 @@
 #include "modelTrainPage.h"
 
 ModelTrainPage::ModelTrainPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, DatasetInfo *globalDatasetInfo,
-                               ModelInfo *globalModelInfo, ModelDock *modelDock):
+                               ModelInfo *globalModelInfo):
     ui(main_ui),terminal(bash_terminal),datasetInfo(globalDatasetInfo),
-    modelInfo(globalModelInfo), modelDock(modelDock){
+    modelInfo(globalModelInfo){
 
     ui->fewShotWidget->setVisible(false);
     ui->oldClassNumEdit->setValidator(new QRegularExpressionValidator(QRegularExpression("^[1-9][0-9]{1,3}$")));
@@ -192,7 +192,6 @@ void ModelTrainPage::monitorTrainProcess(){
                 showLog=false;
                 ui->startTrainButton->setEnabled(true);
                 //导入训练好的模型至系统
-                //modelDock->importModelAfterTrain(modelTypes[trainModelType], saveModelName);
                 showTrianResult();
                 if(processTrain->state()==QProcess::Running){
                     processTrain->close();

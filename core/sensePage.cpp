@@ -14,11 +14,11 @@ SenseSetPage::SenseSetPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, 
     datasetInfo(globalDatasetInfo)
 {
     // 数据集类别选择框事件相应
-    BtnGroup_typeChoice->addButton(ui->radioButton_HRRP_choice, 0);
-    BtnGroup_typeChoice->addButton(ui->radioButton_RCS_choice, 1);
-    BtnGroup_typeChoice->addButton(ui->radioButton_RADIO_choice, 2);
-    BtnGroup_typeChoice->addButton(ui->radioButton_FEATURE_choice, 3);
-    BtnGroup_typeChoice->addButton(ui->radioButton_IMAGE_choice, 4);
+    BtnGroup_typeChoice->addButton(ui->radioButton_train_choice, 0);
+    BtnGroup_typeChoice->addButton(ui->radioButton_test_choice, 1);
+    BtnGroup_typeChoice->addButton(ui->radioButton_val_choice, 2);
+    BtnGroup_typeChoice->addButton(ui->radioButton_unknow_choice, 3);
+
     connect(this->BtnGroup_typeChoice, &QButtonGroup::buttonClicked, this, &SenseSetPage::changeType);
 
     // 确定

@@ -18,8 +18,8 @@
 //#include "./lib/guiLogic/modelEval.h"
 // 悬浮窗部件类
 #include "./core/projectsWindow/projectDock.h"
-#include "./core/datasetsWindow/datasetDock.h"
-#include "./core/modelsWindow/modelDock.h"
+//#include "./core/datasetsWindow/datasetDock.h"
+//#include "./core/modelsWindow/modelDock.h"
 #include "./lib/guiLogic/bashTerminal.h"
 // 界面美化类
 #include "./conf/QRibbon/QRibbon.h"
@@ -46,16 +46,18 @@ class MainWindow: public QMainWindow{
 //        ModelEval *modeleval; // 模型评估页面控制类
     public slots:
         void switchPage();      // 页面切换
+        void refreshPages();    // 页面刷新
         void fullScreen();      // 全屏
         void aboutApp();      // aboutApp
         void aboutQt();      // aboutQt
         void showManual();      //文档信息
+        
     private:
         Ui::MainWindow *ui; 
 
         ProjectDock *projectDock;
-        DatasetDock *datasetDock;
-        ModelDock *modelDock;
+//        DatasetDock *datasetDock;
+//        ModelDock *modelDock;
 
         SenseSetPage *senseSetPage;
         ModelChoicePage *modelChoicePage;
@@ -66,7 +68,7 @@ class MainWindow: public QMainWindow{
         ModelVisPage *modelVisPage;
         ModelCAMPage *modelCAMPage;
 
-        ProjectsInfo *globalProjectsInfo;
+        ProjectsInfo *globalProjectInfo;
         DatasetInfo *globalDatasetInfo;
         ModelInfo *globalModelInfo;
 

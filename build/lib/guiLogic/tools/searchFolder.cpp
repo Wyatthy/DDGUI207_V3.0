@@ -12,21 +12,6 @@ using namespace std;
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
 
 // Windows平台
-bool SearchFolder::getFiles(vector<string> &files, string filesType, string folderPath){
-    intptr_t hFile = 0;
-    struct _finddata_t fileInfo;
-
-    if ((hFile = _findfirst((folderPath+"/*"+filesType).c_str(), &fileInfo)) != -1){
-        do{
-            files.push_back(fileInfo.name);
-        } while(_findnext(hFile, &fileInfo) == 0);
-    }
-    else{
-        return false;
-    }
-    return true;
-}
-
 bool SearchFolder::getAllFiles(vector<string> &files, string folderPath){
     intptr_t hFile = 0;
     struct _finddata_t fileInfo;
@@ -58,6 +43,67 @@ bool SearchFolder::getDirs(vector<string> &dirs, string folderPath){
     }
     std::sort(dirs.begin(),dirs.end());
     return true;
+}
+
+bool SearchFolder::getDirsplus(vector<string> &dirs, string searchPath){
+    wstring folderPath = QString::fromStdString(searchPath).toStdWString();
+    intptr_t hFile = 0;
+    struct _wfinddata_t fileInfo;
+
+    if ((hFile = _wfindfirst((folderPath+L"/*").c_str(), &fileInfo)) != -1){
+        do{
+            if ((fileInfo.attrib & _A_SUBDIR) && wcscmp(fileInfo.name, L".") != 0 && wcscmp(fileInfo.name, L"..") != 0) {  //比较文件类型是否是文件夹
+                dirs.push_back(QString::fromStdWString(fileInfo.name).toStdString());
+            }
+        } while(_wfindnext(hFile, &fileInfo) == 0);
+    }
+    else{
+        return false;
+    }
+    std::sort(dirs.begin(),dirs.end());
+    return true;
+}
+
+bool SearchFolder::getFilesplus(vector<string> &files, string filesType, string folderPath) {
+    intptr_t hFile = 0;
+    struct _wfinddata_t fileInfo; // 使用_wfinddata_t来支持Unicode路径
+
+    wstring searchPath = QString::fromStdString(folderPath + "/*" + filesType).toStdWString();
+    if ((hFile = _wfindfirst(searchPath.c_str(), &fileInfo)) != -1) {
+        do {
+            string fileName = QString::fromStdWString(fileInfo.name).toStdString(); // 将宽字符转为普通字符
+            files.push_back(fileName);
+        } while (_wfindnext(hFile, &fileInfo) == 0);
+    } else {
+        return false;
+    }
+    return true;
+}
+
+bool SearchFolder::getFiles(vector<string> &files, string filesType, string folderPath){
+    intptr_t hFile = 0;
+    struct _finddata_t fileInfo;
+
+    if ((hFile = _findfirst((folderPath+"/*"+filesType).c_str(), &fileInfo)) != -1){
+        do{
+            files.push_back(fileInfo.name);
+        } while(_findnext(hFile, &fileInfo) == 0);
+    }
+    else{
+        return false;
+    }
+    return true;
+}
+
+bool SearchFolder::ifPathExists(std::string rpath){
+//    std::wstringstream wss;
+//    wss.imbue(std::locale("chs")); // 设置宽字符流为中文环境
+//    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+//    std::wstring wpath_str = converter.from_bytes(rpath);
+//    wss << wpath_str;
+//    std::wstring path_wstr = wss.str();
+//    bool exists = std::filesystem::exists(path_wstr);
+    return 0;
 }
 
 #else

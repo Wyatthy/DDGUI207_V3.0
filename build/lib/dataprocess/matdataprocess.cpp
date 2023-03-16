@@ -35,7 +35,7 @@ void MatDataProcess::getAllDataFromMat(std::string matPath,bool dataProcess,std:
     int N = mxGetN(pMxArray);  //列数
 
     //for(int i=0;i<N/2;i++){
-    for(int i=N/2;i<N;i++){
+    for(int i=0;i<N;i++){
         std::vector<float> onesmp;//存当前遍历的一个样本
         for(int j=0;j<M;j++){
             onesmp.push_back(matdata[i*M+j]);
@@ -60,15 +60,15 @@ void MatDataProcess::loadAllDataFromFolder(std::string datasetPath,std::string t
     SearchFolder *dirTools = new SearchFolder();
     // 寻找子文件夹 WARN:数据集的路径一定不能包含汉字 否则遍历不到文件路径
     std::vector<std::string> subDirs;
-    dirTools->getDirs(subDirs, datasetPath);
+    dirTools->getDirsplus(subDirs, datasetPath);
     for(auto &subDir: subDirs){
         // 寻找每个子文件夹下的样本文件
         std::vector<std::string> fileNames;
         std::string subDirPath = datasetPath+"/"+subDir;
-        dirTools->getFiles(fileNames, type, subDirPath);
+        dirTools->getFilesplus(fileNames, type, subDirPath);
         for(auto &fileName: fileNames){
-            //qDebug()<<QString::fromStdString(subDirPath)<<"/"<<QString::fromStdString(fileName)<<" label:"<<class2label[subDir];
-            getAllDataFromMat(subDirPath+"/"+fileName,dataProcess,data,labels,class2label[subDir],inputLen);
+            qDebug()<<QString::fromStdString(subDirPath)<<"/"<<QString::fromStdString(fileName)<<" label:"<<class2label[subDir];
+            getAllDataFromMat(subDirPath + "/" + fileName,dataProcess,data,labels,class2label[subDir],inputLen);
         }
     }
     return;

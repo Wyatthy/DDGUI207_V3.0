@@ -12,7 +12,6 @@
 #include "./lib/guiLogic/modelInfo.h"
 #include "./lib/guiLogic/datasetInfo.h"
 #include "./lib/guiLogic/tools/searchFolder.h"
-#include "./core/modelsWindow/modelDock.h"
 
 class ModelTrainPage:public QObject
 {
@@ -23,7 +22,6 @@ public:
     DatasetInfo *datasetInfo;
     ModelInfo *modelInfo;
     BashTerminal *train_terminal;
-    ModelDock *modelDock;
 
     QString choicedDatasetPATH;
     QProcess *processTrain;
@@ -40,7 +38,7 @@ public:
     QString cil_data_dimension = "";
     
     ModelTrainPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, DatasetInfo *globalDatasetInfo,
-                   ModelInfo *globalModelInfo, ModelDock *modelDock);
+                   ModelInfo *globalModelInfo);
     void refreshGlobalInfo();
     void uiInitial();
     void execuCmd(QString cmd);   // 开放在终端运行命令接口

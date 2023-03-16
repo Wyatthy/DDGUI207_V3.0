@@ -43,7 +43,6 @@ ProjectDock::ProjectDock(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, Pr
         // connect(currTreeView.second, &QTreeView::clicked, this, &ProjectDock::handleTreeViewClick);
         connect(currTreeView.second, SIGNAL(clicked(QModelIndex)), this, SLOT(treeItemClicked(QModelIndex)));
         connect(currTreeView.second, &QTreeView::customContextMenuRequested, this, &ProjectDock::onRequestMenu);
-
     }
 
 }
@@ -88,17 +87,15 @@ void ProjectDock::drawExample(){//TODO mat变量不合适和样本索引范围�
     QString examIdx_str = ui->projectDock_examIdx->text();
     QDir dir(this->selectedMatFilePath);
     qDebug()<<"selectedMatFilePath ="<<selectedMatFilePath;
-    if(examIdx_str == ""){
-        QMessageBox::information(NULL, "绘制错误", "数据样本索引未指定");
-        return;
-    }
-    if(selectedMatFilePath==""){        //TODO 文件不存在的情况
+    if(selectedMatFilePath=="" || !std::filesystem::exists(std::filesystem::u8path(selectedMatFilePath.toStdString()))){        //TODO 文件不存在的情况
         QMessageBox::information(NULL, "绘制错误", "目标数据文件不存在");
         return;
     }
-
     int examIdx=1;
-    if(examIdx_str=="") examIdx=1;
+    if(examIdx_str==""){
+        examIdx=1;
+        ui->projectDock_examIdx->setText("1");
+    }
     else examIdx = examIdx_str.toInt();
 
     //绘图
@@ -115,7 +112,6 @@ void ProjectDock::drawExample(){//TODO mat变量不合适和样本索引范围�
 }
 
 void ProjectDock::treeItemClicked(const QModelIndex &index){
-    // TODO 判断index是几级标题，工程则刷新下方工程信息，mat文件则刷新波形图（数据集则刷新下方数据集
     this->leftSelType = ui->tabWidget_datasetType->currentWidget()->objectName().split("_")[1].toStdString();
     this->leftSelName = projectTreeViewGroup[this->leftSelType]->model()->itemData(index).values()[0].toString().toStdString();
     this->leftMsIndex = index;
@@ -266,18 +262,18 @@ void ProjectDock::onAction_Expand(){
 void ProjectDock::onAction_Collapse(){
     // projectTreeViewGroup[rightSelType]->collapse(this->rightMsIndex);
     QModelIndex parentIndex = this->rightMsIndex.parent();
-    qDebug()<<"asdf";
+    // qDebug()<<"asdf";
     if(parentIndex.isValid()){
-        qDebug()<<"zxcvzxcv";
+        // qDebug()<<"zxcvzxcv";
         projectTreeViewGroup[rightSelType]->collapse(parentIndex);
     }
 }
 
 void ProjectDock::onAction_ShotProject(){
-    //先将上一个活动项粗体取消
-    if(projectsInfo->selectedType!=""&&projectsInfo->selectedProjectName!=""){
-        QString targetName = QString::fromStdString(projectsInfo->selectedProjectName);
-        QAbstractItemModel* model = projectTreeViewGroup[projectsInfo->selectedType]->model();
+    //先将上一个活动项粗体取消,后设置新的粗体
+    if(projectsInfo->dataTypeOfSelectedProject!=""&&projectsInfo->nameOfSelectedProject!=""){
+        QString targetName = QString::fromStdString(projectsInfo->nameOfSelectedProject);
+        QAbstractItemModel* model = projectTreeViewGroup[projectsInfo->dataTypeOfSelectedProject]->model();
         int rowCount = model->rowCount();
         for (int i = 0; i < rowCount; i++) {
             QModelIndex parentIndex = model->index(i, 0);
@@ -290,12 +286,80 @@ void ProjectDock::onAction_ShotProject(){
             }
         }
     }
-    projectsInfo->selectedType = this->rightSelType;
-    projectsInfo->selectedProjectName = this->rightSelName;
+    projectsInfo->dataTypeOfSelectedProject = this->rightSelType;
+    projectsInfo->nameOfSelectedProject = this->rightSelName;
     QFont font = projectTreeViewGroup[rightSelType]->font();
     font.setBold(true);
     projectTreeViewGroup[rightSelType]->model()->setData(this->rightMsIndex, font, Qt::FontRole);
     QMessageBox::information(NULL, "设为活动工程", QString::fromStdString("活动工程已设定为"+rightSelName));
+
+    //根据工程名字确定projectsInfo->modelTypeOfSelectedProject
+    if(rightSelName.find("atec") != std::string::npos || rightSelName.find("abfc") != std::string::npos) 
+        projectsInfo->modelTypeOfSelectedProject = "FEA_RELE";
+    else if(rightSelName.find("opti") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "FEA_OPTI";
+    else if(rightSelName.find("incre") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "INCRE";
+    else projectsInfo->modelTypeOfSelectedProject = "TRA_DL";
+
+    //根据project类型设置projectsInfo中的pathOfSelectedModel_forInfer和pathOfSelectedModel_forVis
+    string tempModelType = projectsInfo->modelTypeOfSelectedProject;
+    QString project_path = QString::fromStdString(projectsInfo->getAttri(rightSelType,rightSelName,"Project_Path"));
+    QStringList filters;
+    QStringList files;
+    if(projectsInfo->modelTypeOfSelectedProject == "FEA_OPTI"){     //优化的模型测试用的是pth,其他都是trt
+        filters << "*.pth";  
+    }
+    else{
+        filters << "*.trt";  
+    }
+    files = QDir(project_path).entryList(filters, QDir::Files);
+    foreach(QString filename, files) {
+        if (filename.contains(QString::fromStdString(rightSelName))) {
+            projectsInfo->pathOfSelectedModel_forInfer = project_path.toStdString() + "/" + filename.toStdString();
+        }
+    }
+    projectsInfo->nameOfSelectedModel_forInfer = 
+        QString::fromStdString(projectsInfo->pathOfSelectedModel_forInfer).split('/').last().toStdString();
+    if(projectsInfo->getAttri(rightSelType,rightSelName,"Visualize") == "yes"){
+        filters.clear();files.clear();
+        filters << "*.hdf5";  
+        files = QDir(project_path).entryList(filters, QDir::Files);
+        foreach(QString filename, files) {
+            if (filename.contains(QString::fromStdString(rightSelName))) {
+                projectsInfo->pathOfSelectedModel_forVis = project_path.toStdString() + "/" + filename.toStdString();
+            }
+        }
+        projectsInfo->nameOfSelectedModel_forVis = 
+            QString::fromStdString(projectsInfo->pathOfSelectedModel_forVis).split('/').last().toStdString();
+    }
+    projectsInfo->pathOfSelectedProject = project_path.toStdString();
+
+    //TODO 发送信号给MainWIndow，让其刷新各个界面，比如调用EvalPage的refreshGlobalInfo
+
+
+    //先暂时把pathOfSelectedDataset设置成train的
+    projectsInfo->pathOfSelectedDataset = project_path.toStdString() + "/train";
+    projectsInfo->nameOfSelectedDataset = project_path.split('/').last().toStdString() + "/train";
+
+    projectsInfo->classNamesOfSelectedDataset.clear();
+    QStringList folders = QDir(QString::fromStdString(projectsInfo->pathOfSelectedDataset)).entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+    for (int i = 0; i < folders.size(); i++) {
+        QString folderName = folders.at(i);
+        if (folderName.contains("DT")) {
+            projectsInfo->classNamesOfSelectedDataset.insert(projectsInfo->classNamesOfSelectedDataset.begin(), folderName.toStdString());
+        } else {
+            projectsInfo->classNamesOfSelectedDataset.push_back(folderName.toStdString());
+        }
+    }
+
+    if(this->lastProjectPath != project_path){
+        qDebug()<<"emit projectChanged();";
+        emit projectChanged();
+    }
+    
+    this->lastProjectPath = project_path;
+    this->lastProjectIndex = this->rightMsIndex;
+    this->lastProjectDataType = QString::fromStdString(rightSelType);
+    
 }
 
 void ProjectDock::onAction_AddProject(){
@@ -380,6 +444,7 @@ void ProjectDock::addFilesToItem(QStandardItem *parentItem, const QString &path)
 void ProjectDock::reloadTreeView(){
     //datasetInfo和QTreeView的联系，一个数据类型的Map
     //对应一个QTreeView（根节点），第二级的子节点及之后的拓展由Map里每个项目的路径拓展得到;
+
     for(auto &currTreeView: projectTreeViewGroup){
         int projIdx = 0;
         currTreeView.second->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -393,7 +458,24 @@ void ProjectDock::reloadTreeView(){
             addFilesToItem(projectItem, QString::fromStdString(projectPath));
             currModel->setItem(projIdx++, 0, projectItem);
         }
+        //重新加粗try1
+        // if(this->lastProjectIndex.isValid() && lastProjectDataType.toStdString()==currTreeView.first){
+        //     qDebug()<<"ProjectDock::reloadTreeView  try bold, lastProjectDataType= "<<lastProjectDataType;
+        //     QFont font = currTreeView.second->font();
+        //     font.setBold(true);
+        //     currModel->setData(this->lastProjectIndex, font, Qt::FontRole);
+        // }
         currTreeView.second->setModel(currModel);
     }
 
+    //重新加粗try2
+    // if(this->lastProjectIndex.isValid()){
+    //     QFont font = projectTreeViewGroup[lastProjectDataType.toStdString()]->font();
+    //     font.setBold(true);
+    //     projectTreeViewGroup[lastProjectDataType.toStdString()]->model()->setData(this->lastProjectIndex, font, Qt::FontRole);
+    //     projectTreeViewGroup[lastProjectDataType.toStdString()]->update();
+    //     // qDebug()<<"ProjectDock::reloadTreeView  try bold, projectIDx= "<<lastProjectIndex;
+    //     // qDebug()<<"ProjectDock::reloadTreeView  try bold, lastProjectDataType= "<<lastProjectDataType;
+    //     QMessageBox::information(NULL, "设为活动工程", QString::fromStdString("活动工程已设定为")+lastProjectDataType);
+    // }
 }
