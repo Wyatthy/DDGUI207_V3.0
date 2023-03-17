@@ -18,8 +18,6 @@
 //#include "./lib/guiLogic/modelEval.h"
 // 悬浮窗部件类
 #include "./core/projectsWindow/projectDock.h"
-//#include "./core/datasetsWindow/datasetDock.h"
-//#include "./core/modelsWindow/modelDock.h"
 #include "./lib/guiLogic/bashTerminal.h"
 // 界面美化类
 #include "./conf/QRibbon/QRibbon.h"

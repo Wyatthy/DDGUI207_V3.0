@@ -100,7 +100,7 @@
              <x>0</x>
              <y>0</y>
              <width>1145</width>
-             <height>1157</height>
+             <height>1006</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -110,6 +110,18 @@
                <layout class="QVBoxLayout" name="verticalLayout_6">
                 <item>
                  <widget class="QGroupBox" name="groupBox_3">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>16777215</width>
+                    <height>60</height>
+                   </size>
+                  </property>
                   <property name="title">
                    <string>活动数据集选择</string>
                   </property>
@@ -150,26 +162,6 @@
                        </property>
                       </widget>
                      </item>
-                    </layout>
-                   </item>
-                   <item>
-                    <layout class="QHBoxLayout" name="horizontalLayout_12">
-                     <item>
-                      <widget class="QComboBox" name="comboBox_datasetNameChoice">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="minimumSize">
-                        <size>
-                         <width>20</width>
-                         <height>0</height>
-                        </size>
-                       </property>
-                      </widget>
-                     </item>
                      <item>
                       <widget class="QPushButton" name="pushButton_datasetConfirm">
                        <property name="sizePolicy">
@@ -184,6 +176,9 @@
                       </widget>
                      </item>
                     </layout>
+                   </item>
+                   <item>
+                    <layout class="QHBoxLayout" name="horizontalLayout_12"/>
                    </item>
                   </layout>
                  </widget>
@@ -223,12 +218,16 @@
                       </widget>
                      </item>
                      <item>
-                      <widget class="QLineEdit" name="lineEdit_sense_datasetName">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
+                      <widget class="QLabel" name="label">
+                       <property name="text">
+                        <string/>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="label_sense_datasetName">
+                       <property name="text">
+                        <string>-</string>
                        </property>
                       </widget>
                      </item>
@@ -276,12 +275,16 @@
                       </widget>
                      </item>
                      <item>
-                      <widget class="QLineEdit" name="lineEdit_sense_claNum">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
+                      <widget class="QLabel" name="label_114">
+                       <property name="text">
+                        <string/>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="label_sense_claNum">
+                       <property name="text">
+                        <string>-</string>
                        </property>
                       </widget>
                      </item>
@@ -329,12 +332,16 @@
                       </widget>
                      </item>
                      <item>
-                      <widget class="QLineEdit" name="lineEdit_sense_targetNumEachCla">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
+                      <widget class="QLabel" name="label_104">
+                       <property name="text">
+                        <string/>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="label_sense_targetNumEachCla">
+                       <property name="text">
+                        <string>-</string>
                        </property>
                       </widget>
                      </item>
@@ -382,12 +389,16 @@
                       </widget>
                      </item>
                      <item>
-                      <widget class="QLineEdit" name="lineEdit_sense_pitchAngle">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
+                      <widget class="QLabel" name="label_115">
+                       <property name="text">
+                        <string/>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="label_sense_pitchAngle">
+                       <property name="text">
+                        <string>-</string>
                        </property>
                       </widget>
                      </item>
@@ -435,12 +446,16 @@
                       </widget>
                      </item>
                      <item>
-                      <widget class="QLineEdit" name="lineEdit_sense_azimuthAngle">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
+                      <widget class="QLabel" name="label_116">
+                       <property name="text">
+                        <string/>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="label_sense_azimuthAngle">
+                       <property name="text">
+                        <string>-</string>
                        </property>
                       </widget>
                      </item>
@@ -488,12 +503,16 @@
                       </widget>
                      </item>
                      <item>
-                      <widget class="QLineEdit" name="lineEdit_sense_samplingNum">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
+                      <widget class="QLabel" name="label_117">
+                       <property name="text">
+                        <string/>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="label_sense_samplingNum">
+                       <property name="text">
+                        <string>-</string>
                        </property>
                       </widget>
                      </item>
@@ -541,12 +560,16 @@
                       </widget>
                      </item>
                      <item>
-                      <widget class="QLineEdit" name="lineEdit_sense_incidentMode">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
+                      <widget class="QLabel" name="label_118">
+                       <property name="text">
+                        <string/>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="label_sense_incidentMode">
+                       <property name="text">
+                        <string>-</string>
                        </property>
                       </widget>
                      </item>
@@ -594,12 +617,16 @@
                       </widget>
                      </item>
                      <item>
-                      <widget class="QLineEdit" name="lineEdit_sense_freq">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
+                      <widget class="QLabel" name="label_142">
+                       <property name="text">
+                        <string/>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="label_sense_freq">
+                       <property name="text">
+                        <string>-</string>
                        </property>
                       </widget>
                      </item>
@@ -647,12 +674,16 @@
                       </widget>
                      </item>
                      <item>
-                      <widget class="QLineEdit" name="lineEdit_sense_PATH">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
+                      <widget class="QLabel" name="label_143">
+                       <property name="text">
+                        <string/>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="label_sense_PATH">
+                       <property name="text">
+                        <string>-</string>
                        </property>
                       </widget>
                      </item>
@@ -700,35 +731,16 @@
                       </widget>
                      </item>
                      <item>
-                      <widget class="QLabel" name="label_42">
+                      <widget class="QLabel" name="label_145">
                        <property name="text">
                         <string/>
                        </property>
                       </widget>
                      </item>
                      <item>
-                      <widget class="QPlainTextEdit" name="plainTextEdit_sense_note">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="maximumSize">
-                        <size>
-                         <width>16777215</width>
-                         <height>50</height>
-                        </size>
-                       </property>
-                       <property name="baseSize">
-                        <size>
-                         <width>0</width>
-                         <height>0</height>
-                        </size>
-                       </property>
-                       <property name="plainText">
-                        <string>备注
-</string>
+                      <widget class="QLabel" name="label_sense_note">
+                       <property name="text">
+                        <string>-</string>
                        </property>
                       </widget>
                      </item>
@@ -748,28 +760,7 @@
                     </layout>
                    </item>
                    <item>
-                    <layout class="QHBoxLayout" name="horizontalLayout_29">
-                     <item>
-                      <widget class="QLabel" name="label_71">
-                       <property name="text">
-                        <string/>
-                       </property>
-                      </widget>
-                     </item>
-                     <item>
-                      <widget class="QPushButton" name="pushButton_saveDatasetAttri">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="text">
-                        <string>保存</string>
-                       </property>
-                      </widget>
-                     </item>
-                    </layout>
+                    <layout class="QHBoxLayout" name="horizontalLayout_29"/>
                    </item>
                   </layout>
                  </widget>
@@ -1408,7 +1399,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1145</width>
+             <width>709</width>
              <height>623</height>
             </rect>
            </property>
@@ -2264,8 +2255,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>463</width>
-               <height>548</height>
+               <width>321</width>
+               <height>303</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -4008,8 +3999,8 @@
                        <rect>
                         <x>0</x>
                         <y>0</y>
-                        <width>98</width>
-                        <height>28</height>
+                        <width>143</width>
+                        <height>85</height>
                        </rect>
                       </property>
                       <layout class="QHBoxLayout" name="horizontalLayout_78">

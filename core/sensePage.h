@@ -4,10 +4,12 @@
 #include <vector>
 #include <map>
 #include <QObject>
+#include <QDir>
 #include <QButtonGroup>
 #include "ui_MainWindow.h"
 #include "./lib/guiLogic/bashTerminal.h"
 #include "./lib/guiLogic/datasetInfo.h"
+#include "./lib/guiLogic/projectsInfo.h"
 #include "./core/projectsWindow/chart.h"
 
 #include "./lib/guiLogic/tools/searchFolder.h"
@@ -15,10 +17,10 @@
 class SenseSetPage:public QObject{
     Q_OBJECT
 public:
-    SenseSetPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, DatasetInfo *globalDatasetInfo);
+    SenseSetPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, DatasetInfo *globalDatasetInfo, ProjectsInfo *globalProjectInfo);
     ~SenseSetPage();
 
-    std::map<std::string, QLineEdit*> attriLabelGroup;
+    std::map<std::string, QLabel*> attriLabelGroup;
     std::vector<QLabel*> imgGroup;
     std::vector<QLabel*> imgInfoGroup;
     std::vector<QLabel*> chartGroup;
@@ -28,9 +30,8 @@ public:
 
 
 public slots:
-    void changeType();
     void confirmDataset(bool notDialog);
-    void saveDatasetAttri();
+//    void saveDatasetAttri();
 
     void updateAttriLabel();
     void drawClassImage();
@@ -42,6 +43,7 @@ private:
     BashTerminal *terminal;
 
     DatasetInfo *datasetInfo;
+    ProjectsInfo *projectsInfo;
 
     // 不同平台下文件夹搜索工具
     SearchFolder *dirTools = new SearchFolder();

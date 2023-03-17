@@ -1,5 +1,6 @@
 #ifndef PROJECTSINFO_H
 #define PROJECTSINFO_H
+#include <QString>
 #include <iostream>
 #include <vector>
 #include <string>
@@ -28,19 +29,21 @@ public:
     void deleteProject(std::string type, std::string name);
 
     //当前活动工程的Type和Name,在Dock中被赋值
-    std::string pathOfSelectedProject;
-    std::string dataTypeOfSelectedProject;      //HRRP\RCS\featrue\image
+    std::string pathOfSelectedProject = "";
+    std::string dataTypeOfSelectedProject;      //HRRP\RCS\FEATURE\IAMGE
     std::string modelTypeOfSelectedProject;     //TRA_DL\FEA_RELE\FEA_OPTI\INCRE
     std::string nameOfSelectedProject;
 
+    //测试用的数据集类型
+    QString typeOfSelectedDataset = ""; //SenseSetPage::confirmDataset
     //TODO 下面变量在哪里被赋值要写上
-    std::string pathOfSelectedDataset;
-    std::string pathOfSelectedModel_forInfer;
+    std::string pathOfSelectedDataset;//projectDockShot、SenseSetPage::confirmDataset
+    std::string pathOfSelectedModel_forInfer;   //projectDockShot
     std::string pathOfSelectedModel_forVis;
-    std::string nameOfSelectedDataset;      //暂时在Dock Shot被赋值
+    std::string nameOfSelectedDataset;      //projectDockShot、SenseSetPage::confirmDataset
     std::string nameOfSelectedModel_forInfer;
     std::string nameOfSelectedModel_forVis;
-    std::vector<std::string> classNamesOfSelectedDataset;
+    std::vector<std::string> classNamesOfSelectedDataset;   //projectDockShot、SenseSetPage::confirmDataset
 
     std::map<std::string, std::string> var2TypeName;
     std::map<std::string, std::string> typeName2Var;

@@ -47,7 +47,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent){
     connect(projectDock, SIGNAL(projectChanged()),this, SLOT(refreshPages()));
 
     // 场景选择页面
-    this->senseSetPage = new SenseSetPage(this->ui, this->terminal, this->globalDatasetInfo);
+    this->senseSetPage = new SenseSetPage(this->ui, this->terminal, this->globalDatasetInfo, this->globalProjectInfo);
 
     this->modelChoicePage = new ModelChoicePage(this->ui, this->terminal, this->globalModelInfo);
 

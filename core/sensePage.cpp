@@ -8,10 +8,11 @@
 
 using namespace std;
 
-SenseSetPage::SenseSetPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, DatasetInfo *globalDatasetInfo):
+SenseSetPage::SenseSetPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, DatasetInfo *globalDatasetInfo, ProjectsInfo *globalProjectInfo):
     ui(main_ui),
     terminal(bash_terminal),
-    datasetInfo(globalDatasetInfo)
+    datasetInfo(globalDatasetInfo),
+    projectsInfo(globalProjectInfo)
 {
     // 数据集类别选择框事件相应
     BtnGroup_typeChoice->addButton(ui->radioButton_train_choice, 0);
@@ -19,27 +20,28 @@ SenseSetPage::SenseSetPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, 
     BtnGroup_typeChoice->addButton(ui->radioButton_val_choice, 2);
     BtnGroup_typeChoice->addButton(ui->radioButton_unknow_choice, 3);
 
-    connect(this->BtnGroup_typeChoice, &QButtonGroup::buttonClicked, this, &SenseSetPage::changeType);
+    // connect(this->BtnGroup_typeChoice, &QButtonGroup::buttonClicked, this, &SenseSetPage::changeType);
 
     // 确定
     connect(ui->pushButton_datasetConfirm, &QPushButton::clicked, this, &SenseSetPage::confirmDataset);
 
     // 保存
-    connect(ui->pushButton_saveDatasetAttri, &QPushButton::clicked, this, &SenseSetPage::saveDatasetAttri);
+//    connect(ui->pushButton_saveDatasetAttri, &QPushButton::clicked, this, &SenseSetPage::saveDatasetAttri);
 
     // 下一批数据
     connect(ui->pushButton_nextSenseChart, &QPushButton::clicked, this, &SenseSetPage::nextBatchChart);
 
     // 数据集属性显示框
-    this->attriLabelGroup["datasetName"] = ui->lineEdit_sense_datasetName;
-    this->attriLabelGroup["claNum"] = ui->lineEdit_sense_claNum;
-    this->attriLabelGroup["targetNumEachCla"] = ui->lineEdit_sense_targetNumEachCla;
-    this->attriLabelGroup["pitchAngle"] = ui->lineEdit_sense_pitchAngle;
-    this->attriLabelGroup["azimuthAngle"] = ui->lineEdit_sense_azimuthAngle;
-    this->attriLabelGroup["samplingNum"] = ui->lineEdit_sense_samplingNum;
-    this->attriLabelGroup["incidentMode"] = ui->lineEdit_sense_incidentMode;
-    this->attriLabelGroup["freq"] = ui->lineEdit_sense_freq;
-    this->attriLabelGroup["PATH"] = ui->lineEdit_sense_PATH;
+    this->attriLabelGroup["Target_Num"] = ui->label_sense_claNum;
+    this->attriLabelGroup["Project_Path"] = ui->label_sense_PATH;
+    this->attriLabelGroup["datasetName"] = ui->label_sense_datasetName;
+    this->attriLabelGroup["targetNumEachCla"] = ui->label_sense_targetNumEachCla;
+    this->attriLabelGroup["pitchAngle"] = ui->label_sense_pitchAngle;
+    this->attriLabelGroup["azimuthAngle"] = ui->label_sense_azimuthAngle;
+    this->attriLabelGroup["samplingNum"] = ui->label_sense_samplingNum;
+    this->attriLabelGroup["incidentMode"] = ui->label_sense_incidentMode;
+    this->attriLabelGroup["freq"] = ui->label_sense_freq;
+    this->attriLabelGroup["note"] = ui->label_sense_note;
 
     // 图片显示label成组
     imgGroup.push_back(ui->label_datasetClaImg1);
@@ -78,88 +80,86 @@ SenseSetPage::~SenseSetPage(){
 
 }
 
-
-void SenseSetPage::changeType(){
-//    this->BtnGroup_typeChoice->checkedId()<<endl;
-    // 获取选择的类型内容
+void SenseSetPage::confirmDataset(bool notDialog = false){
+    QString project_path = QString::fromStdString(projectsInfo->pathOfSelectedProject);
     QString selectedType = this->BtnGroup_typeChoice->checkedButton()->objectName().split("_")[1];
+    if(selectedType.isEmpty()||projectsInfo->pathOfSelectedProject==""){
+        QMessageBox::warning(NULL, "数据集切换提醒", "数据集切换失败，活动工程或数据集未指定");
+        return;
+    }
+    QString dataset_path = project_path + "/" + selectedType;
+    bool ifDbExists = std::filesystem::exists(std::filesystem::u8path(dataset_path.toStdString()));
+    if(!ifDbExists){
+        QMessageBox::warning(NULL, "数据集切换提醒", "数据集切换失败，该工程下不存在"+selectedType+"数据集");
+        return;
+    }
     terminal->print("Selected Type: " + selectedType);
 
-    // 更新下拉选择框
-    vector<string> comboBoxContents = datasetInfo->getNamesInType(
-        selectedType.toStdString()
-    );
-    ui->comboBox_datasetNameChoice->clear();
-    for(auto &item: comboBoxContents){
-        ui->comboBox_datasetNameChoice->addItem(QString::fromStdString(item));
-    }
-
-}
+    projectsInfo->typeOfSelectedDataset = selectedType;
+    projectsInfo->pathOfSelectedDataset = project_path.toStdString() + "/" + selectedType.toStdString();
+    projectsInfo->nameOfSelectedDataset = project_path.split('/').last().toStdString() + "/" + selectedType.toStdString();
 
 
-void SenseSetPage::confirmDataset(bool notDialog = false){
-    // 获取选择的类型内容
-    QString selectedType = this->BtnGroup_typeChoice->checkedButton()->objectName().split("_")[1];
-    datasetInfo->selectedType = selectedType.toStdString(); // save type
-    // 获取下拉框内容,即选择数据集的名称
-    QString selectedName = ui->comboBox_datasetNameChoice->currentText();
-    datasetInfo->selectedName = selectedName.toStdString(); // save name
-    terminal->print("Selected Type: " + selectedType + ", Selected Name: " + selectedName);
+    // 更新classNamesOfSelectedDataset
+    // vector<string> subDirNames;
+    // dirTools->getDirsplus(subDirNames, projectsInfo->pathOfSelectedDataset);
+    // 排除特殊的文件夹
+    // auto temp=std::find(subDirNames.begin(),subDirNames.end(),"model_saving");
+    // if(temp!=subDirNames.end()) subDirNames.erase(temp);
+    // projectsInfo->classNamesOfSelectedDataset = subDirNames;
 
-    if(!selectedType.isEmpty() && !selectedName.isEmpty()){
-        // 更新属性显示标签
-        updateAttriLabel();
-
-        // 绘制类别图
-        for(int i = 0; i<6; i++){
-            imgGroup[i]->clear();
-            imgInfoGroup[i]->clear();
+    projectsInfo->classNamesOfSelectedDataset.clear();
+    QStringList folders = QDir(QString::fromStdString(projectsInfo->pathOfSelectedDataset)).entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+    for (int i = 0; i < folders.size(); i++) {
+        QString folderName = folders.at(i);
+        if (folderName.contains("DT")) {
+            projectsInfo->classNamesOfSelectedDataset.insert(projectsInfo->classNamesOfSelectedDataset.begin(), folderName.toStdString());
+        } else {
+            projectsInfo->classNamesOfSelectedDataset.push_back(folderName.toStdString());
         }
-        drawClassImage();
-
-        ui->progressBar->setValue(40);
-
-        // 绘制曲线
-        for(int i=0;i<6;i++){
-            if(!chartGroup[i]->layout()) delete chartGroup[i]->layout();
-            chartInfoGroup[i]->clear();
-            chartGroup[i]->clear();
-        }
-        nextBatchChart();
-
-        // 绘制表格 TODO
-
-        if(!notDialog)
-            QMessageBox::information(NULL, "数据集切换提醒", "已成功切换数据集为->"+selectedType+"->"+selectedName+"！");
     }
-    else{
-        if(!notDialog)
-            QMessageBox::warning(NULL, "数据集切换提醒", "数据集切换失败，请指定数据集");
+    qDebug()<<"SenseSetPage::confirmDataset dataset_path== "<<dataset_path;
+    // 更新属性显示标签
+    updateAttriLabel();
+
+    // 绘制类别图
+    for(int i = 0; i<6; i++){
+        imgGroup[i]->clear();
+        imgInfoGroup[i]->clear();
     }
+    drawClassImage();
+
+    ui->progressBar->setValue(40);
+
+    // 绘制曲线
+    for(int i=0;i<6;i++){
+        if(!chartGroup[i]->layout()) delete chartGroup[i]->layout();
+        chartInfoGroup[i]->clear();
+        chartGroup[i]->clear();
+    }
+    nextBatchChart();
+
+    // 绘制表格 TODO
+    if(!notDialog)
+        QMessageBox::information(NULL, "数据集切换提醒", "已成功切换数据集为->"+selectedType);
 }
 
 
 void SenseSetPage::updateAttriLabel(){
-    map<string,string> attriContents = datasetInfo->getAllAttri(
-        datasetInfo->selectedType,
-        datasetInfo->selectedName
+    map<string,string> attriContents = projectsInfo->getAllAttri(
+        projectsInfo->dataTypeOfSelectedProject,
+        projectsInfo->nameOfSelectedProject
     );
     for(auto &currAttriWidget: this->attriLabelGroup){
         currAttriWidget.second->setText(QString::fromStdString(attriContents[currAttriWidget.first]));
     }
-    ui->plainTextEdit_sense_note->setPlainText(QString::fromStdString(attriContents["note"]));
+//    ui->plainTextEdit_sense_note->setPlainText(QString::fromStdString(attriContents["note"]));
 }
 
 
 void SenseSetPage::drawClassImage(){
-    string rootPath = datasetInfo->getAttri(datasetInfo->selectedType,datasetInfo->selectedName,"PATH");
-    // 寻找根目录下子文件夹的名称
-    vector<string> subDirNames;
-    dirTools->getDirs(subDirNames, rootPath);
-    auto temp=std::find(subDirNames.begin(),subDirNames.end(),"model_saving");
-    if(temp!=subDirNames.end()) subDirNames.erase(temp);
-    datasetInfo->selectedClassNames = subDirNames; // 保存下，之后不用重复遍历
-
+    string rootPath = projectsInfo->pathOfSelectedDataset;
+    vector<string> subDirNames = projectsInfo->classNamesOfSelectedDataset;
     for(int i = 0; i<subDirNames.size(); i++){
         imgInfoGroup[i]->setText(QString::fromStdString(subDirNames[i]));
         QString imgPath = QString::fromStdString(rootPath +"/"+ subDirNames[i] +".png");
@@ -169,8 +169,8 @@ void SenseSetPage::drawClassImage(){
 
 
 void SenseSetPage::nextBatchChart(){
-    string rootPath = datasetInfo->getAttri(datasetInfo->selectedType,datasetInfo->selectedName,"PATH");
-    vector<string> subDirNames = datasetInfo->selectedClassNames;
+    string rootPath = projectsInfo->pathOfSelectedDataset;
+    vector<string> subDirNames = projectsInfo->classNamesOfSelectedDataset;
     qDebug()<<"(SenseSetPage::nextBatchChart) subDirNames.size()="<<subDirNames.size();
     // 按类别显示
     for(int i=0; i<subDirNames.size(); i++){
@@ -192,9 +192,9 @@ void SenseSetPage::nextBatchChart(){
             std::string matVariable=allMatFile[0].substr(0,allMatFile[0].find_last_of('.')).c_str();//假设数据变量名同文件名的话
 
             QString chartTitle="Temporary Title";
-            if(datasetInfo->selectedType=="HRRP") {chartTitle="HRRP(Ephi),Polarization HP(1)[Magnitude in dB]";}
-            else if (datasetInfo->selectedType=="RADIO") {chartTitle="RADIO Temporary Title";}
-            else if (datasetInfo->selectedType=="RCS") {chartTitle="RCS Temporary Title";}
+            if(projectsInfo->dataTypeOfSelectedProject=="HRRP") {chartTitle="HRRP(Ephi),Polarization HP(1)[Magnitude in dB]";}
+            else if (projectsInfo->dataTypeOfSelectedProject=="RADIO") {chartTitle="RADIO Temporary Title";}
+            else if (projectsInfo->dataTypeOfSelectedProject=="RCS") {chartTitle="RCS Temporary Title";}
             pMxArray = matGetVariable(pMatFile,matVariable.c_str());
             if(!pMxArray){qDebug()<<"(ModelEvalPage::randSample)pMxArray变量没找到！！！！！！";return;}
             int N = mxGetN(pMxArray);  //N 列数
@@ -202,48 +202,8 @@ void SenseSetPage::nextBatchChart(){
 
             //绘图
             previewChart = new Chart(ui->label_mE_chartGT,chartTitle,matFilePath);
-            previewChart->drawImage(chartGroup[i],datasetInfo->selectedType,randomIdx);
+            previewChart->drawImage(chartGroup[i],projectsInfo->dataTypeOfSelectedProject,randomIdx);
             chartInfoGroup[i]->setText(QString::fromStdString(choicedClass+":Index")+QString::number(randomIdx));
         }
-
-
     }
-}
-
-
-void SenseSetPage::saveDatasetAttri(){
-    // 保存至内存
-    string type = datasetInfo->selectedType;
-    string name = datasetInfo->selectedName;
-    if(!type.empty() && !name.empty()){
-        string customAttriValue = "";
-        // 对lineEdit组件
-        for(auto &currAttriWidget: attriLabelGroup){
-            customAttriValue = currAttriWidget.second->text().toStdString();
-            if(customAttriValue.empty()){
-                customAttriValue = "未定义";
-            }
-            this->datasetInfo->modifyAttri(type, name, currAttriWidget.first, customAttriValue);
-        }
-        // 对plainTextEdit组件
-        customAttriValue = ui->plainTextEdit_sense_note->toPlainText().toStdString();
-        if(customAttriValue.empty()){
-            customAttriValue = "未定义";
-        }
-        this->datasetInfo->modifyAttri(type, name, "note", customAttriValue);
-
-
-        // 保存至.xml,并更新
-        this->datasetInfo->writeToXML(datasetInfo->defaultXmlPath);
-        this->confirmDataset(true);
-
-        // 提醒
-        QMessageBox::information(NULL, "属性保存提醒", "数据集属性修改已保存");
-        terminal->print("数据集："+QString::fromStdString(type)+"->"+QString::fromStdString(name)+"->属性修改已保存");
-    }
-    else{
-        QMessageBox::warning(NULL, "属性保存提醒", "属性保存失败，数据集未指定！");
-        terminal->print("数据集："+QString::fromStdString(type)+"->"+QString::fromStdString(name)+"->属性修改无效");
-    }
-
 }

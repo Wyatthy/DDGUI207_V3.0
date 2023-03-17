@@ -333,10 +333,7 @@ void ProjectDock::onAction_ShotProject(){
     }
     projectsInfo->pathOfSelectedProject = project_path.toStdString();
 
-    //TODO 发送信号给MainWIndow，让其刷新各个界面，比如调用EvalPage的refreshGlobalInfo
-
-
-    //先暂时把pathOfSelectedDataset设置成train的
+    //shot后默认测试集为test
     projectsInfo->pathOfSelectedDataset = project_path.toStdString() + "/train";
     projectsInfo->nameOfSelectedDataset = project_path.split('/').last().toStdString() + "/train";
 
@@ -350,7 +347,7 @@ void ProjectDock::onAction_ShotProject(){
             projectsInfo->classNamesOfSelectedDataset.push_back(folderName.toStdString());
         }
     }
-
+    //TODO 发送信号给MainWIndow，让其刷新各个界面，比如调用EvalPage的refreshGlobalInfo
     if(this->lastProjectPath != project_path){
         qDebug()<<"emit projectChanged();";
         emit projectChanged();
