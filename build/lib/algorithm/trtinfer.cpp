@@ -269,10 +269,16 @@ bool TrtInfer::testAllSample(
     return 1;
 }
 
-void TrtInfer::realTimeInfer(std::vector<float> data_vec,std::string modelPath, bool dataProcess,int *predIdx, std::vector<float> &degrees){
+void TrtInfer::realTimeInfer(std::vector<float> temp,std::string modelPath, bool dataProcess,int *predIdx, std::vector<float> &degrees){
+    qDebug()<<"(TrtInfer::realTimeInfer) 收到的数据长度="<<QString::number(temp.size())<<"  模型输入长度"<<QString::number(inputLen);
+    //如果收到的数据长度和模型输入长度不一致，通过复制或者裁减使其变成模型输入长度inputlen
+    //目前只有RTI是到这一步才变更数据长度
+    std::vector<float> data_vec;
+    int numberOfcopies=inputLen/temp.size();
+    for(int j=0;j<inputLen;j++){
+        data_vec.push_back(temp[j/numberOfcopies]);//64*128,对应训练时(128,64,1)的输入维度
+    }
 
-    //int inputLen=2;int outputLen=6;
-    //ready to send data to context
     if(dataProcess) oneNormalization_(data_vec);//对收到的数据做归一
     float *outdata=new float[outputLen]; std::fill_n(outdata,outputLen,9);
     //qDebug()<<"(TrtInfer::realTimeInfer) i get one! now to infer";

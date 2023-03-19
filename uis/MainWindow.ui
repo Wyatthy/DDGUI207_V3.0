@@ -33,7 +33,7 @@
        </sizepolicy>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>4</number>
       </property>
       <widget class="QWidget" name="page_senseSet">
        <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -99,7 +99,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1145</width>
+             <width>548</width>
              <height>1006</height>
             </rect>
            </property>
@@ -1399,7 +1399,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>709</width>
+             <width>1145</width>
              <height>623</height>
             </rect>
            </property>
@@ -2255,8 +2255,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>321</width>
-               <height>303</height>
+               <width>463</width>
+               <height>548</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -2418,7 +2418,7 @@
             <widget class="QWidget" name="scrollAreaWidgetContents_5">
              <property name="geometry">
               <rect>
-               <x>0</x>
+               <x>-9</x>
                <y>0</y>
                <width>699</width>
                <height>620</height>
@@ -2760,8 +2760,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>814</width>
-             <height>374</height>
+             <width>1164</width>
+             <height>587</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_51">
@@ -3765,8 +3765,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>353</width>
-             <height>307</height>
+             <width>1164</width>
+             <height>558</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_57">
@@ -3988,8 +3988,11 @@
                    </item>
                    <item>
                     <widget class="QScrollArea" name="scrollArea_7">
+                     <property name="verticalScrollBarPolicy">
+                      <enum>Qt::ScrollBarAsNeeded</enum>
+                     </property>
                      <property name="horizontalScrollBarPolicy">
-                      <enum>Qt::ScrollBarAlwaysOff</enum>
+                      <enum>Qt::ScrollBarAsNeeded</enum>
                      </property>
                      <property name="widgetResizable">
                       <bool>true</bool>
@@ -3999,20 +4002,34 @@
                        <rect>
                         <x>0</x>
                         <y>0</y>
-                        <width>143</width>
-                        <height>85</height>
+                        <width>549</width>
+                        <height>336</height>
                        </rect>
                       </property>
-                      <layout class="QHBoxLayout" name="horizontalLayout_78">
+                      <layout class="QVBoxLayout" name="verticalLayout_2">
                        <property name="spacing">
                         <number>0</number>
                        </property>
                        <item>
-                        <layout class="QHBoxLayout" name="horizontalLayout_HotCol">
-                         <property name="spacing">
-                          <number>0</number>
+                        <widget class="QGroupBox" name="groupBox_6">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
                          </property>
-                        </layout>
+                         <property name="title">
+                          <string/>
+                         </property>
+                         <layout class="QVBoxLayout" name="verticalLayout_31" stretch="1,1">
+                          <item>
+                           <layout class="QVBoxLayout" name="verticalLayout_hotShow"/>
+                          </item>
+                          <item>
+                           <layout class="QVBoxLayout" name="verticalLayout_sigShow"/>
+                          </item>
+                         </layout>
+                        </widget>
                        </item>
                       </layout>
                      </widget>
@@ -5317,9 +5334,9 @@
     <addaction name="separator"/>
     <addaction name="action_ModelChoice"/>
     <addaction name="separator"/>
-    <addaction name="action_Evaluate"/>
-    <addaction name="separator"/>
     <addaction name="action_ModelTrain"/>
+    <addaction name="separator"/>
+    <addaction name="action_Evaluate"/>
     <addaction name="separator"/>
     <addaction name="action_Monitor"/>
     <addaction name="separator"/>

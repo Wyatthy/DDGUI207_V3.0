@@ -34,7 +34,6 @@ void MatDataProcess::getAllDataFromMat(std::string matPath,bool dataProcess,std:
     int M = mxGetM(pMxArray);  //行数
     int N = mxGetN(pMxArray);  //列数
 
-    //for(int i=0;i<N/2;i++){
     for(int i=0;i<N;i++){
         std::vector<float> onesmp;//存当前遍历的一个样本
         for(int j=0;j<M;j++){
@@ -48,8 +47,11 @@ void MatDataProcess::getAllDataFromMat(std::string matPath,bool dataProcess,std:
             temp.push_back(onesmp[j/numberOfcopies]);//64*128,对应训练时(128,64,1)的输入维度
             //temp.push_back(onesmp[j%M]);//128*64,对应训练时(64,128,1)的输入维度
         }
-
-        data.push_back(temp);
+        if(inputLen < 0){       //此时表示上层想要原数据长度
+            data.push_back(onesmp);
+        }else{
+            data.push_back(temp);
+        }
         labels.push_back(label);
     }
     // qDebug()<<"(MatDataProcess:getAllDataFromMat)matVariable=="<<QString::fromStdString(matVariable);

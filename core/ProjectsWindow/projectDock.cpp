@@ -294,8 +294,8 @@ void ProjectDock::onAction_ShotProject(){
     QMessageBox::information(NULL, "设为活动工程", QString::fromStdString("活动工程已设定为"+rightSelName));
 
     //根据工程名字确定projectsInfo->modelTypeOfSelectedProject
-    if(rightSelName.find("atec") != std::string::npos || rightSelName.find("abfc") != std::string::npos) 
-        projectsInfo->modelTypeOfSelectedProject = "FEA_RELE";
+    if(rightSelName.find("atec") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "ATEC";
+    else if(rightSelName.find("abfc") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "ABFC";
     else if(rightSelName.find("opti") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "FEA_OPTI";
     else if(rightSelName.find("incre") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "INCRE";
     else projectsInfo->modelTypeOfSelectedProject = "TRA_DL";
@@ -333,7 +333,7 @@ void ProjectDock::onAction_ShotProject(){
     }
     projectsInfo->pathOfSelectedProject = project_path.toStdString();
 
-    //shot后默认测试集为test
+    //shot后默认测试集为train
     projectsInfo->pathOfSelectedDataset = project_path.toStdString() + "/train";
     projectsInfo->nameOfSelectedDataset = project_path.split('/').last().toStdString() + "/train";
 

@@ -55,7 +55,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent){
 
     this->modelTrainPage = new ModelTrainPage(this->ui, this->terminal,this->globalDatasetInfo, this->globalModelInfo);
 
-    this->monitorPage = new MonitorPage(this->ui, this->terminal,this->globalDatasetInfo,this->globalModelInfo);
+    this->monitorPage = new MonitorPage(this->ui, this->terminal,this->globalDatasetInfo,this->globalModelInfo, this->globalProjectInfo);
 
     this->modelVisPage = new ModelVisPage(this->ui, this->terminal, this->globalDatasetInfo, this->globalModelInfo);
     this->modelCAMPage = new ModelCAMPage(this->ui, this->terminal, this->globalDatasetInfo, this->globalModelInfo);
@@ -98,6 +98,7 @@ void MainWindow::switchPage(){
 
 void MainWindow::refreshPages(){
     this->modelEvalPage->refreshGlobalInfo();
+    this->monitorPage->refresh();
 }
 
 void MainWindow::fullScreen(){

@@ -23,7 +23,7 @@ public:
     void initialization();
     SOCKET createServeSocket(const char* ip);
     void run();
-
+    void setInputLen(int len);
     //定义服务端套接字，接受请求套接字
     SOCKET s_server;
     SOCKET s_accept;
@@ -31,14 +31,16 @@ public:
     std::queue<std::vector<float>>* sharedQue;
     QMutex *lock;
 signals:
-    void sigColorMap();
-
+    void sigSignalVisualize(QVector<float>& dataFrameQ);
 private:
     BashTerminal *terminal;
     void dataVisualization();
     std::deque<std::vector<float>> colorMapMatrix;
     PyObject *pModule,*pFunc,*PyArray,*args;
     PyArrayObject* pRet;
+    int inputLen;
+    std::vector<float> dataFrame;//里面放个数为CustomDataset单个样本数据长度的浮点数
+
 };
 
 #endif // SOCKETSERVER_H

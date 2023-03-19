@@ -88,8 +88,6 @@ void SocketServer::run(){           //Producer
         return ;
     }
     // 可以和客户端进行通信了
-    std::vector<float> dataFrame;//里面放大小为模型输入数据长度个浮点数，用以送进网络。
-    std::vector<float> repeatDataFrame;
     while (!isInterruptionRequested()) {
         // recv从指定的socket接受消息
         int getCharNum=recv(s_accept, recv_buf, RECEIVE_BUF_SIZ, 0);
@@ -102,25 +100,17 @@ void SocketServer::run(){           //Producer
                 qDebug()<<"(SocketServer::run)data errrr";continue;
             }
             //qDebug() << "客户端信息:" << QString::number(num_float) ;
-            //terminal->print("Receive:"+QString::number(num_float));
-            if(dataFrame.size()==(128-1)){//之后要和选择的模型匹配起来！！TODO
+            if(dataFrame.size()==(inputLen-1)){
                 //while(sharedQue->size()>0){}
                 dataFrame.push_back(num_float);
-                for(int i=0;i<128;i++){
-                    for(int j=0;j<64;j++)
-                        repeatDataFrame.push_back(dataFrame[i]);
-                }
                 //QMutexLocker x(lock);//智能锁,在栈区使用结束会自动释放
-                sharedQue->push(repeatDataFrame);
+                sharedQue->push(dataFrame);
                 sem->release(1);
                 //qDebug()<<"(SocketServer::run) sem->release()"<<QString::number(num_float);
-                //terminal->print("One Sample was received ");
-                //colorMapMatrix更新
                 colorMapMatrix.pop_back();
                 colorMapMatrix.push_front(dataFrame);
                 dataVisualization();
                 dataFrame.clear();
-                repeatDataFrame.clear();
             }
             else{
                 dataFrame.push_back(num_float);
@@ -137,29 +127,34 @@ void SocketServer::run(){           //Producer
     WSACleanup();
     return;
 }
-
+void SocketServer::setInputLen(int len){
+    this->inputLen = len;
+}
 void SocketServer::dataVisualization(){
     //数据准备
-    float numpyptr[128*ColorMapColumnNUM];
+    float* numpyptr = new float[this->inputLen*ColorMapColumnNUM];
     std::deque<std::vector<float>> colorMapMatrix_copy=colorMapMatrix;
     //qDebug()<<"colorMapMatrix.size()="<<colorMapMatrix.size();
     //qDebug()<<"colorMapMatrix_copy.size()="<<colorMapMatrix_copy.size();
     for(int i=0;i<ColorMapColumnNUM;i++){
         std::vector<float> asdf=colorMapMatrix_copy.front();
-        for(int j=0;j<128;j++){
-            numpyptr[i*128+j]=asdf[j];
+        for(int j=0;j<this->inputLen;j++){
+            numpyptr[i*this->inputLen+j]=asdf[j];
         }
         colorMapMatrix_copy.pop_front();
     }
-    npy_intp dims[2] = {ColorMapColumnNUM,128};//矩阵维度
+    npy_intp dims[2] = {ColorMapColumnNUM,this->inputLen};//矩阵维度
     PyArray = PyArray_SimpleNewFromData(2, dims, NPY_FLOAT, numpyptr);//将数据变为numpy
     //用tuple装起来传入python
     args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, PyArray);
     //函数调用
     pRet = (PyArrayObject*)PyEval_CallObject(pFunc, args);
-    emit sigColorMap();
+    QVector<float> dataFrameQ(dataFrame.begin(), dataFrame.end());
+    emit sigColorMap(dataFrameQ);
+    emit sigShowDataGraph(dataFrameQ);
     //qDebug()<<"(SocketServer::dataVisualization)emited signal!";
+    delete[] numpyptr;
     return;
 }
 

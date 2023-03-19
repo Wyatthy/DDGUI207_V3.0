@@ -223,9 +223,9 @@ void  ModelEvalPage::testOneSample(){
             return;
         }
         if(projectsInfo->modelTypeOfSelectedProject=="INCRE") dataProcess=false; //目前的增量模型接受的数据是没做预处理的
-        if(projectsInfo->modelTypeOfSelectedProject=="FEA_RELE"){
+        if(projectsInfo->modelTypeOfSelectedProject=="ABFC"){
             std::string feaWeightTxtPath=choicedModelPATH.substr(0, choicedModelPATH.rfind("/"))+"/attention.txt";
-            if(this->dirTools->exist(feaWeightTxtPath)){//判断是abfc还是atec,依据就是有没有attention文件
+            if(this->dirTools->exist(feaWeightTxtPath)){//abfc有attention文件
                 int modelIdx=1,tempi=0;std::vector<int> dataOrder;std::string line;
                 std::ifstream infile(feaWeightTxtPath);
                 while (getline(infile, line)){
@@ -233,12 +233,10 @@ void  ModelEvalPage::testOneSample(){
                     dataOrder.push_back(std::stoi(line));
                 }infile.close();
                 trtInfer->setParmsOfABFC(modelIdx, dataOrder);
-                flag="FEA_RELE_abfc";
             }
-            else{
-                flag="FEA_RELE_atec";
-                dataProcess=false;
-            }
+        }
+        if(projectsInfo->modelTypeOfSelectedProject=="ATEC"){
+            dataProcess=false;
         }
         if(modelFormat!="trt"){
             QMessageBox::warning(NULL, "提示", "模型文件需为.trt模型!");

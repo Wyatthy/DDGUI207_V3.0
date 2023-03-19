@@ -100,7 +100,7 @@ void ModelTrainPage::startTrain(){
         cmd="activate tf24 && python ./api/bashs/hrrp_TRImodel/train.py --data_dir "+choicedDatasetPATH+ \
                         " --time "+time+" --batch_size "+batchSize+" --max_epochs "+epoch+" --model_name "+saveModelName;
         switch(trainModelType){
-            case 0:cmd ="activate tf24 && python ./api/bashs/baseline/baseline.py --data_dir "+choicedDatasetPATH+ \
+            case 0:cmd ="activate tf24 && python ./api/bashs/baseline/baseline2.py --data_dir "+choicedDatasetPATH+ \
                         " --time "+time+" --batch_size "+batchSize+" --max_epochs "+epoch+" --model_name "+saveModelName+" --net DNN";break;
             case 1:cmd ="activate tf24 && python ./api/bashs/baseline/baseline.py --data_dir "+choicedDatasetPATH+ \
                         " --time "+time+" --batch_size "+batchSize+" --max_epochs "+epoch+" --model_name "+saveModelName+" --net CNN";break;

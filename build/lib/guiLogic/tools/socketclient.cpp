@@ -5,6 +5,7 @@
 #define RECEIVE_BUF_SIZ 512
 bool startorstop_flag = true;
 SocketClient::SocketClient(){
+
     //moveToThread(this); 
 }
 
@@ -53,25 +54,20 @@ void SocketClient::run(){
     SOCKET s_server;
     initSocketClient();
     s_server = createClientSocket("127.0.0.1");
-    int inputLen=128;
-    // for (auto const &pair: class2label) {
-    //     qDebug()<< "{" << QString::fromStdString(pair.first) << ": " << QString::number(pair.second) << "}";
-    // }
-    //qDebug()<<"(SocketClient::run)datasetlPath=="<<QString::fromStdString(datasetlPath);
-    auto mydataset = CustomDataset(datasetlPath, false, ".mat", class2label,inputLen);//发的数据不做归一化预处理。inputLen要和单一样本长度一致，而不能是可能更大的输入层数据长度
-    int mydataset_size=mydataset.labels.size();
-    int classIdx_rightnow=mydataset.labels[0];
-    qDebug()<<"(SocketClient::run)mydataset_size=="<<QString::number(mydataset.labels.size());
+    //发的数据不做归一化预处理,且长度就是CustomDataset中样本的原始长度
+    // myDataset = CustomDataset(datasetlPath, false, ".mat", class2label, -1);
+    std::cout << "(client run)myDataset 的内存地址为: 0x" << std::hex << myDataset << std::endl;
+    int mydataset_size=myDataset->labels.size();
+    int classIdx_rightnow=myDataset->labels[0];
+    qDebug()<<"(SocketClient::run) mydataset_size=="<<QString::number(myDataset->labels.size());
+    qDebug()<<"(SocketClient::run) mydataset_datalen=="<<QString::number(myDataset->data[0].size());
     for(int i=0;i<mydataset_size;i++){
         while(!startorstop_flag){};
         if(isInterruptionRequested()) break;
         while(!startOrstop){};//如果是0就卡在这里
-        // QMutexLocker lock(&m_lock);
-        // if(!m_flag) break;
-        // while(!m_flag){};//如果是0就卡在这里
 
-        for(int j=0;j<inputLen;j++){
-            float floatVariable = mydataset.data[i][j];
+        for(int j=0;j<myDataset->data[0].size();j++){
+            float floatVariable = myDataset->data[i][j];
             std::string str = std::to_string(floatVariable);
             strcpy(send_buf, str.c_str());
             if (send(s_server, send_buf, BUFSIZ, 0) < 0) {
@@ -80,8 +76,8 @@ void SocketClient::run(){
             }
             if (i > 0) _sleep(1);
         }
-        if(mydataset.labels[i]!=classIdx_rightnow){//如果发送的类别变了的话，发送新的类别信号
-            classIdx_rightnow=mydataset.labels[i];
+        if(myDataset->labels[i]!=classIdx_rightnow){//如果发送的类别变了的话，发送新的类别信号
+            classIdx_rightnow=myDataset->labels[i];
             emit sigClassName(classIdx_rightnow);
         }
         // if (i == 0){
@@ -89,7 +85,7 @@ void SocketClient::run(){
         //     emit sigClassName(classIdx_rightnow);
         // }
         emit sigClassName(classIdx_rightnow);
-        qDebug()<< "==================Send "<<QString::number(inputLen)<<"==============="<< QString::number(i);
+        qDebug()<< "==================Send==============="<< QString::number(i);
     }
     qDebug()<< "600个发送完毕";  
 }
@@ -97,8 +93,13 @@ void SocketClient::setClass2LabelMap(std::map<std::string, int> class2label0){
     class2label=class2label0;
     qDebug()<<"(SocketClient::setClass2LabelMap) class2label.size()=="<<class2label.size();
 }
+
 void SocketClient::setParmOfRTI(std::string datasetP){
     datasetlPath=datasetP;
+}
+
+void SocketClient::setMyDataset(CustomDataset &mdataset){
+   myDataset = &mdataset;
 }
 
 void SocketClient::startOrstop_slot(bool startorstop){

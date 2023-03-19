@@ -76,8 +76,54 @@ void Chart::drawImage(QLabel* chartLabel, std::string dataSetType, int examIdx){
     showChart(chartLabel);
 }
 
+void Chart::drawImageWithSingleSignal(QLabel* chartLabel, std::string dataSetType,QVector<float>& dataFrameQ){
+    if(dataSetType=="HRRP"){
+        points.clear();
+        float y_min = 200000,y_max = -200000;
+        for(int i=0;i<dataFrameQ.size();i++){
+            float y=dataFrameQ[i];
+            y_min = fmin(y_min,y);
+            y_max = fmax(y_max,y);
+            points.append(QPointF(2*i,y));
+        }
+        xmin = 0; xmax = dataFrameQ.size()*2+4;
+        ymin = y_min-3; ymax = y_max+3;
+        setAxis("Range/cm",xmin,xmax,10, "dB(V/m)",ymin,ymax,10);  
+    }
+    else if(dataSetType=="RCS" || dataSetType=="IMAGE"){
+        int windowLen=128;  //窗口长度传过来太麻烦了 默认128
+        points.clear();
+        float y_min = 200000,y_max = -200000;
+        for(int i=0;i<windowLen;i++){
+            float y=dataFrameQ[i];
+            y_min = fmin(y_min,y);
+            y_max = fmax(y_max,y);
+            points.append(QPointF(2*i,y));
+        }
+        xmin = 0; xmax = windowLen*2+4;
+        ymin = y_min-3; ymax = y_max+3;
+        setAxis("Time/mm",xmin,xmax,10, "dB(V/m)",ymin,ymax,10);
+    }
+    else if(dataSetType=="FEATURE"){
+        points.clear();
+        float y_min = 200000,y_max = -200000;
+        for(int i=0;i<dataFrameQ.size();i++){
+            float y=dataFrameQ[i];
+            y_min = fmin(y_min,y);
+            y_max = fmax(y_max,y);
+            points.append(QPointF(2*i,y));
+        }
+        xmin = 0; xmax = dataFrameQ.size()*2+4;
+        ymin = y_min-3; ymax = y_max+3;
+        setAxis("Time/mm",xmin,xmax,10, "dB(V/m)",ymin,ymax,10);
+    }
+
+    buildChart(points);
+    showChart(chartLabel);
+}
+
 void Chart::readRadiomat(int emIdx){
-points.clear();
+    points.clear();
     float y_min = 200000,y_max = -200000;
     MATFile* pMatFile = NULL;
     mxArray* pMxArray = NULL;
@@ -147,7 +193,7 @@ void Chart::readHRRPmat(int emIdx){
     ymin = y_min-3; ymax = y_max+3;
     //qDebug()<<"(Chart::readHRRPmat)ymin:"<<ymin<<"      ymax:"<<ymax;
 //    mxFree(pMxArray);
-//    matClose(pMatFile);//不注释这两个善后代码就会crashed，可能是冲突了
+//    matClose(pMatFile);
 }
 
 void Chart::readFeaturemat(int emIdx){
@@ -258,7 +304,7 @@ void Chart::readHRRPtxt(){
         qDebug() << "txt files open filed! ";
     }
 }
-//下面这个函数本来想调用于trtInfer::realTimeInfer里，画图用，但是没成功，画不出来   可以删了
+//下面这个函数本来想调用于trtInfer::realTimeInfer里，画图用，但是没成功，画不出来
 QWidget* Chart::drawDisDegreeChart(QString &classGT, std::vector<float> &degrees, std::map<int, std::string> &classNames){
     QChart *chart = new QChart;
     //qDebug() << "(ModelEvalPage::disDegreeChart)子线程id：" << QThread::currentThreadId();

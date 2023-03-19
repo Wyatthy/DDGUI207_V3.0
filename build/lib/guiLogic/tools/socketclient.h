@@ -26,7 +26,10 @@ public:
     void run();
     void setClass2LabelMap(std::map<std::string, int> class2label);
     void setParmOfRTI(std::string modelPath);
+    void setinputLen(int len);
+    void setMyDataset(CustomDataset &myDataset);
     void stopThread();
+    
     bool startOrstop=true;
     bool m_flag;
     QMutex m_lock;
@@ -47,6 +50,9 @@ private:
     std::string datasetlPath="";
     bool dataProcess=false;
     std::map<std::string, int> class2label;
+    int inputLen = -1;
+
+    CustomDataset* myDataset ;
     
 };
 

@@ -8,15 +8,18 @@
 #include "./lib/guiLogic/bashTerminal.h"
 #include "./lib/guiLogic/modelInfo.h"
 #include "./lib/guiLogic/datasetInfo.h"
+#include "./lib/guiLogic/projectsInfo.h"
 #include "./lib/guiLogic/tools/socketserver.h"
 #include "./lib/guiLogic/tools/socketclient.h"
 #include "lib/algorithm/inferthread.h"
+#include "./lib/dataprocess/customdataset.h"
+
 
 class MonitorPage : public QObject
 {
     Q_OBJECT
 public:
-    MonitorPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, DatasetInfo *globalDatasetInfo,ModelInfo *globalModelInfo);
+    MonitorPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, DatasetInfo *globalDatasetInfo,ModelInfo *globalModelInfo,ProjectsInfo *globalProjectInfo);
     void startListen();
     void stopSend();
     void simulateSend();
@@ -31,15 +34,15 @@ public:
     ~MonitorPage();
     int rightNum =0;
     int inferedNum =0;
-
+    CustomDataset myDataset ;
 
 
 public 
 slots:
-    void showInferResult(int,QVariant);
-    void enableSimulateSignal();
-    void showColorMap();
-    void showRealClass(int);
+    void slotEnableSimulateSignal();
+    void slotShowInferResult(int,QVariant);
+    void slotSignalVisualize(QVector<float>& dataFrameQ);
+    void slotShowRealClass(int);
 signals:
     void startOrstop_sig(bool);
 
@@ -50,6 +53,8 @@ private:
     std::string choicedModelPATH="";
     ModelInfo *modelInfo;
     DatasetInfo *datasetInfo;
+    ProjectsInfo *projectsInfo;
+
     std::map<int, std::string> label2class;
     std::map<std::string, int> class2label;
 

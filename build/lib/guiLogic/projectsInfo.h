@@ -31,7 +31,7 @@ public:
     //当前活动工程的Type和Name,在Dock中被赋值
     std::string pathOfSelectedProject = "";
     std::string dataTypeOfSelectedProject;      //HRRP\RCS\FEATURE\IAMGE
-    std::string modelTypeOfSelectedProject;     //TRA_DL\FEA_RELE\FEA_OPTI\INCRE
+    std::string modelTypeOfSelectedProject;     //TRA_DL\ATEC\ABFC\FEA_OPTI\INCRE
     std::string nameOfSelectedProject;
 
     //测试用的数据集类型

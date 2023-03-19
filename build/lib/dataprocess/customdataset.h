@@ -5,25 +5,25 @@
 #include <vector>
 #include <map>
 
-//CustomDataSet.data=F(The M of dataset's mat , dims(model.inputlayer))
+//CustomDataSet.data=F(The M of dataset's mat , dims(model.inputlayer)) 这是一个根据网络类型调整的数据集
 class CustomDataset{
 public:
     std::vector<std::vector<float>> data;
     std::vector<int> labels;
     std::map<std::string, int> class2label;
     std::vector<int> eachClassQuantity;
-
+    CustomDataset(){}
     CustomDataset(std::string dataSetPath, bool dataProcess, std::string type, std::map<std::string, int> class2label,int inputLen,std::string flag="TRA_DL",int modelIdx=1,std::vector<int> dataOrder=std::vector<int>())
         :class2label(class2label){
         if(flag=="FEA_RELE_abfc"){
             MatDataProcess_abfc matDataPrcs(dataOrder,modelIdx);
             matDataPrcs.loadAllDataFromFolder(dataSetPath, type, dataProcess, data, labels, class2label, inputLen,eachClassQuantity);
         }
-        else if(flag=="RCS_"){
+        else if(flag=="RCS_"){//这样CustomDataset中单样本长度就是网络输入长度inputlen
             MatDataProcess_rcs matDataPrcs;
             matDataPrcs.loadAllDataFromFolder(dataSetPath, type, dataProcess, data, labels, class2label, inputLen);
         }
-        else{
+        else{//根据网络模型输入层的长度inputlen做CustomDataset,把原单个样本复制或裁剪到inputlen长度。inputlen赋-1时等于原单个数据样本长度
             MatDataProcess matDataPrcs;
             matDataPrcs.loadAllDataFromFolder(dataSetPath, type, dataProcess, data, labels, class2label, inputLen);
         }

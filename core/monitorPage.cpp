@@ -5,11 +5,12 @@
 #include <QMutex>
 #include <QFileInfo>
 
-MonitorPage::MonitorPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, DatasetInfo *globalDatasetInfo,ModelInfo *globalModelInfo):
+MonitorPage::MonitorPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, DatasetInfo *globalDatasetInfo,ModelInfo *globalModelInfo,ProjectsInfo *globalProjectInfo):
     ui(main_ui),
     terminal(bash_terminal),
     datasetInfo(globalDatasetInfo),
-    modelInfo(globalModelInfo)
+    modelInfo(globalModelInfo),
+    projectsInfo(globalProjectInfo)
 {
     //初始化label2class缓解了acquire在没有release的情况下就成功的问题
     label2class[0] ="Big_ball";label2class[1] ="Cone"; label2class[2] ="Cone_cylinder";
@@ -25,14 +26,14 @@ MonitorPage::MonitorPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, Da
     inferThread->setInferMode("real_time_infer");
 
     client = new SocketClient();
-    connect(client, SIGNAL(sigClassName(int)),this,SLOT(showRealClass(int)));
+    connect(client, SIGNAL(sigClassName(int)),this,SLOT(slotShowRealClass(int)));
 
-    //connect(inferThread, &InferThread::sigInferResult,this,&MonitorPage::showInferResult);
-    connect(inferThread, SIGNAL(sigInferResult(int,QVariant)),this,SLOT(showInferResult(int,QVariant)));
-    connect(inferThread, SIGNAL(modelAlready()),this,SLOT(enableSimulateSignal()));
+    //connect(inferThread, &InferThread::sigInferResult,this,&MonitorPage::slotShowInferResult);
+    connect(inferThread, SIGNAL(sigInferResult(int,QVariant)),this,SLOT(slotShowInferResult(int,QVariant)));
+    connect(inferThread, SIGNAL(modelAlready()),this,SLOT(slotEnableSimulateSignal()));
 
     server = new SocketServer(&sem,&sharedQue,&lock,terminal);//监听线程
-    connect(server, SIGNAL(sigColorMap()),this,SLOT(showColorMap()));
+    connect(server, SIGNAL(sigSignalVisualize(QVector<float>&)),this,SLOT(slotSignalVisualize(QVector<float>&)));
 
 
     connect(ui->startListen, &QPushButton::clicked, this, &MonitorPage::startListen);
@@ -51,26 +52,25 @@ MonitorPage::MonitorPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, Da
 }
 
 void MonitorPage::startListen(){
-    if(modelInfo->selectedType==""||this->choicedDatasetPATH==""){
-        QMessageBox::warning(NULL, "实时监测", "监听失败,请先指定HRRP模型和数据集");
+    if(this->choicedDatasetPATH==""){
+        QMessageBox::warning(NULL, "实时监测", "监听失败,请先指定数据集");
         //qDebug()<<"modelInfo->selectedType=="<<QString::fromStdString(modelInfo->selectedType);
         return;
     }
-    QFileInfo datasetFileInfo(QString::fromStdString(choicedDatasetPATH));
-    QFileInfo modelFileInfo(QString::fromStdString(choicedModelPATH));
-    qDebug()<<"datasetFileInfo.suffix()=============="<<datasetFileInfo.suffix();
-    if(datasetFileInfo.fileName()!="HRRP_simulate_128xN_c6"){
-        QMessageBox::warning(NULL, "实时监测", "建议使用HRRP_simulate_128xN_c6数据集");
-        return;
-    }
-    else if(modelFileInfo.suffix()!="trt"){
-        QMessageBox::warning(NULL, "实时监测", "模型应为trt类型文件");
-        return;
-    }
+    std::string datasetlPath = projectsInfo->pathOfSelectedDataset;
+    // 准备CustomDataset，把CustomDataset单个样本的长度传给server
+    myDataset = CustomDataset(datasetlPath, false, ".mat", class2label, -1, projectsInfo->modelTypeOfSelectedProject);
+    server->setInputLen(myDataset.data[0].size());
     server->start();
-    terminal->print("开始监听");
+    terminal->print("开始监听,等待模型及数据中...");
     inferThread->start();
     emit startOrstop_sig(true);
+}
+
+void MonitorPage::simulateSend(){
+    client->setMyDataset(myDataset);
+    client->start();
+    ui->stopListen->setEnabled(true);
 }
 
 void MonitorPage::stopSend(){
@@ -82,15 +82,11 @@ void MonitorPage::stopSend(){
     client->stopThread();
 }
 
-void MonitorPage::simulateSend(){
-    client->start();
-    ui->stopListen->setEnabled(true);
-}
 
 void MonitorPage::refresh(){
     bool ifDataPreProcess=true;
     // 网络输出标签对应类别名称初始化
-    std::vector<std::string> comboBoxContents = datasetInfo->selectedClassNames;
+    std::vector<std::string> comboBoxContents = projectsInfo->classNamesOfSelectedDataset;
     if(comboBoxContents.size()>0){
         for(int i=0;i<comboBoxContents.size();i++)   {label2class[i]=comboBoxContents[i];
             qDebug()<<"(MonitorPage::refresh) comboBoxContents[i]="<<QString::fromStdString(comboBoxContents[i]);}
@@ -102,19 +98,17 @@ void MonitorPage::refresh(){
         std::cout << iter->first << " : " << iter->second << std::endl;
         iter++;
     }
-    //如果数据集或模型路径变了
+    //如果工程路径变了
     if(
-        modelInfo->getAttri(modelInfo->selectedType,modelInfo->selectedName,"PATH") != choicedModelPATH 
-        ||
-        datasetInfo->getAttri(datasetInfo->selectedType,datasetInfo->selectedName,"PATH") != choicedDatasetPATH
+        projectsInfo->getAttri(projectsInfo->dataTypeOfSelectedProject,projectsInfo->nameOfSelectedProject,"Project_Path") != choicedDatasetPATH
     ){
         if(inferThread->isRunning()){//如果已经在跑了 忽视模型更改
             qDebug()<<"(MonitorPage::refresh) inferThread is Running";
             return;
         }
-        if(datasetInfo->selectedType=="INCRE") ifDataPreProcess=false;
-        choicedModelPATH=modelInfo->getAttri(modelInfo->selectedType,modelInfo->selectedName,"PATH");
-        choicedDatasetPATH=datasetInfo->getAttri(datasetInfo->selectedType,datasetInfo->selectedName,"PATH");
+        if(projectsInfo->modelTypeOfSelectedProject=="INCRE") ifDataPreProcess=false;
+        choicedModelPATH=projectsInfo->pathOfSelectedModel_forInfer;
+        choicedDatasetPATH=projectsInfo->pathOfSelectedDataset;
         //TODO 因为使用测试页面，下面嗯切可能带来错误
         inferThread->setClass2LabelMap(class2label);
         //qDebug()<<"(MonitorPage::refresh) class2label.size()=="<<class2label.size();
@@ -122,10 +116,8 @@ void MonitorPage::refresh(){
         client->setClass2LabelMap(class2label);
         client->setParmOfRTI(choicedDatasetPATH);//发的数据不做归一化预处理
 
-        QFileInfo datasetFileInfo(QString::fromStdString(choicedDatasetPATH));
-        ui->datasetname_cil_label->setText(datasetFileInfo.fileName());
-        QFileInfo modelFileInfo(QString::fromStdString(choicedModelPATH));
-        ui->modelname_cil_label->setText(modelFileInfo.fileName());
+        ui->datasetname_cil_label->setText(QString::fromStdString(projectsInfo->nameOfSelectedDataset));
+        ui->modelname_cil_label->setText(QString::fromStdString(projectsInfo->nameOfSelectedModel_forInfer));
         qDebug()<<"(MonitorPage::refresh) A  "<<QString::fromStdString(choicedDatasetPATH);
         qDebug()<<"(MonitorPage::refresh) B  "<<QString::fromStdString(choicedModelPATH);
     }
@@ -150,7 +142,7 @@ void removeLayout2(QLayout *layout){
     }
 }
 
-void MonitorPage::showInferResult(int predIdx,QVariant qv){
+void MonitorPage::slotShowInferResult(int predIdx,QVariant qv){
     Chart *tempChart = new Chart(ui->label_mE_chartGT,"","");//就调用一下它的方法
     //std::vector<float> degrees={0.1,0.1,0.1,0.1,0.2,0.4};
     std::vector<float> degrees=qv.value<std::vector<float>>();
@@ -163,45 +155,63 @@ void MonitorPage::showInferResult(int predIdx,QVariant qv){
     removeLayout2(ui->horizontalLayout_degreeChart2);
     ui->horizontalLayout_degreeChart2->addWidget(tempWidget);
     ui->jcLabel->setText(QString::fromStdString(label2class[predIdx]));
-    qDebug()<<"(MonitorPage::showInferResult)"<<ui->xlLabel->text()<<QString::fromStdString(label2class[predIdx]);
+    qDebug()<<"(MonitorPage::slotShowInferResult)"<<ui->xlLabel->text()<<QString::fromStdString(label2class[predIdx]);
     this->inferedNum ++;
     if(ui->xlLabel->text() == QString::fromStdString(label2class[predIdx])){
         this->rightNum++;
     }
-    qDebug()<<"(MonitorPage::showInferResult) right=="<<this->rightNum<<"   infered_num="<<this->inferedNum;
-    //qDebug()<<"(MonitorPage::showInferResult) global_realLabel= "<<global_realLabel;
+    qDebug()<<"(MonitorPage::slotShowInferResult) right=="<<this->rightNum<<"   infered_num="<<this->inferedNum;
+    //qDebug()<<"(MonitorPage::slotShowInferResult) global_realLabel= "<<global_realLabel;
     QString monitor_acc= QString::number(this->rightNum*100/this->inferedNum);
-    qDebug()<<"(MonitorPage::showInferResult) monitor_acc="<<monitor_acc;
+    qDebug()<<"(MonitorPage::slotShowInferResult) monitor_acc="<<monitor_acc;
     ui->monitor_acc->setText(QString("%1").arg(monitor_acc)+"%");
 
 }
 
-void MonitorPage::enableSimulateSignal(){
+void MonitorPage::slotEnableSimulateSignal(){
     terminal->print("模型已载入可以开始模拟发送");
     ui->simulateSignal->setEnabled(true);
 }
 
-void MonitorPage::showColorMap(){
-    /*=================draw thermal column==============*/
-    QLabel *imageLabel=new QLabel;
-    imageLabel->setBackgroundRole(QPalette::Base);
-    imageLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
-    imageLabel->setScaledContents(true);
-    //imageLabel->setStyleSheet("border:2px solid red;");
-    QImage image;
+void MonitorPage::slotSinalVisualize(QVector<float>& dataFrameQ){
+    removeLayout2(ui->verticalLayout_hotShow);
+    removeLayout2(ui->verticalLayout_sigShow);
+
+    /*=================单帧==============*/
+    QLabel *imageLabel_sig=new QLabel(ui->scrollArea_7);
+    std::string currtDataType = projectsInfo->dataTypeOfSelectedProject;
+    qDebug()<<"dataFrameQ.size() === "<<dataFrameQ.size()<<"currtDataType = "<<QString::fromStdString(currtDataType);
+    QString chartTitle="Temporary Title";
+    if(currtDataType=="HRRP") chartTitle="HRRP(Ephi),Polarization HP(1)[Magnitude in dB]";
+    else if (currtDataType=="RADIO") chartTitle="RADIO Temporary Title";
+    else if (currtDataType=="FEATURE") chartTitle="Feture Temporary Title";
+    else if (currtDataType=="RCS") chartTitle="RCS Temporary Title";
+    imageLabel_sig->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);  
+    Chart *previewChart = new Chart(imageLabel_sig,chartTitle,"");
+    previewChart->drawImageWithSingleSignal(imageLabel_sig,currtDataType,dataFrameQ);  
+
+    /*=================热图==============*/
+    QLabel *imageLabel_hot=new QLabel(ui->scrollArea_7);
+    imageLabel_hot->setBackgroundRole(QPalette::Base);
+    imageLabel_hot->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+    imageLabel_hot->setScaledContents(true);
+    //imageLabel_hot->setStyleSheet("border:2px solid red;");
     QImageReader reader("./colorMap.png");
     reader.setAutoTransform(true);
     const QImage newImage = reader.read();
     if (newImage.isNull()) {
         qDebug()<<"errrrrrrrrrror";
     }
+    QImage image;
     image = newImage;
-    imageLabel->setPixmap(QPixmap::fromImage(image));
-    removeLayout2(ui->horizontalLayout_HotCol);
-    ui->horizontalLayout_HotCol->addWidget(imageLabel);
+    imageLabel_hot->setPixmap(QPixmap::fromImage(image));
+
+    ui->verticalLayout_hotShow->addWidget(imageLabel_hot);
+    ui->verticalLayout_sigShow->addWidget(imageLabel_sig);
+
 }
 
-void MonitorPage::showRealClass(int realLabel){//client触发
+void MonitorPage::slotShowRealClass(int realLabel){//client触发
     ui->xlLabel->setText(QString::fromStdString(label2class[realLabel]));
 }
 

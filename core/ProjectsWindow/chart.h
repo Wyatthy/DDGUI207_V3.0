@@ -53,6 +53,7 @@ class Chart : public QWidget{
         void readRCSmat(int emIndex);
         void buildChart(QList<QPointF> pointlist);
         void drawImage(QLabel* chartLabel, std::string dataSetType, int examIdx=0);
+        void drawImageWithSingleSignal(QLabel* chartLabel, std::string dataSetType,QVector<float>& dataFrameQ);
         QWidget* drawDisDegreeChart(QString &classGT, std::vector<float> &degrees, std::map<int, std::string> &classNames);
         void showChart(QLabel* imagelabel);
         void Show_Save();
