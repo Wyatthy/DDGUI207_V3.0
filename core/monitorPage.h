@@ -40,8 +40,7 @@ public:
 public 
 slots:
     void slotEnableSimulateSignal();
-    void slotShowInferResult(int,QVariant);
-    void slotSignalVisualize(QVector<float>& dataFrameQ);
+    void slotShowInferResult(QVector<float>,int,QVariant);
     void slotShowRealClass(int);
 signals:
     void startOrstop_sig(bool);
@@ -54,11 +53,16 @@ private:
     ModelInfo *modelInfo;
     DatasetInfo *datasetInfo;
     ProjectsInfo *projectsInfo;
+    void signalVisualize(QVector<float> dataFrameQ);
 
     std::map<int, std::string> label2class;
     std::map<std::string, int> class2label;
 
-
+    bool getSigFromClient = false;
+    std::vector<int> sigsFromClient;
+    int fallBackValue = 0;
+    int num_fallBackValueUsed = 0;
+    bool getSigFromInfer = false;
 };
 
 #endif // MONITORPAGE_H

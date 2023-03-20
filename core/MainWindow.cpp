@@ -7,12 +7,10 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent){
     ui = new Ui::MainWindow();
 	ui->setupUi(this);
 	QRibbon::install(this);
-
     // 全局数据记录设置
     this->globalDatasetInfo = new DatasetInfo("./conf/datasetInfoCache.xml");
     this->globalModelInfo = new ModelInfo("./conf/modelInfoCache.xml");
     this->globalProjectInfo = new ProjectsInfo("./conf/projectsInfoCache.xml");
-
 	// 悬浮窗设置
 	setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
 	setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
@@ -43,13 +41,14 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent){
     connect(ui->pushButton_bashClean, &QPushButton::clicked, terminal, &BashTerminal::cleanBash);
 
     // 工程管理悬浮窗设置
+    
     this->projectDock = new ProjectDock(this->ui, this->terminal, this->globalProjectInfo);
     connect(projectDock, SIGNAL(projectChanged()),this, SLOT(refreshPages()));
 
     // 场景选择页面
     this->senseSetPage = new SenseSetPage(this->ui, this->terminal, this->globalDatasetInfo, this->globalProjectInfo);
 
-    this->modelChoicePage = new ModelChoicePage(this->ui, this->terminal, this->globalModelInfo);
+    this->modelChoicePage = new ModelChoicePage(this->ui, this->terminal, this->globalModelInfo, this->globalProjectInfo);
 
     this->modelEvalPage = new ModelEvalPage(this->ui, this->terminal,this->globalDatasetInfo, this->globalModelInfo, this->globalProjectInfo);
 
@@ -58,7 +57,9 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent){
     this->monitorPage = new MonitorPage(this->ui, this->terminal,this->globalDatasetInfo,this->globalModelInfo, this->globalProjectInfo);
 
     this->modelVisPage = new ModelVisPage(this->ui, this->terminal, this->globalDatasetInfo, this->globalModelInfo);
+
     this->modelCAMPage = new ModelCAMPage(this->ui, this->terminal, this->globalDatasetInfo, this->globalModelInfo);
+    
 }
 
 
@@ -71,8 +72,10 @@ void MainWindow::switchPage(){
     QAction *action = qobject_cast<QAction*>(sender());
     if(action==ui->action_SceneSetting)
         ui->stackedWidget_MultiPage->setCurrentWidget(ui->page_senseSet);
-    else if(action==ui->action_ModelChoice)
+    else if(action==ui->action_ModelChoice){
         ui->stackedWidget_MultiPage->setCurrentWidget(ui->page_modelChoice);
+        this->modelChoicePage->refreshGlobalInfo();
+    }
     else if(action==ui->action_Evaluate){
         ui->stackedWidget_MultiPage->setCurrentWidget(ui->page_modelEval);
         this->modelEvalPage->refreshGlobalInfo();
@@ -99,6 +102,7 @@ void MainWindow::switchPage(){
 void MainWindow::refreshPages(){
     this->modelEvalPage->refreshGlobalInfo();
     this->monitorPage->refresh();
+    this->modelChoicePage->refreshGlobalInfo();
 }
 
 void MainWindow::fullScreen(){

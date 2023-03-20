@@ -29,7 +29,7 @@ public:
     std::queue<std::vector<float>>* sharedQue;
     QMutex *lock;
 signals:
-    void sigInferResult(int,QVariant);
+    void sigInferResult(QVector<float>,int,QVariant);
     void modelAlready();
 private:
     TrtInfer* trtInfer_rti;

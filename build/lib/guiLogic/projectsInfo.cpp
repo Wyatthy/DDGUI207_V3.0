@@ -1,4 +1,5 @@
 #include "projectsInfo.h"
+#include "qdebug.h"
 using namespace std;
 #include "./lib/guiLogic/tinyXml/tinyxml.h"
 

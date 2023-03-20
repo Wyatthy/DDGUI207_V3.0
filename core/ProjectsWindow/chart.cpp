@@ -172,8 +172,7 @@ void Chart::readHRRPmat(int emIdx){
         qDebug()<<"(Chart::readHRRPmat)文件指针空！！！！！！";
         return;
     }
-    std::string matVariable=filefullpath.split("/").last().split(".")[0].toStdString().c_str();//假设数据变量名同文件名
-    pMxArray = matGetVariable(pMatFile,matVariable.c_str());
+    pMxArray = matGetNextVariable(pMatFile, NULL);
     if(!pMxArray){
         qDebug()<<"(Chart::readHRRPmat)pMxArray变量没找到！！！！！！";
         return;
@@ -208,8 +207,7 @@ void Chart::readFeaturemat(int emIdx){
         qDebug()<<"(Chart::readFeaturemat)文件指针空！！！！！！";
         return;
     }
-    std::string matVariable=filefullpath.split("/").last().split(".")[0].toStdString().c_str();//假设数据变量名同文件名
-    pMxArray = matGetVariable(pMatFile,matVariable.c_str());
+    pMxArray = matGetNextVariable(pMatFile, NULL);
     if(!pMxArray){
         qDebug()<<"(Chart::readFeaturemat)pMxArray变量没找到！！！！！！";
         return;
@@ -243,8 +241,7 @@ void Chart::readRCSmat(int emIdx){
         qDebug()<<"(Chart::readHRRPmat)文件指针空！！！！！！";
         return;
     }
-    std::string matVariable=filefullpath.split("/").last().split(".")[0].toStdString().c_str();//假设数据变量名同文件名
-    pMxArray = matGetVariable(pMatFile,matVariable.c_str());
+    pMxArray = matGetNextVariable(pMatFile, NULL);
     if(!pMxArray){
         qDebug()<<"(Chart::readHRRPmat)pMxArray变量没找到！！！！！！";
         return;

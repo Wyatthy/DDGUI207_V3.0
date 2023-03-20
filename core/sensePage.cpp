@@ -32,16 +32,16 @@ SenseSetPage::SenseSetPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, 
     connect(ui->pushButton_nextSenseChart, &QPushButton::clicked, this, &SenseSetPage::nextBatchChart);
 
     // 数据集属性显示框
-    this->attriLabelGroup["Target_Num"] = ui->label_sense_claNum;
+    this->attriLabelGroup["Dataset_TargetNum"] = ui->label_sense_claNum;
     this->attriLabelGroup["Project_Path"] = ui->label_sense_PATH;
-    this->attriLabelGroup["datasetName"] = ui->label_sense_datasetName;
-    this->attriLabelGroup["targetNumEachCla"] = ui->label_sense_targetNumEachCla;
-    this->attriLabelGroup["pitchAngle"] = ui->label_sense_pitchAngle;
-    this->attriLabelGroup["azimuthAngle"] = ui->label_sense_azimuthAngle;
-    this->attriLabelGroup["samplingNum"] = ui->label_sense_samplingNum;
-    this->attriLabelGroup["incidentMode"] = ui->label_sense_incidentMode;
-    this->attriLabelGroup["freq"] = ui->label_sense_freq;
-    this->attriLabelGroup["note"] = ui->label_sense_note;
+    this->attriLabelGroup["Dataset_Name"] = ui->label_sense_datasetName;
+    this->attriLabelGroup["Dataset_TargetNumEachCla"] = ui->label_sense_targetNumEachCla;
+    this->attriLabelGroup["Dataset_PitchAngle"] = ui->label_sense_pitchAngle;
+    this->attriLabelGroup["Dataset_AzimuthAngle"] = ui->label_sense_azimuthAngle;
+    this->attriLabelGroup["Dataset_SamplingNum"] = ui->label_sense_samplingNum;
+    this->attriLabelGroup["Dataset_IncidentMode"] = ui->label_sense_incidentMode;
+    this->attriLabelGroup["Dataset_Freq"] = ui->label_sense_freq;
+    this->attriLabelGroup["Dataset_Note"] = ui->label_sense_note;
 
     // 图片显示label成组
     imgGroup.push_back(ui->label_datasetClaImg1);
@@ -118,7 +118,7 @@ void SenseSetPage::confirmDataset(bool notDialog = false){
             projectsInfo->classNamesOfSelectedDataset.push_back(folderName.toStdString());
         }
     }
-    qDebug()<<"SenseSetPage::confirmDataset dataset_path== "<<dataset_path;
+    // qDebug()<<"SenseSetPage::confirmDataset dataset_path== "<<dataset_path;
     // 更新属性显示标签
     updateAttriLabel();
 
@@ -171,7 +171,7 @@ void SenseSetPage::drawClassImage(){
 void SenseSetPage::nextBatchChart(){
     string rootPath = projectsInfo->pathOfSelectedDataset;
     vector<string> subDirNames = projectsInfo->classNamesOfSelectedDataset;
-    qDebug()<<"(SenseSetPage::nextBatchChart) subDirNames.size()="<<subDirNames.size();
+    // qDebug()<<"(SenseSetPage::nextBatchChart) subDirNames.size()="<<subDirNames.size();
     // 按类别显示
     for(int i=0; i<subDirNames.size(); i++){
         srand((unsigned)time(NULL));

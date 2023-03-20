@@ -27,11 +27,11 @@ ProjectDock::ProjectDock(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, Pr
     this->projectTreeViewGroup["IMAGE"] = ui->treeView_IMAGE;
 
     // 数据集信息预览label按属性成组 std::map<std::string, QLabel*>
-    this->attriLabelGroup["Train_Acc"] = ui->label_projectDock_modelAcc;
+    this->attriLabelGroup["Model_AccuracyOnTest"] = ui->label_projectDock_modelAcc;
     this->attriLabelGroup["Project_Path"] = ui->label_projectDock_path;
-    this->attriLabelGroup["Framework"] = ui->label_projectDock_frame;
-    this->attriLabelGroup["Target_Num"] = ui->label_projectDock_clasNUm;
-    this->attriLabelGroup["Visualize"] = ui->label_projectDock_visualize;
+    this->attriLabelGroup["Model_Framework"] = ui->label_projectDock_frame;
+    this->attriLabelGroup["Dataset_TargetNum"] = ui->label_projectDock_clasNUm;
+    this->attriLabelGroup["Model_Visualize"] = ui->label_projectDock_visualize;
     //this->attriLabelGroup["note"] = ui->label_projectDock_targetNumEachCla;
 
     //刷新TreeView视图
@@ -86,7 +86,7 @@ void ProjectDock::drawExample(){//TODO mat变量不合适和样本索引范围�
     */
     QString examIdx_str = ui->projectDock_examIdx->text();
     QDir dir(this->selectedMatFilePath);
-    qDebug()<<"selectedMatFilePath ="<<selectedMatFilePath;
+    // qDebug()<<"selectedMatFilePath ="<<selectedMatFilePath;
     if(selectedMatFilePath=="" || !std::filesystem::exists(std::filesystem::u8path(selectedMatFilePath.toStdString()))){        //TODO 文件不存在的情况
         QMessageBox::information(NULL, "绘制错误", "目标数据文件不存在");
         return;
@@ -143,73 +143,6 @@ void ProjectDock::treeItemClicked(const QModelIndex &index){
         this->selectedMatFilePath = itemPath;
         ui->projectDock_matfilename->setText(selectedMatFilePath.split('/').last());
     }
-
-/*
-    // 显示数据集预览属性信息
-    map<string,string> attriContents = datasetInfo->getAllAttri(previewType, previewName);
-    for(auto &currAttriLabel: attriLabelGroup){
-        currAttriLabel.second->setText(QString::fromStdString(attriContents[currAttriLabel.first]));
-    }
-    // 获取所有类别子文件夹
-    string rootPath = datasetInfo->getAttri(previewType, previewName, "PATH");
-    //ui->datadirEdit->setText(QString::fromStdString(rootPath));
-    vector<string> subDirNames;
-    if(dirTools->getDirs(subDirNames, rootPath)){
-        if(subDirNames.size()==0) return;
-        //先确定数据集中数据文件的format
-        vector<string> allFileWithTheClass;
-        QString dataFileFormat;
-        if(dirTools->getAllFiles(allFileWithTheClass,rootPath +"/"+subDirNames[0])){//当前的逻辑是根据数据集第一类数据的文件夹下的数据文件格式确定整个数据集数据文件格式。
-            dataFileFormat = QString::fromStdString(allFileWithTheClass[2]).split('.').last();//因为前两个是.和..
-        }else{qDebug()<<QString::fromStdString(rootPath +"/"+subDirNames[0])<<"此路径下没有带后缀的数据文件,可能出错";}
-        //给Cache加上数据集的数据文件类型  这意味着不点dataseTree
-        //this->datasetInfo->modifyAttri(previewType, previewName ,"dataFileFormat", dataFileFormat.toStdString());
-        //this->datasetInfo->writeToXML(datasetInfo->defaultXmlPath);
-        //qDebug()<<"数据集的dataFileFormat："<<QString::fromStdString(datasetInfo->getAttri(previewType, previewName, "dataFileFormat"));
-        for(int i = 0; i<chartGroup.size(); i++){
-            srand((unsigned)time(NULL));
-            // 随机选取类别
-            string choicedClass = subDirNames[(rand()+i)%subDirNames.size()];
-            string classPath = rootPath +"/"+ choicedClass;
-            // 随机选取数据
-            if(dataFileFormat==QString::fromStdString("txt")){
-                vector<string> allTxtFile;
-                if(dirTools->getFiles(allTxtFile, ".txt", classPath)){
-                    string choicedFile = allTxtFile[(rand())%allTxtFile.size()];
-                    QString txtFilePath = QString::fromStdString(classPath + "/" + choicedFile);
-                    choicedFile = QString::fromStdString(choicedFile).split(".").first().toStdString();
-                    // 绘图
-                    Chart *previewChart = new Chart(chartGroup[i],"HRRP(Ephi),Polarization HP(1)[Magnitude in dB]",txtFilePath);
-                    previewChart->drawImage(chartGroup[i],"HRRP",0);
-                    chartInfoGroup[i]->setText(QString::fromStdString(choicedClass+":"+choicedFile));
-                    //chartInfoGroup[i]->setText(QString::fromStdString(allMatFile[0]+":"+std::to_string(randomIdx)));
-                }
-            }
-            else if(dataFileFormat==QString::fromStdString("mat")){
-                vector<string> allMatFile;
-                if(dirTools->getFiles(allMatFile, ".mat", classPath)){
-                    int randomIdx = (rand())%5000;
-                    //绘图
-                    QString matFilePath = QString::fromStdString(classPath + "/" + allMatFile[0]);
-                    QString chartTitle="Temporary Title";
-                    if(clickedType=="HRRP") chartTitle="HRRP(Ephi),Polarization HP(1)[Magnitude in dB]";
-                    else if (clickedType=="RADIO") chartTitle="RADIO Temporary Title";
-                    else if (clickedType=="FEATURE") chartTitle="Feture Temporary Title";
-                    else if (clickedType=="RCS") chartTitle="RCS Temporary Title";
-                    Chart *previewChart = new Chart(chartGroup[i],chartTitle,matFilePath);
-                    previewChart->drawImage(chartGroup[i],clickedType,randomIdx);
-                    //chartInfoGroup[i]->setText(QString::fromStdString(choicedClass+":"+matFilePath.split(".").first().toStdString()));
-                    chartInfoGroup[i]->setText(QString::fromStdString(allMatFile[0]+":"+std::to_string(randomIdx)));
-                    
-                }
-            }
-            else{
-                qDebug()<<dataFileFormat<<"(DatasetDock::treeItemClicked)没有对应此种数据文件类型的解析！";
-                QMessageBox::information(NULL, "数据集错误", "没有对应此种数据文件类型的解析！");
-            }
-        }
-    }
-*/
 }
 
 void ProjectDock::onRequestMenu(const QPoint &pos){
@@ -347,9 +280,8 @@ void ProjectDock::onAction_ShotProject(){
             projectsInfo->classNamesOfSelectedDataset.push_back(folderName.toStdString());
         }
     }
-    //TODO 发送信号给MainWIndow，让其刷新各个界面，比如调用EvalPage的refreshGlobalInfo
+    // 发送信号给MainWIndow，让其刷新各个界面，比如调用EvalPage的refreshGlobalInfo
     if(this->lastProjectPath != project_path){
-        qDebug()<<"emit projectChanged();";
         emit projectChanged();
     }
     

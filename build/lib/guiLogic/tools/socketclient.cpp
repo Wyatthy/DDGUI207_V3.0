@@ -91,7 +91,7 @@ void SocketClient::run(){
 }
 void SocketClient::setClass2LabelMap(std::map<std::string, int> class2label0){
     class2label=class2label0;
-    qDebug()<<"(SocketClient::setClass2LabelMap) class2label.size()=="<<class2label.size();
+    // qDebug()<<"(SocketClient::setClass2LabelMap) class2label.size()=="<<class2label.size();
 }
 
 void SocketClient::setParmOfRTI(std::string datasetP){

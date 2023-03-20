@@ -21,13 +21,9 @@ void MatDataProcess::getAllDataFromMat(std::string matPath,bool dataProcess,std:
         qDebug()<<"(MatDataProcess:getAllDataFromMat)文件指针空！！！！！！";
         return;
     }
-    std::string matVariable=matPath.substr(
-                matPath.find_last_of('/')+1,
-                matPath.find_last_of('.')-matPath.find_last_of('/')-1).c_str();////假设数据变量名同文件名的话
-    //qDebug()<<"(MatDataProcess:getAllDataFromMat)matVariable=="<<QString::fromStdString(matVariable);
-    pMxArray = matGetVariable(pMatFile,matVariable.c_str());
+    pMxArray = matGetNextVariable(pMatFile, NULL);
     if(!pMxArray){
-        qDebug()<<"(MatDataProcess:getAllDataFromMat)pMxArray变量没找到！！！！！！";
+        qDebug()<<"(MatDataProcess:getAllDataFromMat).mat文件变量没找到！！！("<<QString::fromStdString(matPath);
         return;
     }
     matdata = (double*)mxGetData(pMxArray);
@@ -69,7 +65,7 @@ void MatDataProcess::loadAllDataFromFolder(std::string datasetPath,std::string t
         std::string subDirPath = datasetPath+"/"+subDir;
         dirTools->getFilesplus(fileNames, type, subDirPath);
         for(auto &fileName: fileNames){
-            qDebug()<<QString::fromStdString(subDirPath)<<"/"<<QString::fromStdString(fileName)<<" label:"<<class2label[subDir];
+            // qDebug()<<QString::fromStdString(subDirPath)<<"/"<<QString::fromStdString(fileName)<<" label:"<<class2label[subDir];
             getAllDataFromMat(subDirPath + "/" + fileName,dataProcess,data,labels,class2label[subDir],inputLen);
         }
     }

@@ -15,7 +15,7 @@ public:
     CustomDataset(){}
     CustomDataset(std::string dataSetPath, bool dataProcess, std::string type, std::map<std::string, int> class2label,int inputLen,std::string flag="TRA_DL",int modelIdx=1,std::vector<int> dataOrder=std::vector<int>())
         :class2label(class2label){
-        if(flag=="FEA_RELE_abfc"){
+        if(flag=="ABFC"){
             MatDataProcess_abfc matDataPrcs(dataOrder,modelIdx);
             matDataPrcs.loadAllDataFromFolder(dataSetPath, type, dataProcess, data, labels, class2label, inputLen,eachClassQuantity);
         }

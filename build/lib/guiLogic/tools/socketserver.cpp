@@ -19,7 +19,6 @@ SocketServer::SocketServer(QSemaphore *s,std::queue<std::vector<float>>* sharedQ
     Py_Initialize();
     _import_array();
     PyRun_SimpleString("import sys");
-    //PyRun_SimpleString("sys.path.append('./')");
     PyRun_SimpleString("sys.path.append('../../lib/guiLogic/tools/')");
     pModule = PyImport_ImportModule("hrrp2colormap");
     pFunc = PyObject_GetAttrString(pModule, "ff");
@@ -151,8 +150,8 @@ void SocketServer::dataVisualization(){
     //函数调用
     pRet = (PyArrayObject*)PyEval_CallObject(pFunc, args);
     QVector<float> dataFrameQ(dataFrame.begin(), dataFrame.end());
-    emit sigColorMap(dataFrameQ);
-    emit sigShowDataGraph(dataFrameQ);
+//    emit sigColorMap(dataFrameQ);
+//    emit sigShowDataGraph(dataFrameQ);
     //qDebug()<<"(SocketServer::dataVisualization)emited signal!";
     delete[] numpyptr;
     return;

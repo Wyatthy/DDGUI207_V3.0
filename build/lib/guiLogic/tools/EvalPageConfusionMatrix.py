@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 
 def draw_confusion_matrix(classesf, confusion_matrix):
     classes = classesf.split("#")
+    classes.pop()
     plt.figure()
     proportion = []
     length = len(confusion_matrix)

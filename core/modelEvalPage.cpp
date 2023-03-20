@@ -306,10 +306,10 @@ void ModelEvalPage::testAllSample(){
                     //cout<<std::stoi(line)<<endl;
                 }infile.close();
                 trtInfer->setParmsOfABFC(modelIdx, dataOrder);
-                flag="FEA_RELE_abfc";
+                flag="ABFC";
             }
             else{
-                flag="FEA_RELE_atec";
+                flag="ATEC";
                 dataProcess=false;
             }
         }

@@ -4,35 +4,35 @@
 
 using namespace std;
 
-ModelChoicePage::ModelChoicePage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, ModelInfo *globalModelInfo):
+ModelChoicePage::ModelChoicePage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, ModelInfo *globalModelInfo, ProjectsInfo *globalProjectInfo):
     ui(main_ui),
     terminal(bash_terminal),
-    modelInfo(globalModelInfo)
+    modelInfo(globalModelInfo),
+    projectsInfo(globalProjectInfo)
 {
     // 模型类别选择框事件相应
-    BtnGroup_typeChoice->addButton(ui->radioButton__TRA_DL__choice, 0);
-    BtnGroup_typeChoice->addButton(ui->radioButton__FEA_RELE__choice, 1);
-    BtnGroup_typeChoice->addButton(ui->radioButton__FEA_OPTI__choice, 2);
-    BtnGroup_typeChoice->addButton(ui->radioButton__INCRE__choice, 3);
-    connect(this->BtnGroup_typeChoice, &QButtonGroup::buttonClicked, this, &ModelChoicePage::changeType);
+    // BtnGroup_typeChoice->addButton(ui->radioButton__TRA_DL__choice, 0);
+    // BtnGroup_typeChoice->addButton(ui->radioButton__FEA_RELE__choice, 1);
+    // BtnGroup_typeChoice->addButton(ui->radioButton__FEA_OPTI__choice, 2);
+    // BtnGroup_typeChoice->addButton(ui->radioButton__INCRE__choice, 3);
+    // connect(this->BtnGroup_typeChoice, &QButtonGroup::buttonClicked, this, &ModelChoicePage::changeType);
 
     // 确定
-    connect(ui->pushButton_modelConfirm, &QPushButton::clicked, this, &ModelChoicePage::confirmModel);
+    // connect(ui->pushButton_modelConfirm, &QPushButton::clicked, this, &ModelChoicePage::confirmModel);
 
     // 保存
-    connect(ui->pushButton_saveModelAttri, &QPushButton::clicked, this, &ModelChoicePage::saveModelAttri);
+    // connect(ui->pushButton_saveModelAttri, &QPushButton::clicked, this, &ModelChoicePage::saveModelAttri);
 
     // 模型属性显示框
-    attriLabelGroup["name"] = ui->lineEdit_modelChoice_name;
-    attriLabelGroup["algorithm"] = ui->lineEdit_modelChoice_algorithm;
-    attriLabelGroup["accuracy"] = ui->lineEdit_modelChoice_accuracy;
-    attriLabelGroup["trainDataset"] = ui->lineEdit_modelChoice_trainDataset;
-    attriLabelGroup["trainEpoch"] = ui->lineEdit_modelChoice_trainEpoch;
-    attriLabelGroup["trainLR"] = ui->lineEdit_modelChoice_trainLR;
-    attriLabelGroup["framework"] = ui->lineEdit_modelChoice_framework;
-    attriLabelGroup["PATH"] = ui->lineEdit_modelChoice_PATH;
-    attriLabelGroup["batch"] = ui->lineEdit_modelChoice_batch;
-    attriLabelGroup["other"] = ui->lineEdit_modelChoice_other;
+    attriLabelGroup["Model_Name"] = ui->label_modelChoice_name;
+    attriLabelGroup["Model_Algorithm"] = ui->label_modelChoice_algorithm;
+    attriLabelGroup["Model_Accuracy"] = ui->label_modelChoice_accuracy;
+    attriLabelGroup["Model_TrainDataset"] = ui->label_modelChoice_trainDataset;
+    attriLabelGroup["Model_TrainEpoch"] = ui->label_modelChoice_trainEpoch;
+    attriLabelGroup["Model_TrainLR"] = ui->label_modelChoice_trainLR;
+    attriLabelGroup["Model_Framework"] = ui->label_modelChoice_framework;
+    attriLabelGroup["Model_Path"] = ui->label_modelChoice_PATH;
+
 
     qgraphicsScene = new QGraphicsScene; //要用QGraphicsView就必须要有QGraphicsScene搭配着用
 }
@@ -42,34 +42,28 @@ ModelChoicePage::~ModelChoicePage(){
 }
 
 
-void ModelChoicePage::changeType(){//选择模型类型
-//    this->BtnGroup_typeChoice->checkedId()<<endl;
-    // 获取选择的类型内容
-    QString selectedType = this->BtnGroup_typeChoice->checkedButton()->objectName().split("__")[1];
-    terminal->print("Selected Type: " + selectedType);
+// void ModelChoicePage::changeType(){//选择模型类型
+// //    this->BtnGroup_typeChoice->checkedId()<<endl;
+//     获取选择的类型内容
+//     QString selectedType = this->BtnGroup_typeChoice->checkedButton()->objectName().split("__")[1];
+//     terminal->print("Selected Type: " + selectedType);
 
-    // 更新下拉选择框
-    vector<string> comboBoxContents = modelInfo->getNamesInType(
-        selectedType.toStdString()
-    );
-    ui->comboBox_modelNameChoice->clear();
-    for(auto &item: comboBoxContents){
-        ui->comboBox_modelNameChoice->addItem(QString::fromStdString(item));
-    }
+//     // 更新下拉选择框
+//     vector<string> comboBoxContents = modelInfo->getNamesInType(
+//         selectedType.toStdString()
+//     );
+//     ui->comboBox_modelNameChoice->clear();
+//     for(auto &item: comboBoxContents){
+//         ui->comboBox_modelNameChoice->addItem(QString::fromStdString(item));
+//     }
 
-}
+// }
 
 
-void ModelChoicePage::confirmModel(bool notDialog = false){
-    // 获取选择的类型内容
-    QString selectedType = this->BtnGroup_typeChoice->checkedButton()->objectName().split("__")[1];
-    modelInfo->selectedType = selectedType.toStdString(); // save type
-    // 获取下拉框内容,即选择模型的名称
-    QString selectedName = ui->comboBox_modelNameChoice->currentText();
-    modelInfo->selectedName = selectedName.toStdString(); // save name
-    terminal->print("Selected Type: " + selectedType + ", Selected Name: " + selectedName);
-
-    if(!selectedType.isEmpty() && !selectedName.isEmpty()){
+void ModelChoicePage::refreshGlobalInfo(){
+    std::string pathOfSelectedModel = projectsInfo->pathOfSelectedModel_forInfer;
+    std::string modelTypeOfSelectedProject = projectsInfo->modelTypeOfSelectedProject;
+    if(std::filesystem::exists(std::filesystem::u8path(pathOfSelectedModel))){
         if(all_Images[ui->graphicsView_2_modelImg]){ //delete 原来的图
             qgraphicsScene->removeItem(all_Images[ui->graphicsView_2_modelImg]);
             delete all_Images[ui->graphicsView_2_modelImg]; //空悬指针
@@ -79,27 +73,26 @@ void ModelChoicePage::confirmModel(bool notDialog = false){
         // 更新属性显示标签
         updateAttriLabel();
         // 网络图像展示
-        QString rootPath = QString::fromStdString(modelInfo->getAttri(modelInfo->selectedType,modelInfo->selectedName,"PATH"));
-        QString imgPath = rootPath.split(".trt").first()+".png";
-        terminal->print(imgPath);
+        QString imgPath = QString::fromStdString(pathOfSelectedModel).split(".trt").first()+".png";
+        // terminal->print("模型图像地址:"+imgPath);
         //ui->label_modelImg->setPixmap(QPixmap(imgPath).scaled(QSize(400,400), Qt::KeepAspectRatio));
-        if(this->dirTools->exist(imgPath.toStdString())){qDebug()<<"add....";
+        if(std::filesystem::exists(std::filesystem::u8path(imgPath.toStdString()))){
+            // qDebug()<<"add....";
             recvShowPicSignal(QPixmap(imgPath), ui->graphicsView_2_modelImg);
+        }else{
+            terminal->print("模型图像地址:"+imgPath+"不存在！");
         }
-        if(!notDialog)
-            QMessageBox::information(NULL, "模型切换提醒", "已成功切换模型为->"+selectedType+"->"+selectedName+"！");
     }
     else{
-        if(!notDialog)
-            QMessageBox::warning(NULL, "模型切换提醒", "模型切换失败，请指定模型");
+        // terminal->print("模型路径");
     }
 }
 
 
 void ModelChoicePage::updateAttriLabel(){
-    map<string,string> attriContents = modelInfo->getAllAttri(
-        modelInfo->selectedType,
-        modelInfo->selectedName
+    map<string,string> attriContents = projectsInfo->getAllAttri(
+        projectsInfo->dataTypeOfSelectedProject,
+        projectsInfo->nameOfSelectedProject
     );
     for(auto &currAttriWidget: this->attriLabelGroup){
         currAttriWidget.second->setText(QString::fromStdString(attriContents[currAttriWidget.first]));
@@ -110,29 +103,29 @@ void ModelChoicePage::updateAttriLabel(){
 
 void ModelChoicePage::saveModelAttri(){
     // 保存至内存
-    string type = modelInfo->selectedType;
-    string name = modelInfo->selectedName;
+    string type = projectsInfo->dataTypeOfSelectedProject;
+    string name = projectsInfo->nameOfSelectedProject;
     if(!type.empty() && !name.empty()){
         string customAttriValue = "";
-        // 对lineEdit组件
+        // 对label组件
         for(auto &currAttriWidget: attriLabelGroup){
             customAttriValue = currAttriWidget.second->text().toStdString();
             if(customAttriValue.empty()){
                 customAttriValue = "未定义";
             }
-            this->modelInfo->modifyAttri(type, name, currAttriWidget.first, customAttriValue);
+            this->projectsInfo->modifyAttri(type, name, currAttriWidget.first, customAttriValue);
         }
         // 对plainTextEdit组件
         customAttriValue = ui->plainTextEdit_modelChoice_note->toPlainText().toStdString();
         if(customAttriValue.empty()){
             customAttriValue = "未定义";
         }
-        this->modelInfo->modifyAttri(type, name, "note", customAttriValue);
+        this->projectsInfo->modifyAttri(type, name, "note", customAttriValue);
 
 
         // 保存至.xml,并更新
-        this->modelInfo->writeToXML(modelInfo->defaultXmlPath);
-        this->confirmModel(true);
+        this->projectsInfo->writeToXML(projectsInfo->defaultXmlPath);
+        this->refreshGlobalInfo();
 
         // 提醒
         QMessageBox::information(NULL, "属性保存提醒", "模型属性修改已保存");

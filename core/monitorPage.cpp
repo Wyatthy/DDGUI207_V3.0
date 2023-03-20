@@ -14,7 +14,7 @@ MonitorPage::MonitorPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, Da
 {
     //初始化label2class缓解了acquire在没有release的情况下就成功的问题
     label2class[0] ="Big_ball";label2class[1] ="Cone"; label2class[2] ="Cone_cylinder";
-    label2class[3] ="DT"; label2class[4] ="Small_ball"; label2class[5] ="Spherical_cone";
+    label2class[3] ="DT"; label2class[4] ="Small_ball";
     for(auto &item: label2class){
         class2label[item.second] = item.first;
     }
@@ -28,27 +28,19 @@ MonitorPage::MonitorPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, Da
     client = new SocketClient();
     connect(client, SIGNAL(sigClassName(int)),this,SLOT(slotShowRealClass(int)));
 
-    //connect(inferThread, &InferThread::sigInferResult,this,&MonitorPage::slotShowInferResult);
-    connect(inferThread, SIGNAL(sigInferResult(int,QVariant)),this,SLOT(slotShowInferResult(int,QVariant)));
+    connect(inferThread, SIGNAL(sigInferResult(QVector<float>,int,QVariant)),this,SLOT(slotShowInferResult(QVector<float>,int,QVariant)));
     connect(inferThread, SIGNAL(modelAlready()),this,SLOT(slotEnableSimulateSignal()));
 
     server = new SocketServer(&sem,&sharedQue,&lock,terminal);//监听线程
-    connect(server, SIGNAL(sigSignalVisualize(QVector<float>&)),this,SLOT(slotSignalVisualize(QVector<float>&)));
+    // connect(server, SIGNAL(sigSignalVisualize(QVector<float>&)),this,SLOT(slotSignalVisualize(QVector<float>&)));
 
 
     connect(ui->startListen, &QPushButton::clicked, this, &MonitorPage::startListen);
     connect(ui->simulateSignal, &QPushButton::clicked, this, &MonitorPage::simulateSend);
     connect(ui->stopListen, &QPushButton::clicked,[this]() { 
-        // ui->simulateSignal->setEnabled(false);
-        // ui->stopListen->setEnabled(false);
         stopSend();
-        // delete client; 
-        // delete server; 
-        //delete inferThread;
     });
-    //connect(ui->stopListen, &QPushButton::clicked, this, &MonitorPage::stopListen);
     connect(this, SIGNAL(startOrstop_sig(bool)), client, SLOT(startOrstop_slot(bool)));
-    rightNum = 0;inferedNum = 0;
 }
 
 void MonitorPage::startListen(){
@@ -88,16 +80,18 @@ void MonitorPage::refresh(){
     // 网络输出标签对应类别名称初始化
     std::vector<std::string> comboBoxContents = projectsInfo->classNamesOfSelectedDataset;
     if(comboBoxContents.size()>0){
-        for(int i=0;i<comboBoxContents.size();i++)   {label2class[i]=comboBoxContents[i];
-            qDebug()<<"(MonitorPage::refresh) comboBoxContents[i]="<<QString::fromStdString(comboBoxContents[i]);}
+        for(int i=0;i<comboBoxContents.size();i++){
+            label2class[i]=comboBoxContents[i];
+            // qDebug()<<"(MonitorPage::refresh) comboBoxContents[i]="<<QString::fromStdString(comboBoxContents[i]);
+        }
         for(auto &item: label2class)   class2label[item.second] = item.first;
     }
-    std::map<std::string, int>::iterator iter;
-    iter = class2label.begin();
-    while(iter != class2label.end()) {
-        std::cout << iter->first << " : " << iter->second << std::endl;
-        iter++;
-    }
+    // std::map<std::string, int>::iterator iter;
+    // iter = class2label.begin();
+    // while(iter != class2label.end()) {
+    //     std::cout << iter->first << " : " << iter->second << std::endl;
+    //     iter++;
+    // }
     //如果工程路径变了
     if(
         projectsInfo->getAttri(projectsInfo->dataTypeOfSelectedProject,projectsInfo->nameOfSelectedProject,"Project_Path") != choicedDatasetPATH
@@ -118,8 +112,8 @@ void MonitorPage::refresh(){
 
         ui->datasetname_cil_label->setText(QString::fromStdString(projectsInfo->nameOfSelectedDataset));
         ui->modelname_cil_label->setText(QString::fromStdString(projectsInfo->nameOfSelectedModel_forInfer));
-        qDebug()<<"(MonitorPage::refresh) A  "<<QString::fromStdString(choicedDatasetPATH);
-        qDebug()<<"(MonitorPage::refresh) B  "<<QString::fromStdString(choicedModelPATH);
+        // qDebug()<<"(MonitorPage::refresh) A  "<<QString::fromStdString(choicedDatasetPATH);
+        // qDebug()<<"(MonitorPage::refresh) B  "<<QString::fromStdString(choicedModelPATH);
     }
 }
 
@@ -142,7 +136,8 @@ void removeLayout2(QLayout *layout){
     }
 }
 
-void MonitorPage::slotShowInferResult(int predIdx,QVariant qv){
+void MonitorPage::slotShowInferResult(QVector<float> dataFrameQ, int predIdx, QVariant qv){
+    signalVisualize(dataFrameQ);
     Chart *tempChart = new Chart(ui->label_mE_chartGT,"","");//就调用一下它的方法
     //std::vector<float> degrees={0.1,0.1,0.1,0.1,0.2,0.4};
     std::vector<float> degrees=qv.value<std::vector<float>>();
@@ -154,14 +149,25 @@ void MonitorPage::slotShowInferResult(int predIdx,QVariant qv){
     QWidget *tempWidget=tempChart->drawDisDegreeChart(predClass,degrees,label2class);
     removeLayout2(ui->horizontalLayout_degreeChart2);
     ui->horizontalLayout_degreeChart2->addWidget(tempWidget);
-    ui->jcLabel->setText(QString::fromStdString(label2class[predIdx]));
-    qDebug()<<"(MonitorPage::slotShowInferResult)"<<ui->xlLabel->text()<<QString::fromStdString(label2class[predIdx]);
+    ui->label_monitor_predClass->setText(QString::fromStdString(label2class[predIdx]));
+
+    if(sigsFromClient.empty()){//如果出现极端情况，连client的类标签都没发过来，就用临时的标签做容错。
+        ui->label_monitor_realClass->setText(QString::fromStdString(label2class[fallBackValue]));
+        num_fallBackValueUsed++;
+    }else{
+        for(int i=0;i<num_fallBackValueUsed;i++) sigsFromClient.erase(sigsFromClient.begin());
+        num_fallBackValueUsed = 0;
+        ui->label_monitor_realClass->setText(QString::fromStdString(label2class[*sigsFromClient.begin()]));
+        fallBackValue = *sigsFromClient.begin();
+        sigsFromClient.erase(sigsFromClient.begin());
+    }
+
+    qDebug()<<"(MonitorPage::slotShowInferResult)"<<ui->label_monitor_realClass->text()<<QString::fromStdString(label2class[predIdx]);
     this->inferedNum ++;
-    if(ui->xlLabel->text() == QString::fromStdString(label2class[predIdx])){
+    if(ui->label_monitor_realClass->text() == QString::fromStdString(label2class[predIdx])){
         this->rightNum++;
     }
     qDebug()<<"(MonitorPage::slotShowInferResult) right=="<<this->rightNum<<"   infered_num="<<this->inferedNum;
-    //qDebug()<<"(MonitorPage::slotShowInferResult) global_realLabel= "<<global_realLabel;
     QString monitor_acc= QString::number(this->rightNum*100/this->inferedNum);
     qDebug()<<"(MonitorPage::slotShowInferResult) monitor_acc="<<monitor_acc;
     ui->monitor_acc->setText(QString("%1").arg(monitor_acc)+"%");
@@ -173,14 +179,14 @@ void MonitorPage::slotEnableSimulateSignal(){
     ui->simulateSignal->setEnabled(true);
 }
 
-void MonitorPage::slotSinalVisualize(QVector<float>& dataFrameQ){
+void MonitorPage::signalVisualize(QVector<float> dataFrameQ){
     removeLayout2(ui->verticalLayout_hotShow);
     removeLayout2(ui->verticalLayout_sigShow);
 
     /*=================单帧==============*/
     QLabel *imageLabel_sig=new QLabel(ui->scrollArea_7);
     std::string currtDataType = projectsInfo->dataTypeOfSelectedProject;
-    qDebug()<<"dataFrameQ.size() === "<<dataFrameQ.size()<<"currtDataType = "<<QString::fromStdString(currtDataType);
+    // qDebug()<<"dataFrameQ.size() === "<<dataFrameQ.size()<<"currtDataType = "<<QString::fromStdString(currtDataType);
     QString chartTitle="Temporary Title";
     if(currtDataType=="HRRP") chartTitle="HRRP(Ephi),Polarization HP(1)[Magnitude in dB]";
     else if (currtDataType=="RADIO") chartTitle="RADIO Temporary Title";
@@ -212,7 +218,14 @@ void MonitorPage::slotSinalVisualize(QVector<float>& dataFrameQ){
 }
 
 void MonitorPage::slotShowRealClass(int realLabel){//client触发
-    ui->xlLabel->setText(QString::fromStdString(label2class[realLabel]));
+    // getSigFromClient = true;
+    sigsFromClient.push_back(realLabel);
+    // if(getSigFromClient && getSigFromInfer){
+    //     ui->xlLabel->setText(QString::fromStdString(label2class[sigsFromClient.begin()]));
+    //     sigsFromClient.erase(sigsFromClient.begin());
+    //     getSigFromClient = false;
+    //     getSigFromInfer = false;
+    // }
 }
 
 MonitorPage::~MonitorPage(){

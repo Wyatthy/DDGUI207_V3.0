@@ -13,22 +13,23 @@ void InferThread::run(){
             sem->acquire(1);
             qDebug()<<"(InferThread::run)  acquired one";
             //QMutexLocker x(lock);
-            std::vector<float> temp(sharedQue->front());
+            std::vector<float> singleDataFrame(sharedQue->front());
+            QVector<float> singleDataFrameQ(singleDataFrame.begin(), singleDataFrame.end());
             //qDebug()<<"(InferThread::run) acquire得到的temp.size()= "<<temp.size();
             int preIdx;
             std::vector<float> degrees;
             //degrees={0.1,0.2,0.3,0.1,0.2,0.1};preIdx=2;
-            trtInfer_rti->realTimeInfer(temp, modelPath, dataProcess, &preIdx, degrees);
-            QVariant qv; qv.setValue(degrees);
-            emit sigInferResult(preIdx,qv);//monitor主线程槽函数接收
-            //qDebug()<<"InferThread::run  emit's  is "<<asdf;
+            trtInfer_rti->realTimeInfer(singleDataFrame, modelPath, dataProcess, &preIdx, degrees);
+            QVariant degreesQ; degreesQ.setValue(degrees);
+            emit sigInferResult(singleDataFrameQ,preIdx,degreesQ);//monitor主线程槽函数接收
+            qDebug()<<"InferThread::run  sigInferResult";
             sharedQue->pop();
         }
     }
 }
 void InferThread::setClass2LabelMap(std::map<std::string, int> class2label){
     trtInfer_rti = new TrtInfer(class2label);
-    qDebug()<<"(InferThread::setClass2LabelMap) class2label.size()=="<<class2label.size();
+    // qDebug()<<"(InferThread::setClass2LabelMap) class2label.size()=="<<class2label.size();
 }
 void InferThread::setInferMode(std::string infermode){
     inferMode=infermode;
