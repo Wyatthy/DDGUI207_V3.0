@@ -53,7 +53,7 @@ public slots:
     void processSampleInferFinished();   // 可视化脚本执行结束事件 
     void processDatasetInferFinished();
     // 针对单样本
-    void randSample();
+    void takeSample();
     void testOneSample();
 
 

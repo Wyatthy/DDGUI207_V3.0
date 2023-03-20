@@ -22,7 +22,7 @@ class Chart : public QWidget{
         QValueAxis *axisX;
         QValueAxis *axisY;
 
-        QString chartname;
+        QString chartTitle = "Temporary Title";
         QString filefullpath;
         int examIdx;
         //坐标轴参数
@@ -41,7 +41,7 @@ class Chart : public QWidget{
         int ShoworSave = 1;
 
     public:
-        Chart(QWidget* parent, QString _chartname, QString filename);
+        Chart(QWidget* parent, QString dataSetType_, QString filename);
         ~Chart();
         void setAxis(QString _xname, qreal _xmin, qreal _xmax, int _xtickc, \
                      QString _yname, qreal _ymin, qreal _ymax, int _ytickc);
@@ -52,8 +52,8 @@ class Chart : public QWidget{
         void readFeaturemat(int emIndex);
         void readRCSmat(int emIndex);
         void buildChart(QList<QPointF> pointlist);
-        void drawImage(QLabel* chartLabel, std::string dataSetType, int examIdx=0);
-        void drawImageWithSingleSignal(QLabel* chartLabel, std::string dataSetType,QVector<float>& dataFrameQ);
+        void drawImage(QLabel* chartLabel, int examIdx=0);
+        void drawImageWithSingleSignal(QLabel* chartLabel, QVector<float>& dataFrameQ);
         QWidget* drawDisDegreeChart(QString &classGT, std::vector<float> &degrees, std::map<int, std::string> &classNames);
         void showChart(QLabel* imagelabel);
         void Show_Save();
@@ -62,6 +62,9 @@ class Chart : public QWidget{
         void ShowBigPic();
         void SaveBigPic();
         void Show_infor();
+    
+    private:
+        QString dataSetType = "";
 };
 
 #endif // CHART_H

@@ -187,14 +187,9 @@ void MonitorPage::signalVisualize(QVector<float> dataFrameQ){
     QLabel *imageLabel_sig=new QLabel(ui->scrollArea_7);
     std::string currtDataType = projectsInfo->dataTypeOfSelectedProject;
     // qDebug()<<"dataFrameQ.size() === "<<dataFrameQ.size()<<"currtDataType = "<<QString::fromStdString(currtDataType);
-    QString chartTitle="Temporary Title";
-    if(currtDataType=="HRRP") chartTitle="HRRP(Ephi),Polarization HP(1)[Magnitude in dB]";
-    else if (currtDataType=="RADIO") chartTitle="RADIO Temporary Title";
-    else if (currtDataType=="FEATURE") chartTitle="Feture Temporary Title";
-    else if (currtDataType=="RCS") chartTitle="RCS Temporary Title";
     imageLabel_sig->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);  
-    Chart *previewChart = new Chart(imageLabel_sig,chartTitle,"");
-    previewChart->drawImageWithSingleSignal(imageLabel_sig,currtDataType,dataFrameQ);  
+    Chart *previewChart = new Chart(imageLabel_sig,QString::fromStdString(currtDataType),"");
+    previewChart->drawImageWithSingleSignal(imageLabel_sig,dataFrameQ);  
 
     /*=================热图==============*/
     QLabel *imageLabel_hot=new QLabel(ui->scrollArea_7);

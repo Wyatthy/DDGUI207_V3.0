@@ -332,8 +332,8 @@ int ModelCAMPage::randomImage(){
             //绘图
             QString chartTitle="Temporary Title";
             if(datasetInfo->selectedType=="HRRP") {chartTitle="HRRP(Ephi),Polarization HP(1)[Magnitude in dB]";}
-            Chart *previewChart = new Chart(ui->label_CAM_choicedImg,chartTitle,matFilePath);
-            previewChart->drawImage(ui->label_CAM_choicedImg,datasetInfo->selectedType,randomIdx);
+            Chart *previewChart = new Chart(ui->label_CAM_choicedImg,QString::fromStdString(datasetInfo->selectedType),matFilePath);
+            previewChart->drawImage(ui->label_CAM_choicedImg,randomIdx);
             ui->label_CAM_choicedImgName->setText(QString::fromStdString(allMatFile[0])+"/"+QString::number(randomIdx));
 
             return 1;

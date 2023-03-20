@@ -101,13 +101,8 @@ void ProjectDock::drawExample(){//TODO mat变量不合适和样本索引范围�
     //绘图
     QString matFilePath = selectedMatFilePath;
     QString matFileName = selectedMatFilePath.split('/').last();
-    QString chartTitle="Temporary Title";
-    if(leftSelType=="HRRP") chartTitle="HRRP(Ephi),Polarization HP(1)[Magnitude in dB]";
-    else if (leftSelType=="RADIO") chartTitle="RADIO Temporary Title";
-    else if (leftSelType=="FEATURE") chartTitle="Feture Temporary Title";
-    else if (leftSelType=="RCS") chartTitle="RCS Temporary Title";
-    Chart *previewChart = new Chart(ui->label_datasetDock_examChart,chartTitle,matFilePath);
-    previewChart->drawImage(ui->label_datasetDock_examChart,leftSelType,examIdx);
+    Chart *previewChart = new Chart(ui->label_datasetDock_examChart,QString::fromStdString(leftSelType),matFilePath);
+    previewChart->drawImage(ui->label_datasetDock_examChart,examIdx);
     //ui->projectDock_examIdx->setText(std::to_string(examIdx));
 }
 
@@ -232,6 +227,10 @@ void ProjectDock::onAction_ShotProject(){
     else if(rightSelName.find("opti") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "FEA_OPTI";
     else if(rightSelName.find("incre") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "INCRE";
     else projectsInfo->modelTypeOfSelectedProject = "TRA_DL";
+
+    //根据工程名字确定projectsInfo->modelNameOfSelectedProject
+
+    
 
     //根据project类型设置projectsInfo中的pathOfSelectedModel_forInfer和pathOfSelectedModel_forVis
     string tempModelType = projectsInfo->modelTypeOfSelectedProject;

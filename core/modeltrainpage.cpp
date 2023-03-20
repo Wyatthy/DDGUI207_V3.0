@@ -1,9 +1,12 @@
 #include "modelTrainPage.h"
 
-ModelTrainPage::ModelTrainPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, DatasetInfo *globalDatasetInfo,
-                               ModelInfo *globalModelInfo):
-    ui(main_ui),terminal(bash_terminal),datasetInfo(globalDatasetInfo),
-    modelInfo(globalModelInfo){
+ModelTrainPage::ModelTrainPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, DatasetInfo *globalDatasetInfo,ModelInfo *globalModelInfo, ProjectsInfo *globalProjectInfo):
+    ui(main_ui),
+    terminal(bash_terminal),
+    datasetInfo(globalDatasetInfo),
+    modelInfo(globalModelInfo),
+    projectsInfo(globalProjectInfo)
+{
 
     ui->fewShotWidget->setVisible(false);
     ui->oldClassNumEdit->setValidator(new QRegularExpressionValidator(QRegularExpression("^[1-9][0-9]{1,3}$")));
@@ -13,13 +16,21 @@ ModelTrainPage::ModelTrainPage(Ui_MainWindow *main_ui, BashTerminal *bash_termin
     ui->trainBatchEdit->setValidator(new QRegularExpressionValidator(QRegularExpression("^[1-9][0-9]{1,4}[1-9]$")));
     ui->saveModelNameEdit->setValidator(new QRegularExpressionValidator(QRegularExpression("[a-zA-Z0-9_]+$")));
 
+    ui->oldClassNumEdit->setText("1");
+    ui->dataNumPercentEdit->setText("0.9");
+    ui->preTrainEpochEdit->setText("100");
+    ui->trainEpochEdit->setText("500");
+    ui->trainBatchEdit->setText("16");
+
+    ui->saveModelNameEdit->setValidator(new QRegularExpressionValidator(QRegularExpression("[a-zA-Z0-9_]+$")));
+
+
     processTrain = new QProcess();
     refreshGlobalInfo();
 
     connect(processTrain, &QProcess::readyReadStandardOutput, this, &ModelTrainPage::monitorTrainProcess);
     connect(ui->startTrainButton, &QPushButton::clicked, this, &ModelTrainPage::startTrain);
     connect(ui->stopTrainButton,  &QPushButton::clicked, this, &ModelTrainPage::stopTrain);
-    connect(ui->modelTypeBox, &QComboBox::currentIndexChanged, this, &ModelTrainPage::changeTrainType);
     connect(ui->editModelButton,  &QPushButton::clicked, this, &ModelTrainPage::editModelFile);
 
 }
@@ -31,35 +42,39 @@ void ModelTrainPage::refreshGlobalInfo(){
     ui->cil_data_dimension_box->addItem(QString::number(128));
     ui->cil_data_dimension_box->addItem(QString::number(39));
 
-    if(QString::fromStdString(datasetInfo->selectedName)!=""){
-        ui->choosedDataText->setText(QString::fromStdString(datasetInfo->selectedName));
-        this->choicedDatasetPATH = QString::fromStdString(datasetInfo->getAttri(datasetInfo->selectedType,datasetInfo->selectedName,"PATH"));
+    QString projectPath = QString::fromStdString(projectsInfo->pathOfSelectedProject);
+    if(projectPath != ""){
+        this->choicedDatasetPATH = projectPath+"/train";
+        ui->choosedDataText->setText(projectPath.split('/').last()+"/train");
     }
     else{
         ui->choosedDataText->setText("未指定");
         this->choicedDatasetPATH = "";
     }
+
+    changeTrainType();
 }
 
 
 void ModelTrainPage::changeTrainType(){
-    int modelType=ui->modelTypeBox->currentIndex();
 
+    modelType = projectsInfo->modelTypeOfSelectedProject;
+    modelName = projectsInfo->modelNameOfSelectedProject;
     ui->tabWidget->removeTab(0);
     ui->tabWidget->removeTab(1);
     ui->tabWidget->removeTab(2);
-    if(modelType==7){   //abfc
+    if(modelType=="ABFC"){
         ui->fewShotWidget->setVisible(false);
         ui->tabWidget->addTab(ui->tab_2,"特征关联性能");
         ui->tabWidget->addTab(ui->tab_3,"混淆矩阵");
     }
-    else if(modelType==8){      //atec
+    else if(modelType=="ATEC"){   
         ui->fewShotWidget->setVisible(false);
         ui->tabWidget->addTab(ui->tab,"训练集准确率");
         ui->tabWidget->addTab(ui->tab_2,"验证集准确率");
         ui->tabWidget->addTab(ui->tab_3,"混淆矩阵");
     }
-    else if(modelType==10){      //cil
+    else if(modelType=="INCRE"){  
         ui->fewShotWidget->setVisible(true);
         ui->tabWidget->addTab(ui->tab_2,"验证集准确率");
         ui->tabWidget->addTab(ui->tab_3,"混淆矩阵");
@@ -78,10 +93,9 @@ void ModelTrainPage::startTrain(){
         QMessageBox::warning(NULL,"错误","未选择训练数据集!");
         return;
     }
-    QString datasetName=QString::fromStdString(datasetInfo->selectedName);
+    QString datasetPath=this->choicedDatasetPATH;
     QDateTime dateTime(QDateTime::currentDateTime());
     time = dateTime.toString("yyyy-MM-dd-hh-mm-ss");
-    trainModelType = ui->modelTypeBox->currentIndex();
     batchSize = ui->trainBatchEdit->text();
     epoch = ui->trainEpochEdit->text();
     saveModelName = ui->saveModelNameEdit->text();
@@ -91,7 +105,7 @@ void ModelTrainPage::startTrain(){
     pretrain_epoch = ui->preTrainEpochEdit->text(); 
     cil_data_dimension = ui->cil_data_dimension_box->currentText();
     
-    if(trainModelType<10){
+    if(modelType!="INCRE"){
         if(batchSize=="" || epoch=="" || saveModelName==""){
             QMessageBox::warning(NULL,"错误","请检查各项文本框中训练参数是否正确配置!");
             return;
@@ -99,26 +113,35 @@ void ModelTrainPage::startTrain(){
         uiInitial();
         cmd="activate tf24 && python ./api/bashs/hrrp_TRImodel/train.py --data_dir "+choicedDatasetPATH+ \
                         " --time "+time+" --batch_size "+batchSize+" --max_epochs "+epoch+" --model_name "+saveModelName;
-        switch(trainModelType){
-            case 0:cmd ="activate tf24 && python ./api/bashs/baseline/baseline2.py --data_dir "+choicedDatasetPATH+ \
-                        " --time "+time+" --batch_size "+batchSize+" --max_epochs "+epoch+" --model_name "+saveModelName+" --net DNN";break;
-            case 1:cmd ="activate tf24 && python ./api/bashs/baseline/baseline.py --data_dir "+choicedDatasetPATH+ \
-                        " --time "+time+" --batch_size "+batchSize+" --max_epochs "+epoch+" --model_name "+saveModelName+" --net CNN";break;
-            case 2:cmd +=" --net DenseNet121";      break;
-            case 3:cmd +=" --net ResNet50V2";       break;
-            case 4:cmd +=" --net MobileNet";        break;
-            case 5:cmd +=" --net ResNet101";        break;
-            case 6:cmd +=" --net EfficientNetB0";   break;
-            case 7:cmd = "activate tf24 && python ./api/bashs/abfc/train.py --data_dir "+choicedDatasetPATH+ \
-                        " --time "+time+" --batch_size "+batchSize+" --max_epochs "+epoch+" --model_name "+saveModelName;break;
-            case 8:cmd = "activate tf24 && python ./api/bashs/atec/main.py --data_dir "+choicedDatasetPATH+ \
-                        " --time "+time+" --batch_size "+batchSize+" --max_epochs "+epoch+" --model_name "+saveModelName+ \
-                        " --new_data_dir "+"./db/datasets/"+"FEATURE_-"+datasetName+"-_36xN_c6";break;
-            case 9:cmd ="activate tf24 && python ./api/bashs/rcs/rcs_densenet.py --data_dir "+choicedDatasetPATH+ \
-                        " --time "+time+" --batch_size "+batchSize+" --max_epochs "+epoch+" --model_name "+saveModelName;break;break;
+        if(modelName == "dnn"){
+            cmd = "activate tf24 && python ./api/bashs/baseline/baseline2.py --data_dir "+choicedDatasetPATH+ \
+                " --time "+time+" --batch_size "+batchSize+" --max_epochs "+epoch+" --model_name "+saveModelName+" --net DNN";
+        }else if(modelName == "cnn"){
+            cmd ="activate tf24 && python ./api/bashs/baseline/baseline.py --data_dir "+choicedDatasetPATH+ \
+                " --time "+time+" --batch_size "+batchSize+" --max_epochs "+epoch+" --model_name "+saveModelName+" --net CNN";
+        }else if(modelName == "densenet121"){
+            cmd +=" --net DenseNet121";
+        }else if(modelName == "resnet50v2"){
+            cmd +=" --net ResNet50V2";
+        }else if(modelName == "resnet101"){
+            cmd +=" --net ResNet101";
+        }else if(modelName == "mobilenet"){
+            cmd +=" --net MobileNet";
+        }else if(modelName == "efficientnetb0"){
+            cmd +=" --net EfficientNetB0";
+        }else if(modelName == "abfc"){
+            cmd = "activate tf24 && python ./api/bashs/abfc/train.py --data_dir "+choicedDatasetPATH+ \
+                " --time "+time+" --batch_size "+batchSize+" --max_epochs "+epoch+" --model_name "+saveModelName;
+        }else if(modelName == "atec"){
+            cmd = "activate tf24 && python ./api/bashs/atec/main.py --data_dir "+choicedDatasetPATH+ \
+                    " --time "+time+" --batch_size "+batchSize+" --max_epochs "+epoch+" --model_name "+saveModelName+ \
+                    " --new_data_dir "+"./db/datasets/"+"FEATURE_-"+this->choicedDatasetPATH+"-_36xN_c6";
+        }else if(modelName == "rcs"){
+            cmd ="activate tf24 && python ./api/bashs/rcs/rcs_densenet.py --data_dir "+choicedDatasetPATH+ \
+                    " --time "+time+" --batch_size "+batchSize+" --max_epochs "+epoch+" --model_name "+saveModelName;
         }
     }
-    else if(trainModelType==10){     //小样本增量模型训练
+    else if(modelType=="INCRE"){     //小样本增量模型训练
         reduce_sample=reduce_sample==""?"1.0":reduce_sample;
         old_class_num=old_class_num==""?"5":old_class_num;
         pretrain_epoch=pretrain_epoch==""?"1":pretrain_epoch;
@@ -228,11 +251,11 @@ void ModelTrainPage::showTrianResult(){
     foreach (auto dir , dirList){
         if(dir.contains(time)){
             QString wordir    = "./db/trainLogs/"+dir;
-            if(trainModelType==7){      //abfc
+            if(modelType=="ABFC"){    
                 ui->val_img->setPixmap(QPixmap(wordir+"/features_Accuracy.jpg"));
                 ui->confusion_mat->setPixmap(QPixmap(wordir+"/confusion_matrix.jpg"));
             }
-            else if(trainModelType==10){     //cil
+            else if(modelType=="INCRE"){  
                 ui->val_img->setPixmap(QPixmap(wordir+"/verification_accuracy.jpg"));
                 ui->confusion_mat->setPixmap(QPixmap(wordir+"/confusion_matrix.jpg"));
             }

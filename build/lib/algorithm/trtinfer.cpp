@@ -149,9 +149,9 @@ QString TrtInfer::testOneSample(
 
 bool TrtInfer::testAllSample(
         std::string dataset_path,std::string modelPath,int inferBatch, bool dataProcess,
-        float &Acc,std::vector<std::vector<int>> &confusion_matrix,std::string flag){
+        float &Acc,std::vector<std::vector<int>> &confusion_matrix,std::string flag,std::vector<std::vector<float>> &degrees_matrix){
     qDebug()<< "(TrtInfer::testAllSample) modelPath old = " << QString::fromStdString(modelPath);
-    //modelPath = "D:/lyh/GUI207_V2.0/db/models/HRRP_128_densenet121_c6_keras/HRRP_128_densenet121_c6_keras.trt";
+
     if (readTrtFile(modelPath,modelStream, engine)) qDebug()<< "(TrtInfer::testAllSample)tensorRT engine created successfully.";
     else qDebug()<< "(TrtInfer::testAllSample)tensorRT engine created failed." ;
     context = engine->createExecutionContext();
@@ -241,6 +241,8 @@ bool TrtInfer::testAllSample(
             temp.push_back(outdata[i-1]);
             if(i%outputLen==0){
                 output_vec.push_back(temp);
+                for(int j=0;j<outputLen;j++)
+                    degrees_matrix[j].push_back(temp[j]);
                 temp.clear();
             }
         }//std::cout<<std::endl;

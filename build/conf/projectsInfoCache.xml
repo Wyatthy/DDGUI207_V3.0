@@ -1,29 +1,34 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <globalProjectInfo datasetTypeNum="4">
-    <HRRP typeID="1">
+    <FEATURE typeID="1" />
+    <HRRP typeID="2">
         <HRRP_Densenet121 nameID="1">
-			<Project_Path>N:/207/GUI207_V3.0/db/projects/HRRP_Densenet121</Project_Path>
-			<Model_Name>Hrrpdensenet</Model_Name>
-			<Model_Algorithm>densenet121</Model_Algorithm>
-			<Model_AccuracyOnTrain>99</Model_AccuracyOnTrain>
-			<Model_AccuracyOnTest>98</Model_AccuracyOnTest>
-			<Model_Framework>keras</Model_Framework>
-			<Model_Visualize>yes</Model_Visualize>
-			<Model_TrainDataset>keras</Model_TrainDataset>
-			<Model_TrainEpoch>keras</Model_TrainEpoch>
-			<Model_TrainLR>keras</Model_TrainLR>
-			<Model_Path>keras</Model_Path>
-			<Dataset_TargetNum>6</Dataset_TargetNum>
-			<Dataset_Name>modulation</Dataset_Name>
-			<Dataset_Path>null</Dataset_Path>
-			<Dataset_TargetNumEachCla>200</Dataset_TargetNumEachCla>
-			<Dataset_PitchAngle>5</Dataset_PitchAngle>
-			<Dataset_AzimuthAngle>5</Dataset_AzimuthAngle>
-			<Dataset_SamplingNum>5</Dataset_SamplingNum>
-			<Dataset_IncidentMode>5</Dataset_IncidentMode>
-			<Dataset_Freq>5</Dataset_Freq>
-			<Dataset_Note>test</Dataset_Note>
+            <Dataset_AzimuthAngle>5</Dataset_AzimuthAngle>
+            <Dataset_Freq>5</Dataset_Freq>
+            <Dataset_IncidentMode>5</Dataset_IncidentMode>
+            <Dataset_Name>modulation</Dataset_Name>
+            <Dataset_Note>test</Dataset_Note>
+            <Dataset_Path>null</Dataset_Path>
+            <Dataset_PitchAngle>5</Dataset_PitchAngle>
+            <Dataset_SamplingNum>5</Dataset_SamplingNum>
+            <Dataset_TargetNum>6</Dataset_TargetNum>
+            <Dataset_TargetNumEachCla>200</Dataset_TargetNumEachCla>
+            <Model_AccuracyOnTest>98</Model_AccuracyOnTest>
+            <Model_AccuracyOnTrain>99</Model_AccuracyOnTrain>
+            <Model_Algorithm>densenet121</Model_Algorithm>
+            <Model_Framework>keras</Model_Framework>
+            <Model_Name>Hrrpdensenet</Model_Name>
+            <Model_Path>keras</Model_Path>
+            <Model_TrainDataset>keras</Model_TrainDataset>
+            <Model_TrainEpoch>keras</Model_TrainEpoch>
+            <Model_TrainLR>keras</Model_TrainLR>
+            <Model_Visualize>yes</Model_Visualize>
+            <Project_Path>N:/207/GUI207_V3.0/db/projects/HRRP_Densenet121</Project_Path>
         </HRRP_Densenet121>
+        <HRRP数据格式 nameID="2">
+            <Project_Path>N:/207/GUI207_V3.0/db/projects/HRRP数据格式</Project_Path>
+        </HRRP数据格式>
     </HRRP>
-
+    <IMAGE typeID="3" />
+    <RCS typeID="4" />
 </globalProjectInfo>

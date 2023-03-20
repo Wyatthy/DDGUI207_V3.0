@@ -9,9 +9,13 @@
 #include <QBarCategoryAxis>
 #include <mat.h>
 
-Chart::Chart(QWidget* parent, QString _chartname, QString _filefullpath){
+Chart::Chart(QWidget* parent, QString dataSetType_, QString _filefullpath){
     setParent(parent);
-    chartname = _chartname;
+    dataSetType = dataSetType_;
+    if(dataSetType=="HRRP") {chartTitle="HRRP(Ephi),Polarization HP(1)[Magnitude in dB]";}
+    else if (dataSetType=="RADIO") {chartTitle="RADIO Temporary Title";}
+    else if (dataSetType=="RCS") {chartTitle="RCS Temporary Title";}
+
     filefullpath = _filefullpath;
     series = new QSplineSeries(this);
     qchart = new QChart;
@@ -49,7 +53,7 @@ void Chart::drawHRRPimage(QLabel* chartLabel){
 }
 
 
-void Chart::drawImage(QLabel* chartLabel, std::string dataSetType, int examIdx){
+void Chart::drawImage(QLabel* chartLabel, int examIdx){
 
     QString dataFileFormat=filefullpath.split(".").last();
 
@@ -76,7 +80,7 @@ void Chart::drawImage(QLabel* chartLabel, std::string dataSetType, int examIdx){
     showChart(chartLabel);
 }
 
-void Chart::drawImageWithSingleSignal(QLabel* chartLabel, std::string dataSetType,QVector<float>& dataFrameQ){
+void Chart::drawImageWithSingleSignal(QLabel* chartLabel, QVector<float>& dataFrameQ){
     if(dataSetType=="HRRP"){
         points.clear();
         float y_min = 200000,y_max = -200000;
@@ -117,7 +121,33 @@ void Chart::drawImageWithSingleSignal(QLabel* chartLabel, std::string dataSetTyp
         ymin = y_min-3; ymax = y_max+3;
         setAxis("Time/mm",xmin,xmax,10, "dB(V/m)",ymin,ymax,10);
     }
+    else if(dataSetType=="usualData"){
+        // points.clear();
+        // float y_min = -1,y_max = 1;
+        // for(int i=0;i<dataFrameQ.size();i++){
+        //     float y=dataFrameQ[i];
+        //     y_min = fmin(y_min,y);
+        //     y_max = fmax(y_max,y);
+        //     points.append(QPointF(i,y));
+        // }
+        // xmin = 0; xmax = dataFrameQ.size()+4;
+        // ymin = y_min-0.2; ymax = y_max+0.2;
+        // setAxis("Sample Index",xmin,xmax,10, "dB(V/m)",ymin,ymax,0.1);
+        points.clear();
+        float y_min = FLT_MAX, y_max = -FLT_MAX;
+        for (int i = 0; i < dataFrameQ.size(); i++) {
+            float y = dataFrameQ[i];
+            y_min = fmin(y_min, y);
+            y_max = fmax(y_max, y);
+            points.append(QPointF(i, y));
+        }
+        xmin = 0;
+        xmax = dataFrameQ.size() + 4;
+        ymin = y_min - 0.2;
+        ymax = y_max + 0.2;
+        setAxis("Sample Index", xmin, xmax, 10, "Degree of sample", ymin, ymax, (ymax - ymin) / 10);
 
+    }
     buildChart(points);
     showChart(chartLabel);
 }
@@ -473,7 +503,7 @@ void Chart::Show_Save(){
     for(int i=0; i<points.size();i++)
         newseries->append(points.at(i).x(), points.at(i).y());
 
-    newchart->setTitle(chartname);
+    newchart->setTitle(chartTitle);
     newchart->legend()->hide(); //隐藏图例
     newchart->addSeries(newseries);//输入数据
     newchart->setAxisX(newaxisX, newseries);

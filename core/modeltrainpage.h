@@ -11,6 +11,7 @@
 #include "./lib/guiLogic/bashTerminal.h"
 #include "./lib/guiLogic/modelInfo.h"
 #include "./lib/guiLogic/datasetInfo.h"
+#include "./lib/guiLogic/projectsInfo.h"
 #include "./lib/guiLogic/tools/searchFolder.h"
 
 class ModelTrainPage:public QObject
@@ -21,12 +22,14 @@ public:
     BashTerminal *terminal;
     DatasetInfo *datasetInfo;
     ModelInfo *modelInfo;
+    ProjectsInfo *projectsInfo;
     BashTerminal *train_terminal;
 
     QString choicedDatasetPATH;
     QProcess *processTrain;
     std::vector<std::string> modelTypes={"HRRP","AFS","FewShot"};
-    int trainModelType=0;
+    std::string modelType = "";
+    std::string modelName = "";
     QString cmd="";
     QString time = "";
     QString batchSize = "";
@@ -38,7 +41,7 @@ public:
     QString cil_data_dimension = "";
     
     ModelTrainPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, DatasetInfo *globalDatasetInfo,
-                   ModelInfo *globalModelInfo);
+                   ModelInfo *globalModelInfo,ProjectsInfo *globalProjectInfo);
     void refreshGlobalInfo();
     void uiInitial();
     void execuCmd(QString cmd);   // 开放在终端运行命令接口

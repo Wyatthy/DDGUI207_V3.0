@@ -24,7 +24,7 @@ ModelEvalPage::ModelEvalPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal
     connect(ui->comboBox_sampleType, SIGNAL(textActivated(QString)), this, SLOT(on_comboBox_sampleType(QString)));
     connect(ui->comboBox_chosFile, SIGNAL(textActivated(QString)), this, SLOT(on_comboBox_chosFile(QString)));
     // 取样按钮
-    connect(ui->pushButton_mE_randone, &QPushButton::clicked, this, &ModelEvalPage::randSample);
+    connect(ui->pushButton_mE_randone, &QPushButton::clicked, this, &ModelEvalPage::takeSample);
     // 测试按钮
     connect(ui->pushButton_testOneSample, &QPushButton::clicked, this, &ModelEvalPage::testOneSample);
     connect(ui->pushButton_testAllSample, &QPushButton::clicked, this, &ModelEvalPage::testAllSample);
@@ -113,14 +113,13 @@ void ModelEvalPage::refreshGlobalInfo(){
     }
 }
 
-void ModelEvalPage::randSample(){
-
+void ModelEvalPage::takeSample(){
     Chart *previewChart;
     string nameOfMatFile = this->choicedFileInClass;
 
     QString matFilePath = QString::fromStdString(this->choicedSamplePATH);
     // std::filesystem::exists(this->choicedSamplePATH)
-    qDebug()<<"ModelEvalPage::randSample matFilePath = "<<matFilePath;
+    qDebug()<<"ModelEvalPage::takeSample matFilePath = "<<matFilePath;
     
     // if(dirTools->exist(this->choicedSamplePATH)){
     if(std::filesystem::exists(std::filesystem::u8path(this->choicedSamplePATH))){
@@ -137,7 +136,7 @@ void ModelEvalPage::randSample(){
         MATFile* pMatFile = NULL;
         mxArray* pMxArray = NULL;
         pMatFile = matOpen(matFilePath.toStdString().c_str(), "r");
-        if(!pMatFile){qDebug()<<"(ModelEvnameOfMatFilealPage::randSample)文件指针空！！！！！！";return;}
+        if(!pMatFile){qDebug()<<"(ModelEvnameOfMatFilealPage::takeSample)文件指针空！！！！！！";return;}
         std::string matVariable=nameOfMatFile.substr(0,nameOfMatFile.find_last_of('.')).c_str();//假设数据变量名同文件名的话
 
         QString chartTitle="Temporary Title";
@@ -145,7 +144,7 @@ void ModelEvalPage::randSample(){
         else if (projectsInfo->dataTypeOfSelectedProject=="RADIO") {chartTitle="RADIO Temporary Title";}// matVariable="radio101";}
 
         pMxArray = matGetVariable(pMatFile,matVariable.c_str());
-        if(!pMxArray){qDebug()<<"(ModelEvalPage::randSample)pMxArray变量没找到！！！！！！";return;}
+        if(!pMxArray){qDebug()<<"(ModelEvalPage::takeSample)pMxArray变量没找到！！！！！！";return;}
         int N = mxGetN(pMxArray);  //N 列数
         examIdx = examIdx>N?N-1:examIdx;
 
@@ -154,8 +153,8 @@ void ModelEvalPage::randSample(){
         // ui->label_mE_choicedSample->setText("Index:"+QString::number(randomIdx));
         ui->label_mE_imgGT->setPixmap(QPixmap(imgPath).scaled(QSize(100,100), Qt::KeepAspectRatio));
         //绘图
-        previewChart = new Chart(ui->label_mE_chartGT,chartTitle,matFilePath);
-        previewChart->drawImage(ui->label_mE_chartGT,projectsInfo->dataTypeOfSelectedProject,examIdx);
+        previewChart = new Chart(ui->label_mE_chartGT,QString::fromStdString(projectsInfo->dataTypeOfSelectedProject),matFilePath);
+        previewChart->drawImage(ui->label_mE_chartGT,examIdx);
     }
     
     else{
@@ -280,22 +279,26 @@ void ModelEvalPage::testAllSample(){
         qDebug()<<"(ModelEvalPage::testAllSample)dataTypeOfSelectedProject=="<<QString::fromStdString(projectsInfo->dataTypeOfSelectedProject);
         qDebug()<<"(ModelEvalPage::testAllSample)modelTypeOfSelectedProject=="<<QString::fromStdString(projectsInfo->modelTypeOfSelectedProject);
 
-        float acc = 0.6;
+        float acc = 0.96;
         int classNum=label2class.size();
         std::vector<std::vector<int>> confusion_matrix(classNum, std::vector<int>(classNum, 0));
+        std::vector<std::vector<float>> degrees_matrix(classNum, std::vector<float>(0, 0));
+        // std::vector<std::vector<float>> degrees_matrix;
         bool dataProcess=true;
         std::string flag="";
-        //V3版本下面这个判断应该不需要了
-        if(projectsInfo->dataTypeOfSelectedProject=="HRRP" && projectsInfo->modelTypeOfSelectedProject=="FEA_RELE"){
-            QMessageBox::warning(NULL, "提示", "特征关联模型输入应为特征数据");
-            return;
-        }
+        //下面判断一些数据处理的情况
         if(projectsInfo->dataTypeOfSelectedProject=="RCS") {
             dataProcess=false;
             flag="RCS_";
         }
-        if(projectsInfo->modelTypeOfSelectedProject=="INCRE") dataProcess=false; //目前增量模型接受的数据是不做预处理的
-        if(projectsInfo->modelTypeOfSelectedProject=="FEA_RELE"){
+        else if(projectsInfo->dataTypeOfSelectedProject=="FEATURE") {
+            flag="ABFC";
+        }
+        else if(projectsInfo->dataTypeOfSelectedProject=="ATEC") {
+            dataProcess=false;
+        }
+        else if(projectsInfo->modelTypeOfSelectedProject=="CIL") dataProcess=false; //目前增量模型接受的数据是不做预处理的
+        if(projectsInfo->modelTypeOfSelectedProject=="ABFC"){
             std::string feaWeightTxtPath=choicedModelPATH.substr(0, choicedModelPATH.rfind("/"))+"/attention.txt";
             if(this->dirTools->exist(feaWeightTxtPath)){//判断是abfc还是atec,依据就是有没有attention文件
                 int modelIdx=1,tempi=0;std::vector<int> dataOrder;std::string line;
@@ -307,10 +310,6 @@ void ModelEvalPage::testAllSample(){
                 }infile.close();
                 trtInfer->setParmsOfABFC(modelIdx, dataOrder);
                 flag="ABFC";
-            }
-            else{
-                flag="ATEC";
-                dataProcess=false;
             }
         }
         if(projectsInfo->modelTypeOfSelectedProject=="FEA_OPTI"){
@@ -333,7 +332,7 @@ void ModelEvalPage::testAllSample(){
             QMessageBox::warning(NULL, "提示", "模型文件需为.trt模型!");
             return;
         }
-        if(!trtInfer->testAllSample(choicedDatasetPATH,choicedModelPATH,inferBatch,dataProcess,acc,confusion_matrix,flag)){
+        if(!trtInfer->testAllSample(choicedDatasetPATH,choicedModelPATH,inferBatch,dataProcess,acc,confusion_matrix,flag,degrees_matrix)){
             qDebug()<<"(modelEvalPage::testAllSample) trtInfer-testAll failed~";
             return ;
         }
@@ -370,10 +369,26 @@ void ModelEvalPage::testAllSample(){
         if(this->dirTools->exist(imgPath.toStdString())){
             recvShowPicSignal(QPixmap(imgPath), ui->graphicsView_3_evalpageMatrix);
         }
-        //ui->label_evalpageMatrix->setPixmap(QPixmap(imgPath).scaled(QSize(576,432), Qt::KeepAspectRatio));
-        //ui->label_evalpageMatrix->setPixmap(QPixmap(imgPath).scaled(ui->label_evalpageMatrix->size(), Qt::KeepAspectRatio));
         ui->label_testAllAcc->setText(QString("%1").arg(acc*100));
-        QMessageBox::information(NULL, "所有样本测试", "识别成果，结果已输出！");
+
+        std::vector<float> meaninglessC1; 
+        for(int i=0;i<label2class.size();i++){
+            QLabel *imageLabel=new QLabel("数据集样本在"+QString::fromStdString(label2class[i])+"类上的隶属度曲线");
+            QLabel *imageLabel_sig=new QLabel();
+            imageLabel_sig->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred); 
+            imageLabel_sig->setStyleSheet("border: 3px black");
+            QVector<float> meaninglessCiQ = QVector<float>(degrees_matrix[i].begin(), degrees_matrix[i].end());
+            Chart *previewChart = new Chart(imageLabel_sig,"usualData","");
+            previewChart->drawImageWithSingleSignal(imageLabel_sig,meaninglessCiQ);
+            imageLabel_sig->setMinimumHeight(120);
+            ui->verticalLayout_22->addWidget(imageLabel);
+            ui->verticalLayout_22->addWidget(imageLabel_sig);
+        }
+        
+        // qDebug()<<"ModelEvalPage::testall degrees_matrix.size()"<<degrees_matrix.size()<<" degrees_matrix[0].size()=="<<degrees_matrix[0].size();
+
+        QMessageBox::information(NULL, "所有样本测试", "识别结果已输出！");
+
     }
     else{
         QMessageBox::warning(NULL, "所有样本测试", "数据集或模型未指定！");

@@ -59,14 +59,26 @@ void MatDataProcess::loadAllDataFromFolder(std::string datasetPath,std::string t
     // 寻找子文件夹 WARN:数据集的路径一定不能包含汉字 否则遍历不到文件路径
     std::vector<std::string> subDirs;
     dirTools->getDirsplus(subDirs, datasetPath);
-    for(auto &subDir: subDirs){
+
+    //换序到subDirsQ
+    QVector<QString> subDirsQ;
+    for (const auto& folderName : subDirs) {
+        QString folderNameQ = QString::fromStdString(folderName);
+        if (folderNameQ.contains("DT")) {
+            subDirsQ.push_front(folderNameQ);
+        } else {
+            subDirsQ.push_back(folderNameQ);
+        }
+    }
+
+    for(auto &subDir: subDirsQ){
         // 寻找每个子文件夹下的样本文件
         std::vector<std::string> fileNames;
-        std::string subDirPath = datasetPath+"/"+subDir;
+        std::string subDirPath = datasetPath+"/"+subDir.toStdString();
         dirTools->getFilesplus(fileNames, type, subDirPath);
         for(auto &fileName: fileNames){
-            // qDebug()<<QString::fromStdString(subDirPath)<<"/"<<QString::fromStdString(fileName)<<" label:"<<class2label[subDir];
-            getAllDataFromMat(subDirPath + "/" + fileName,dataProcess,data,labels,class2label[subDir],inputLen);
+            qDebug()<<QString::fromStdString(subDirPath)<<"/"<<QString::fromStdString(fileName)<<" label:"<<class2label[subDir.toStdString()];
+            getAllDataFromMat(subDirPath + "/" + fileName,dataProcess,data,labels,class2label[subDir.toStdString()],inputLen);
         }
     }
     return;
