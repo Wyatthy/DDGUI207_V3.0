@@ -260,7 +260,7 @@ class IncrementTrain:
         new_weight = new_weight.reshape((512, len(task)))
         self.model.Incremental_learning(classNumber, new_weight)
 
-    def get_all_task_newClassNumber(self, old_class):#for example, all=6,old=1,task=2, classes = [[1,2],[3,4],5]
+    def get_all_task_newClassNumber(self, old_class):
         classes = []
         if self.newClassNumber % self.taskSize == 0:
             for cls in range(old_class, self.allClassNumber, self.taskSize):
@@ -305,7 +305,7 @@ class IncrementTrain:
         self.model.to(device)
 
         # 共需增量len(classes)次
-        for task in classes:    
+        for task in classes:
             num_class = task[-1] + 1
             old_class = num_class - len(task)
             self.old_model = copy.deepcopy(self.model)
@@ -497,28 +497,13 @@ class Evaluation:
 
 
 if __name__ == '__main__':
-    import os
     snr = 12
+    oldClassNumber = 9
     memorySize = 200
     # preTrain = Pretrain(snr, oldClassNumber, memorySize, dataset="RML2016.04c")
     # preTrain.train()
-    all_class = 6
-    newClassNumber = 3
-    taskSize = 1
-    
-    # 读取路径下所有文件夹的名称并保存
-    raw_data_path = "D:/lyh/GUI207_V2.0/db/datasets/HRRP_simulate_128xN_c6"
-    folder_path = raw_data_path # 所有文件夹所在路径
-    file_name = os.listdir(folder_path)  # 读取所有文件夹，将文件夹名存在列表中
-    folder_names = []
-    for i in range(0, len(file_name)):
-        # 判断文件夹与文件
-        if os.path.isdir(folder_path+'/'+file_name[i]):
-            folder_names.append(file_name[i])
-    folder_names.sort()  # 按文件夹名进行排序
 
-    # incrementTrain = IncrementTrain(args.memory_size, args.all_class, args.all_class-args.old_class, args.task_size, \
-    #     args.increment_epoch, args.batch_size, args.learning_rate, args.bound, args.reduce_sample, args.work_dir, folder_names, args.data_dimension)
-    # incrementTrain.train()
-    incrementTrain = IncrementTrain(memorySize, all_class, newClassNumber, taskSize, 5, 32, 1e-4, 0.3, 1.0, "../../../db/trainLogs", folder_names, 128)
+    newClassNumber = 2
+    taskSize = 2
+    incrementTrain = IncrementTrain(memorySize, newClassNumber, taskSize)
     incrementTrain.train()

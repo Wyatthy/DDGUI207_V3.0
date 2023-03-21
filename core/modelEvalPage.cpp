@@ -371,7 +371,6 @@ void ModelEvalPage::testAllSample(){
         }
         ui->label_testAllAcc->setText(QString("%1").arg(acc*100));
 
-        std::vector<float> meaninglessC1; 
         for(int i=0;i<label2class.size();i++){
             QLabel *imageLabel=new QLabel("数据集样本在"+QString::fromStdString(label2class[i])+"类上的隶属度曲线");
             QLabel *imageLabel_sig=new QLabel();

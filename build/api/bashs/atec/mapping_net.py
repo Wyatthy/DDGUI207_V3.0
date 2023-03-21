@@ -36,7 +36,7 @@ def fea_mapping(path, train_x, train_y, test_x, test_y, epoch, batch_size):
                                                  save_best_only=True, mode='min')
     callbacks_list = [checkpoint, learn_rate_reduction]
     fitting_model.fit(train_x, train_y, batch_size=batch_size, epochs=epoch, validation_data=(test_x, test_y),
-                      callbacks=callbacks_list, verbose=0, validation_freq=10)
+                      callbacks=callbacks_list, verbose=0, validation_freq=1)
     test_model = keras.models.load_model(path)
     train_pred = test_model.predict(train_x)
     test_pred = test_model.predict(test_x)

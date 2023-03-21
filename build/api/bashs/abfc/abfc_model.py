@@ -1,6 +1,5 @@
 import tensorflow.compat.v1 as tf
-import numpy as np
-from tensorflow.python.tools import freeze_graph
+tf.compat.v1.disable_eager_execution()
 
 
 def build(total_batch, input_size, output_size):
@@ -12,45 +11,45 @@ def build(total_batch, input_size, output_size):
     tf.add_to_collection('output', Y)
 
     with tf.variable_scope('attention_module') as scope:  # 指定变量作用域
-        E_W = tf.Variable(tf.truncated_normal([input_size, 32], stddev=0.1, seed=1))  # 正态分布相同变量[512,32]
-        E_b = tf.Variable(tf.constant(0.1, shape=[32]))  # 创建0.1填充的长度为隐藏单元数目的变量,[32,]
+        E_W = tf.Variable(tf.truncated_normal([input_size, 32], stddev=0.1, seed=1))  # 正态分布相同变量
+        E_b = tf.Variable(tf.constant(0.1, shape=[32]))  # 创建0.1填充的长度为隐藏单元数目的变量
 
-        E = tf.nn.tanh(tf.matmul(X, E_W) + E_b)  # 使用密集网络提取原始输入之间的内在关系（1）式,[32,]
+        E = tf.nn.tanh(tf.matmul(X, E_W) + E_b)  # 使用密集网络提取原始输入之间的内在关系
 
-        A_W = tf.Variable(tf.truncated_normal([input_size, 32, 2], stddev=0.1, seed=1))  # [512,32,2]
-        A_b = tf.Variable(tf.constant(0.1, shape=[input_size, 2]))  # [512,2]
+        A_W = tf.Variable(tf.truncated_normal([input_size, 32, 2], stddev=0.1, seed=1))
+        A_b = tf.Variable(tf.constant(0.1, shape=[input_size, 2]))
 
-        A_W_unstack = tf.unstack(A_W, axis=0)  # 将A_W沿着0维分解,512个[32,2]
-        A_b_unstack = tf.unstack(A_b, axis=0)  # 512个[2,]
+        A_W_unstack = tf.unstack(A_W, axis=0)  # 将A_W沿着0维分解
+        A_b_unstack = tf.unstack(A_b, axis=0)
 
         # 每个特征选择/未选择的概率
         attention_out_list = []
         for i in range(input_size):
-            attention_FC = tf.matmul(E, A_W_unstack[i]) + A_b_unstack[i]  # [2,]，（2）、（3）式
-            attention_out = tf.nn.softmax(attention_FC)  # 特征选择/未选择的概率，[2,]，（4）式
-            attention_out = tf.expand_dims(attention_out[:, 1], axis=1)  # 被选择的概率，[1,]
+            attention_FC = tf.matmul(E, A_W_unstack[i]) + A_b_unstack[i]
+            attention_out = tf.nn.softmax(attention_FC)  # 特征选择/未选择的概率
+            attention_out = tf.expand_dims(attention_out[:, 1], axis=1)  # 被选择的概率
             attention_out_list.append(attention_out)
-        A = tf.squeeze(tf.stack(attention_out_list, axis=1), axis=2)  # [512,]
+        A = tf.squeeze(tf.stack(attention_out_list, axis=1), axis=2)
 
     with tf.variable_scope("learning_module") as scope:
         G = tf.multiply(X, A)  # 加权特征（5）式,[512,]
         L_W1 = tf.Variable(
-            tf.truncated_normal([input_size, 500], stddev=0.1, seed=1))  # 正态分布相同变量[512,500]
-        L_b1 = tf.Variable(tf.constant(0.1, shape=[500]))  # [500,]
+            tf.truncated_normal([input_size, 500], stddev=0.1, seed=1))  # 正态分布相同变量
+        L_b1 = tf.Variable(tf.constant(0.1, shape=[500]))
         L_W2 = tf.Variable(
-            tf.truncated_normal([500, output_size], stddev=0.1, seed=1))  # [500,5]
-        L_b2 = tf.Variable(tf.constant(0.1, shape=[output_size]))  # [5,]
+            tf.truncated_normal([500, output_size], stddev=0.1, seed=1))
+        L_b2 = tf.Variable(tf.constant(0.1, shape=[output_size]))
 
         variable_averages = tf.train.ExponentialMovingAverage(0.99, global_step)
         variable_averages_op = variable_averages.apply(tf.trainable_variables())  # 滑动平均
         # L_FC = tf.nn.leaky_relu(tf.layers.dense(G, 500) + L_b1)
-        L_FC = tf.nn.tanh(tf.matmul(G, L_W1) + L_b1)  # [500,]
+        L_FC = tf.nn.tanh(tf.matmul(G, L_W1) + L_b1)
         # O = tf.layers.dense(L_FC, 5) + L_b2  # [5,]
-        O = tf.matmul(L_FC, L_W2) + L_b2  # [5,]
+        O = tf.matmul(L_FC, L_W2) + L_b2
 
         average_L_FC = tf.nn.relu(
-            tf.matmul(G, variable_averages.average(L_W1)) + variable_averages.average(L_b1))  # [500,]
-        average_O = tf.matmul(average_L_FC, variable_averages.average(L_W2)) + variable_averages.average(L_b2)  # [5,]
+            tf.matmul(G, variable_averages.average(L_W1)) + variable_averages.average(L_b1))
+        average_O = tf.matmul(average_L_FC, variable_averages.average(L_W2)) + variable_averages.average(L_b2)
 
     with tf.name_scope("Loss") as scope:
         # regularizer = tf.contrib.layers.l2_regularizer(FLAGS.regularization_rate)  # 正则化，平方的和/行数

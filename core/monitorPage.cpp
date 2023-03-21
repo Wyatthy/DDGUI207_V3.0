@@ -54,7 +54,7 @@ void MonitorPage::startListen(){
     myDataset = CustomDataset(datasetlPath, false, ".mat", class2label, -1, projectsInfo->modelTypeOfSelectedProject);
     server->setInputLen(myDataset.data[0].size());
     server->start();
-    terminal->print("开始监听,等待模型及数据中...");
+    terminal->print("开始监听,等待模型及数据载入中...");
     inferThread->start();
     emit startOrstop_sig(true);
 }
@@ -103,7 +103,6 @@ void MonitorPage::refresh(){
         if(projectsInfo->modelTypeOfSelectedProject=="INCRE") ifDataPreProcess=false;
         choicedModelPATH=projectsInfo->pathOfSelectedModel_forInfer;
         choicedDatasetPATH=projectsInfo->pathOfSelectedDataset;
-        //TODO 因为使用测试页面，下面嗯切可能带来错误
         inferThread->setClass2LabelMap(class2label);
         //qDebug()<<"(MonitorPage::refresh) class2label.size()=="<<class2label.size();
         inferThread->setParmOfRTI(choicedModelPATH,ifDataPreProcess);//只有小样本是false 既不做预处理
@@ -181,46 +180,45 @@ void MonitorPage::slotEnableSimulateSignal(){
 
 void MonitorPage::signalVisualize(QVector<float> dataFrameQ){
     removeLayout2(ui->verticalLayout_hotShow);
-    removeLayout2(ui->verticalLayout_sigShow);
+    // removeLayout2(ui->verticalLayout_sigShow);
 
     /*=================单帧==============*/
     QLabel *imageLabel_sig=new QLabel(ui->scrollArea_7);
     std::string currtDataType = projectsInfo->dataTypeOfSelectedProject;
     // qDebug()<<"dataFrameQ.size() === "<<dataFrameQ.size()<<"currtDataType = "<<QString::fromStdString(currtDataType);
-    imageLabel_sig->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);  
+    imageLabel_sig->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);  
     Chart *previewChart = new Chart(imageLabel_sig,QString::fromStdString(currtDataType),"");
     previewChart->drawImageWithSingleSignal(imageLabel_sig,dataFrameQ);  
 
     /*=================热图==============*/
     QLabel *imageLabel_hot=new QLabel(ui->scrollArea_7);
     imageLabel_hot->setBackgroundRole(QPalette::Base);
-    imageLabel_hot->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+    imageLabel_hot->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     imageLabel_hot->setScaledContents(true);
     //imageLabel_hot->setStyleSheet("border:2px solid red;");
     QImageReader reader("./colorMap.png");
     reader.setAutoTransform(true);
     const QImage newImage = reader.read();
     if (newImage.isNull()) {
-        qDebug()<<"errrrrrrrrrror";
+        qDebug()<<"MonitorPage::signalVisualize hotMap not found";
     }
     QImage image;
     image = newImage;
     imageLabel_hot->setPixmap(QPixmap::fromImage(image));
 
+    imageLabel_hot->setMinimumHeight(300);
+    imageLabel_sig->setMinimumHeight(300);
+    imageLabel_hot->setMaximumWidth(700);
+    imageLabel_sig->setMaximumWidth(700);
     ui->verticalLayout_hotShow->addWidget(imageLabel_hot);
-    ui->verticalLayout_sigShow->addWidget(imageLabel_sig);
+    ui->verticalLayout_hotShow->addWidget(imageLabel_sig);
+
+    // ui->verticalLayout_sigShow->addWidget(imageLabel_sig);
 
 }
 
 void MonitorPage::slotShowRealClass(int realLabel){//client触发
-    // getSigFromClient = true;
     sigsFromClient.push_back(realLabel);
-    // if(getSigFromClient && getSigFromInfer){
-    //     ui->xlLabel->setText(QString::fromStdString(label2class[sigsFromClient.begin()]));
-    //     sigsFromClient.erase(sigsFromClient.begin());
-    //     getSigFromClient = false;
-    //     getSigFromInfer = false;
-    // }
 }
 
 MonitorPage::~MonitorPage(){

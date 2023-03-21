@@ -28,7 +28,7 @@ def net_fea_extract(path, train_x, train_y, test_x, test_y, epoch, batch_size):
                                                  save_best_only=True, mode='max')
     callbacks_list = [checkpoint, learn_rate_reduction]
     model.fit(train_x, train_y, batch_size=batch_size, epochs=epoch, shuffle=True,
-              validation_data=(test_x, test_y), callbacks=callbacks_list, verbose=0, validation_freq=10)
+              validation_data=(test_x, test_y), callbacks=callbacks_list, verbose=0, validation_freq=1)
     test_model = keras.models.load_model(path)
     functor = keras.models.Model(inputs=test_model.input, outputs=test_model.layers[-2].output)  # 输出模型倒数第二层
     train_fea = functor.predict(train_x)

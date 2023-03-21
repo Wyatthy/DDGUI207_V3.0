@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 from matplotlib import rcParams
 from sklearn.preprocessing import MinMaxScaler
 
+plt.rcParams['font.sans-serif'] = ['SimHei']
+
 
 # 导入npz数据
 def data_load(path):
@@ -35,8 +37,6 @@ def show_pic(Y_pred, Y_test):
 
 # 绘制混淆矩阵
 def show_confusion_matrix(work_dir, classes, confusion_matrix):
-    # classes = ['1', '2', '3', '4', '5', '6', '7', '8']
-    # confusion_matrix 为分类的特征矩阵
     plt.figure()
     proportion = []
     length = len(confusion_matrix)
@@ -51,19 +51,16 @@ def show_confusion_matrix(work_dir, classes, confusion_matrix):
         pshow.append(pt)
     proportion = np.array(proportion).reshape(length, length)  # reshape(列的长度，行的长度)
     pshow = np.array(pshow).reshape(length, length)
-    # print(pshow)
-    config = {
-        "font.family": 'Times New Roman',  # 设置字体类型
-    }
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, fontsize=12, rotation=20)
+    plt.yticks(tick_marks, classes, fontsize=12)
+    config = {"font.family": 'Times New Roman'}
     rcParams.update(config)
     plt.imshow(proportion, interpolation='nearest', cmap=plt.cm.Blues)  # 按照像素显示出矩阵
     # (改变颜色：'Greys', 'Purples', 'Blues', 'Greens', 'Oranges', 'Reds','YlOrBr', 'YlOrRd',
     # 'OrRd', 'PuRd', 'RdPu', 'BuPu','GnBu', 'PuBu', 'YlGnBu', 'PuBuGn', 'BuGn', 'YlGn')
     # plt.title('confusion_matrix')
     plt.colorbar()
-    tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, fontsize=12, rotation=20)
-    plt.yticks(tick_marks, classes, fontsize=12)
 
     thresh = confusion_matrix.max() / 2.
     # iters = [[i,j] for i in range(len(classes)) for j in range((classes))]
@@ -81,8 +78,7 @@ def show_confusion_matrix(work_dir, classes, confusion_matrix):
     plt.ylabel('True label', fontsize=16)
     plt.xlabel('Predict label', fontsize=16)
     plt.tight_layout()
-    plt.savefig(work_dir+'./confusion_matrix.jpg', dpi=300)
-    #plt.show()
+    plt.savefig(work_dir+'./verification_confusion_matrix.jpg', dpi=1000)
 
 
 # 准确率
@@ -96,7 +92,7 @@ def show_acc(data):
 def show_loss(data):
     x = np.arange(len(data))
     plt.plot(x, data)
-    plt.savefig('./result/loss.jpg', dpi=300)
+    plt.savefig('./result/loss.jpg', dpi=1000)
     plt.show()
 
 

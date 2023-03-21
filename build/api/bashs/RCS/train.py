@@ -1,86 +1,44 @@
 # encoding: utf-8
-from gc import callbacks
 import os
-import csv
-import argparse
-import matplotlib
+import re
+import sys
 import numpy as np
 import scipy.io as sio
 import tensorflow as tf
-import matplotlib.pyplot as plt
-import argparse
-import shutil
-# import keras as K
-# from tensorflow import keras as K
-import re
 from functools import reduce
-from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
+import matplotlib.pyplot as plt
 from matplotlib import rcParams
-# from datetime import datetime
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import classification_report
-import sys
+from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
+import shutil
+import argparse
 
 sys.path.append("..")
 sys.path.extend([os.path.join(root, name) for root, dirs, _ in os.walk("../") for name in dirs])
 plt.rcParams['font.sans-serif'] = ['SimHei']
 
-
 parser = argparse.ArgumentParser(description='Train a detector')
-parser.add_argument('--data_dir', help='the directory of the training data', default="./db/datasets/local_dir/HRRP_simulate_128xN_c6")
-parser.add_argument('--time', help='the directory of the training data',default="2022-09-21-21-52-17")
-parser.add_argument('--work_dir', help='the directory of the trainingLogs',default="./db/trainLogs")
-parser.add_argument('--model_name', help='the Name of the model',default="model")
+parser.add_argument('--data_dir', help='the directory of the training data',default="db/datasets/local_dir/基于RCS数据的Resnet50网络")
 parser.add_argument('--batch_size', help='the number of batch size',default=32)
-parser.add_argument('--max_epochs', help='the number of epochs',default=4)
-parser.add_argument('--net', help="network frame", default="DenseNet121")
-parser.add_argument('--modeldir', help="model saved path", default="../db/models")
+parser.add_argument('--max_epochs', help='the number of epochs',default=1)
 parser.add_argument('--class_number', help="class_number", default="6")
+parser.add_argument('--windows_length', help="windows_length", default=32)
+parser.add_argument('--windows_step', help="windows_step", default=10)
 args = parser.parse_args()
 
+# 归一化
+def trans_norm(data):
+    data_trans = list(map(list, zip(*data)))
+    scaler = MinMaxScaler()
+    data_norm = scaler.fit_transform(np.array(data_trans))
+    trans_data = np.array(list(map(list, zip(*data_norm))))
 
-
-# 数据归一化
-def data_normalization(data):
-    DATA = []
-    for i in range(0, len(data)):
-        data_max = max(data[i])
-        data_min = min(data[i])
-        data_norm = []
-        for j in range(0, len(data[i])):
-            data_one = (data[i][j] - data_min) / (data_max - data_min)
-            data_norm.append(data_one)
-        DATA.append(data_norm)
-    DATA = np.array(DATA)
-    return DATA
+    return trans_data
 
 
 # 从工程文件路径中制作训练集、验证集、测试集
-def read_project(read_path):
-    # 读取路径下所有文件夹的名称并保存
-    folder_path = read_path # 所有文件夹所在路径
-    file_name = os.listdir(folder_path)  # 读取所有文件夹，将文件夹名存在列表中
-    folder_name = []
-    for i in range(0, len(file_name)):
-        # 判断文件夹与文件
-        if os.path.isdir(folder_path+'/'+file_name[i]):
-            folder_name.append(file_name[i])
-    folder_name.sort()  # 按文件夹名进行排序
-
-    for i in range(0, len(folder_name)):
-        if folder_name[i].casefold() == 'train':
-            train_path = read_path + '/train/'
-            train_data, train_label, train_classname = read_mat(train_path)
-        if folder_name[i].casefold() == 'val':
-            val_path = read_path + '/val/'
-            val_data, val_label, val_classname = read_mat(val_path)
-    if len(train_classname) != len(val_classname):
-        print('训练集类别数与验证集类别数不一致！！！')
-    
-    return train_data, train_label, val_data, val_label, train_classname
-
-
-# 从.mat文件读取数据并预处理
-def read_mat(read_path):
+def read_project(read_path, windows_length, windows_step):
     # 读取路径下所有文件夹的名称并保存
     folder_path = read_path  # 所有文件夹所在路径
     file_name = os.listdir(folder_path)  # 读取所有文件夹，将文件夹名存在列表中
@@ -90,10 +48,35 @@ def read_mat(read_path):
         if os.path.isdir(folder_path+'/'+file_name[i]):
             folder_name.append(file_name[i])
     folder_name.sort()  # 按文件夹名进行排序
-    # 如果文件夹名字出现'DT',则DT排第一
-    if 'DT' in folder_name:
-        folder_name.remove('DT')
-        folder_name.insert(0, 'DT')
+    for i in range(0, len(folder_name)):
+        if folder_name[i].casefold() == 'train':
+            train_path = read_path + '/train/'
+            train_data, train_label, train_classname = read_mat(train_path, windows_length, windows_step)
+        if folder_name[i].casefold() == 'val':
+            val_path = read_path + '/val/'
+            val_data, val_label, val_classname = read_mat(val_path, windows_length, windows_step)
+    if len(train_classname) != len(val_classname):
+        print('训练集类别数与验证集类别数不一致！！！')
+    
+    return train_data, train_label, val_data, val_label, train_classname
+
+
+# 从.mat文件读取数据并预处理
+def read_mat(read_path, windows_length, windows_step):
+    # 读取路径下所有文件夹的名称并保存
+    folder_path = read_path  # 所有文件夹所在路径
+    file_name = os.listdir(folder_path)  # 读取所有文件夹，将文件夹名存在列表中
+    folder_name = []
+    for i in range(0, len(file_name)):
+        # 判断文件夹与文件
+        if os.path.isdir(folder_path+'/'+file_name[i]):
+            folder_name.append(file_name[i])
+    folder_name.sort()  # 按文件夹名进行排序
+
+    # 将指定类别放到首位
+    for i in range(0, len(folder_name)):
+        if folder_name[i] == 'DT':
+            folder_name.insert(0, folder_name.pop(i))
     args.class_number=len(folder_name)
     # 读取单个文件夹下的内容
     for i in range(0, len(folder_name)):
@@ -101,25 +84,27 @@ def read_mat(read_path):
         for j in range(0, len(class_mat_name)):
             one_mat_path = folder_path + '/' + folder_name[i] + '/' + class_mat_name[j]
             one_mat_data = sio.loadmat(one_mat_path)
-            one_mat_data = one_mat_data[list(one_mat_data.keys())[-1]].T
+            one_mat_data = one_mat_data[list(one_mat_data.keys())[-1]]
+            one_mat_data_norm = trans_norm(one_mat_data)
+            one_mat_data_norm = np.squeeze(one_mat_data_norm)
+            one_mat_data_win = RCS_windows_cut(one_mat_data_norm, windows_length, windows_step)
             if j == 0:
-                all_mat_data = one_mat_data
+                all_mat_data_win = one_mat_data_win
             else:
-                all_mat_data = np.concatenate((all_mat_data, one_mat_data))
-        
+                all_mat_data_win = np.concatenate((all_mat_data_win, one_mat_data_win))
+        rcs_pic = all_mat_data_win
+
         class_data_picture = []
-        class_data_normalization = data_normalization(all_mat_data)  # 归一化处理
-        for j in range(0, len(class_data_normalization)):
-            class_data_one = class_data_normalization[j]
+        for j in range(0, len(rcs_pic)):
+            class_data_one = rcs_pic[j]
             empty = np.zeros((len(class_data_one), 64))
-            # empty = np.zeros((64, len(class_data_one)))
             for k in range(0, len(class_data_one)):
                 empty[k, :] = class_data_one[k]
             class_data_picture.append(empty)
-        class_data_picture = np.array(class_data_picture)   # 列表转换为数组
+        class_data_picture = np.array(class_data_picture)  # 列表转换为数组
 
         # 设置标签
-        label = np.zeros((len(class_data_normalization), len(folder_name)))
+        label = np.zeros((len(class_data_picture), len(folder_name)))
         label[:, i] = 1
 
         if i == 0:
@@ -131,30 +116,17 @@ def read_mat(read_path):
     return all_class_data, all_label, folder_name
 
 
-# 读取未知类别
-def read_unkown_test_mat(unkown_test_mat_path):
-    folder_path = unkown_test_mat_path
-    file_name = os.listdir(folder_path)
-    unkown_data = {}
-    for i in range(0, len(file_name)):
-        one_unkown_mat_path = folder_path + '/' + file_name[i]
-        one_unkown_mat_data = sio.loadmat(one_unkown_mat_path)
-        one_unkown_mat_data = one_unkown_mat_data[list(one_unkown_mat_data.keys())[-1]].T
-
-        one_unkown_data = []
-        one_unkown_mat_data_norm = data_normalization(one_unkown_mat_data)  # 归一化处理
-        for j in range(0, len(one_unkown_mat_data_norm)):
-            unknown_data_one = one_unkown_mat_data_norm[j]
-            empty = np.zeros((len(unknown_data_one), 64))
-            for k in range(0, len(unknown_data_one)):
-                empty[k, :] = unknown_data_one[k]
-            one_unkown_data.append(empty)
-        one_unkown_data = np.array(one_unkown_data)
-
-        matrix_base = os.path.basename(one_unkown_mat_path)
-        matrix_name = os.path.splitext(matrix_base)[0]  # 获取去除扩展名的.mat文件名称
-        unkown_data[matrix_name] = one_unkown_data
-    return unkown_data
+# 滑窗截取RCS数据
+def RCS_windows_cut(RCS_data, windows_length, windows_step):
+    data_num = len(RCS_data)
+    windows_num = int((data_num-windows_length)/windows_step)
+    RCS_picture = []
+    win_start = 0  # 滑窗截取开始位置
+    for i in range(0, windows_num):
+        rcs_pic = RCS_data[win_start:(windows_length+win_start)]
+        win_start += windows_step
+        RCS_picture.append(rcs_pic)
+    return np.array(RCS_picture)
 
 
 # 特征矩阵存储
@@ -211,7 +183,6 @@ def show_confusion_matrix(classes, confusion_matrix, work_dir):
     plt.xlabel('Predict label', fontsize=16)
     plt.tight_layout()
     plt.savefig(work_dir+'/verification_confusion_matrix.jpg', dpi=1000)
-    # plt.show()
 
 
 # 训练过程中准确率曲线
@@ -257,45 +228,40 @@ def run_main(x_train, y_train, x_val, y_val, class_num, folder_name, work_dir, m
     y_val = y_val[val_shuffle, :]
 
     model = tf.keras.models.Sequential()
-    if (args.net == "DenseNet121"):
-        model.add(tf.keras.applications.densenet.DenseNet121(include_top=True, weights=None, input_tensor=None, input_shape=(x_train.shape[1], x_train.shape[2], 1),pooling=None, classes=class_num))
-    elif (args.net == "EfficientNetB0"):
-        model.add(tf.keras.applications.efficientnet.EfficientNetB0(include_top=True, weights=None, input_tensor=None, input_shape=(x_train.shape[1], x_train.shape[2], 1),pooling=None, classes=class_num))
-    elif (args.net == "ResNet50V2"):
-        model.add(tf.keras.applications.resnet_v2.ResNet50V2(include_top=True, weights=None, input_tensor=None, input_shape=(x_train.shape[1], x_train.shape[2], 1),pooling=None, classes=class_num))
-    elif (args.net == "ResNet101"):
-        model.add(tf.keras.applications.resnet.ResNet101(include_top=True, weights=None, input_tensor=None, input_shape=(x_train.shape[1], x_train.shape[2], 1),pooling=None, classes=class_num))
-    elif (args.net == "MobileNet"):
-        model.add(tf.keras.applications.mobilenet.MobileNet(include_top=True, weights=None, input_tensor=None, input_shape=(x_train.shape[1], x_train.shape[2], 1),pooling=None, classes=class_num))
+    if (model_name == "DenseNet121"):
+        model.add(tf.keras.applications.densenet.DenseNet121(include_top=True, weights=None, input_tensor=None, input_shape=(x_train.shape[1], x_train.shape[2], 1), pooling=None, classes=class_num))
+    elif (model_name == "EfficientNetB0"):
+        model.add(tf.keras.applications.efficientnet.EfficientNetB0(include_top=True, weights=None, input_tensor=None, input_shape=(x_train.shape[1], x_train.shape[2], 1), pooling=None, classes=class_num))
+    elif (model_name == "ResNet50V2"):
+        model.add(tf.keras.applications.resnet_v2.ResNet50V2(include_top=True, weights=None, input_tensor=None, input_shape=(x_train.shape[1], x_train.shape[2], 1), pooling=None, classes=class_num))
+    elif (model_name == "ResNet101"):
+        model.add(tf.keras.applications.resnet.ResNet101(include_top=True, weights=None, input_tensor=None, input_shape=(x_train.shape[1], x_train.shape[2], 1), pooling=None, classes=class_num))
+    elif (model_name == "MobileNet"):
+        model.add(tf.keras.applications.mobilenet.MobileNet(include_top=True, weights=None, input_tensor=None, input_shape=(x_train.shape[1], x_train.shape[2], 1), pooling=None, classes=class_num))
     
     model.compile(loss='categorical_crossentropy', optimizer='RMSprop', metrics=['accuracy'])
     learning_rate_reduction = tf.keras.callbacks.ReduceLROnPlateau(monitor='lr', patience=10, verbose=1, factor=0.99, min_lr=0.00001)
 
-    checkpoint = tf.keras.callbacks.ModelCheckpoint(work_dir+'/model/'+model_naming+'.hdf5', monitor='val_accuracy', verbose=1, save_best_only=True, mode='max')
+    checkpoint = tf.keras.callbacks.ModelCheckpoint(work_dir+'/'+model_naming+'.hdf5', monitor='val_accuracy', verbose=1, save_best_only=True, mode='max')
     callbacks_list = [checkpoint, learning_rate_reduction]
-    h = model.fit(x_train, y_train, batch_size=args.batch_size, epochs=args.max_epochs, shuffle=False,
+    h = model.fit(x_train, y_train, batch_size=batch_size, epochs=max_epochs, shuffle=False,
               validation_data=(x_val, y_val), callbacks=callbacks_list, verbose=2, validation_freq=1)
     h_parameter = h.history
-    train_acc(args.max_epochs, h_parameter['accuracy'], work_dir)
+    train_acc(max_epochs, h_parameter['accuracy'], work_dir)
     val_acc(h_parameter['val_accuracy'], work_dir)
-    save_model = tf.keras.models.load_model(work_dir+'/model/'+ model_naming+'.hdf5')
+    save_model = tf.keras.models.load_model(work_dir+'/'+model_naming+'.hdf5')
     Y_val = np.argmax(y_val, axis=1)
     y_pred = np.argmax(save_model.predict(x_val), axis=1)
     labels = folder_name
+
+    args.valAcc=round(max(h_parameter['val_accuracy'])*100,2)
+
     characteristic_matrix, accuracy_every_class = storage_characteristic_matrix(y_pred, Y_val, class_num)
     show_confusion_matrix(labels, characteristic_matrix, work_dir)
     classification_report_txt = open(work_dir+'/verification_classification_report.txt', 'w')
     classification_report_txt.write(classification_report(Y_val, y_pred, digits=4))
     classification_report_txt.close()
     print(classification_report(Y_val, y_pred, digits=4))
-
-
-    # shutil.copy(args.work_dir+"/"+args.model_name+".trt",os.path.join(project_path,model_naming+'.trt'))
-    shutil.copy(args.work_dir+"/model/"+model_naming+".hdf5",os.path.join(project_path,model_naming+'.hdf5'))
-    shutil.copy(args.work_dir+"/"+"verification_confusion_matrix.jpg",os.path.join(project_path,'verification_confusion_matrix.jpg'))
-    shutil.copy(args.work_dir+"/"+"training_accuracy.jpg",os.path.join(project_path,'training_accuracy.jpg'))
-    shutil.copy(args.work_dir+"/"+"verification_accuracy.jpg",os.path.join(project_path,'verification_accuracy.jpg'))
-
 
 
 def convert_h5to_pb(h5Path, pbPath):
@@ -351,60 +317,55 @@ def convert_hdf5_to_trt(model_type, work_dir, model_naming, abfcmode_Idx, worksp
     except Exception as e:
         print(e)
 
-
-def generator_model_documents(model_name, net, valAcc, data_dir, classNum, modeldir, work_dir):
+def generator_model_documents(args):
     from xml.dom.minidom import Document
-    doc = Document()  # 创建DOM文档对象
-    root = doc.createElement('ModelInfo')  # 创建根元素
+    doc = Document()  #创建DOM文档对象
+    root = doc.createElement('ModelInfo') #创建根元素
     doc.appendChild(root)
     
     model_type = doc.createElement('TRA_DL')
-    # model_type.setAttribute('typeID','1')
+    #model_type.setAttribute('typeID','1')
     root.appendChild(model_type)
 
-    model_item = doc.createElement(model_name+'.trt')
-    # model_item.setAttribute('nameID','1')
+    model_item = doc.createElement(project_path+'.trt')
+    #model_item.setAttribute('nameID','1')
     model_type.appendChild(model_item)
 
     model_infos = {
-        'name': str(model_name),
-        'type': 'TRA_DL',
-        'algorithm': str(net),
-        'framework': 'keras',
-        'accuracy': str(valAcc),
-        'trainDataset': data_dir.split("/")[-1],
-        'trainEpoch': str(args.max_epochs),
-        'trainLR': '0.001',
-        'class': str(classNum),
-        'PATH': os.path.abspath(os.path.join(modeldir, model_name+'.trt')),
-        'batch': str(args.batch_size),
-        'note': '-'
+        'name':str(model_naming),
+        'type':'TRA_DL',
+        'algorithm':'DenseNet121',
+        'framework':'keras',
+        'accuracy':str(args.valAcc),
+        'trainDataset':args.data_dir.split("/")[-1],
+        'trainEpoch':str(args.max_epochs),
+        'trainLR':'0.001',
+        'class':str(args.class_number), 
+        'PATH':os.path.abspath(os.path.join(project_path,model_naming+'.trt')),
+        'batch':str(args.batch_size),
+        'note':'-'
     } 
 
     for key in model_infos.keys():
         info_item = doc.createElement(key)
-        info_text = doc.createTextNode(model_infos[key])  # 元素内容写入
+        info_text = doc.createTextNode(model_infos[key]) #元素内容写入
         info_item.appendChild(info_text)
         model_item.appendChild(info_item)
 
-    with open(os.path.join(modeldir, model_name+'.xml'), 'w') as f:
-        doc.writexml(f, indent='\t', newl='\n', addindent='\t', encoding='utf-8')
-
-    # shutil.copy(work_dir+"/" + model_name+".trt", os.path.join(modeldir, args.model_name+'.trt'))
-    shutil.copy(work_dir+"/model/" + model_name+".hdf5", os.path.join(modeldir, args.model_name+'.hdf5'))
-    shutil.copy(work_dir+"/"+"confusion_matrix.jpg", os.path.join(modeldir, 'confusion_matrix.jpg'))
-    shutil.copy(work_dir+"/"+"training_accuracy.jpg", os.path.join(modeldir, 'training_accuracy.jpg'))
-    shutil.copy(work_dir+"/"+"verification_accuracy.jpg", os.path.join(modeldir, 'verification_accuracy.jpg'))
+    with open(os.path.join(project_path,model_naming+'.xml'),'w',encoding='utf-8') as f:
+        doc.writexml(f,indent = '\t',newl = '\n', addindent = '\t',encoding='utf-8')
 
 
 # 保存参数
 def save_params():
-    params_txt = open(project_path+'/params_save.txt', 'w',encoding='utf-8')
+    params_txt = open(project_path+'/params_save.txt','w',encoding='utf-8')
     params_txt.write('project_path: ' + str(project_path) + '\n')
-    params_txt.write('model_name: ' + str(args.net) + '\n')
+    params_txt.write('model_name: ' + str(model_name) + '\n')
     params_txt.write('model_type: ' + str(model_type) + '\n')
-    params_txt.write('max_epochs: ' + str(args.max_epochs) + '\n')
-    params_txt.write('batch_size: ' + str(args.batch_size) + '\n')
+    params_txt.write('max_epochs: ' + str(max_epochs) + '\n')
+    params_txt.write('batch_size: ' + str(batch_size) + '\n')
+    params_txt.write('RCS_picture_length: ' + str(picture_length) + '\n')
+    params_txt.write('RCS_picture_step: ' + str(picture_step) + '\n')
     params_txt.write('model_naming: ' + str(model_naming) + '\n')
     params_txt.close()
 
@@ -412,28 +373,38 @@ def save_params():
 if __name__ == '__main__':
     # 超参数配置，包括训练集构成、测试集构成、模型文件、输出结果、网络类型等
     # 训练集数据
-    project_path = args.data_dir
-    # model_name = args.model_name  # 网络名称
+
+    project_path = args.data_dir  # 工程目录
+    # 分割路径，获取文件名
+    model_naming = project_path.split('/')[-1]
+    # 网络名字
+    lowProjectPath = model_naming.lower()
+    if 'densenet' in lowProjectPath:
+        model_name = 'DenseNet121'
+    elif 'resnet50' in lowProjectPath:
+        model_name = 'ResNet50V2'
+    elif 'resnet101' in lowProjectPath:
+        model_name = 'ResNet101'
+    elif 'mobilenet' in lowProjectPath:
+        model_name = 'MobileNet'
+    elif 'efficientnet' in lowProjectPath:
+        model_name = 'EfficientNetB0'
+    else:
+        assert False, '请在工程目录中包含Densenet、ResNet50、Resnet101、Mobilenet、Efficientnet中的一个'
+
     model_type = 'HRRP'  # 网络类型
-    path_model = project_path.split('/')[-1]  # 模型文件夹名称
-    model_naming = path_model + '_' + args.net + '_' + args.model_name  # 模型命名
-    datasetName = args.data_dir.split("/")[-1]
-    
-    args.work_dir = args.work_dir+'/'+args.time+'-'+datasetName+'-'+args.model_name
-    if not os.path.exists(args.work_dir):
-        os.makedirs(args.work_dir)
-        os.makedirs(args.work_dir + '/model')
-    args.modeldir = args.modeldir+'/'+args.model_name
-    if not os.path.exists(args.modeldir):
-        os.makedirs(args.modeldir)
-    # model_naming = '基于HRRP的经典神经网络_ResNet50V2_Model_c3'  # 模型命名
+    max_epochs = args.max_epochs  # 训练轮数
+    batch_size = args.batch_size  # 批处理数量
+    picture_length = args.windows_length  # RCS滑窗长度
+    picture_step = args.windows_step  # RCS滑窗步长
+
     save_params()
-    x_train, y_train, x_val, y_val, folder_name = read_project(project_path)
+    x_train, y_train, x_val, y_val, folder_name = read_project(project_path, picture_length, picture_step)
     class_num = len(folder_name)
 
-    run_main(x_train, y_train, x_val, y_val, class_num, folder_name, args.work_dir, args.model_name)
+    run_main(x_train, y_train, x_val, y_val, class_num, folder_name, project_path, model_name)
     h5Path = project_path + '/' + model_naming + '.hdf5'
     pbPath = project_path + '/' + model_naming + '.pb'
-    convert_hdf5_to_trt(model_type, project_path, model_naming, '1')
+    
+    # convert_hdf5_to_trt(model_type, project_path, model_naming, '1')
     print("Train Ended:")
-
