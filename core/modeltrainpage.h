@@ -5,6 +5,9 @@
 #include <QObject>
 #include <QMessageBox>
 #include <QFileDialog>
+#include <QGraphicsScene>
+#include <QGraphicsView>
+#include "./lib/guiLogic/customWidget/imagewidget.h"
 #include <windows.h>
 #include <mat.h>
 #include "ui_MainWindow.h"
@@ -26,10 +29,13 @@ public:
     BashTerminal *train_terminal;
 
     QString choicedDatasetPATH;
+    QString projectPath;
     QProcess *processTrain;
     std::vector<std::string> modelTypes={"HRRP","AFS","FewShot"};
     std::string modelType = "";
     std::string modelName = "";
+    std::string dataType = "";
+
     QString cmd="";
     QString time = "";
     QString batchSize = "";
@@ -68,9 +74,9 @@ public slots:
 
 
 private:
-//    QString dataDir;
-//    int batchSize;
-//    int maxEpoch;
+    // 缩放图像组件
+    std::map<QGraphicsView*, ImageWidget*> all_Images;     // 防止内存泄露
+    void recvShowPicSignal(QPixmap image, QGraphicsView* graphicsView);
 
 };
 

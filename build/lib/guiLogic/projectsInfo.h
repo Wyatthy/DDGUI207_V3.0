@@ -31,12 +31,12 @@ public:
     //当前活动工程的Type和Name,在Dock中被赋值
     std::string pathOfSelectedProject = "";
     std::string dataTypeOfSelectedProject;      //HRRP\RCS\FEATURE\IAMGE
-    std::string modelTypeOfSelectedProject;     //Trad\Baseline\ATEC\ABFC\MsmcNet\CIL
-    std::string modelNameOfSelectedProject;     //12种
+    std::string modelTypeOfSelectedProject;     //ATEC\ABFC\OPTI_CAM\OPTI\CIL\BASE\TRAD
+    std::string modelNameOfSelectedProject;
     std::string nameOfSelectedProject;
 
     //测试用的数据集类型
-    QString typeOfSelectedDataset = ""; //SenseSetPage::confirmDataset
+    QString typeOfSelectedDataset = ""; //train\test\val\unknown_test    SenseSetPage::confirmDataset
     //TODO 下面变量在哪里被赋值要写上
     std::string pathOfSelectedDataset;//projectDockShot、SenseSetPage::confirmDataset
     std::string pathOfSelectedModel_forInfer;   //projectDockShot

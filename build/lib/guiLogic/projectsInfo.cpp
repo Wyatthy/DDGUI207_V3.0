@@ -108,16 +108,19 @@ int ProjectsInfo::addProjectFromXML(string xmlPath){
 
     TiXmlElement *RootElement = projectInfoDoc.RootElement();	//根元素, Info
 
-    //遍历Type结点
+    //遍历dataType结点
     for(TiXmlElement *currTypeEle = RootElement->FirstChildElement(); currTypeEle != NULL; currTypeEle = currTypeEle->NextSiblingElement()){
-
+        auto asdf=currTypeEle->Value();
+        qDebug()<<"(ProjectsInfo::addProjectFromXML) currTypeEle->value()="<<asdf;
         // 遍历节点属性
         TiXmlAttribute *pAttr=currTypeEle->FirstAttribute();
         while( NULL != pAttr){
             pAttr=pAttr->Next();
         }
-        //遍历Name节点
+        //遍历projectName节点
         for(TiXmlElement *currNameEle=currTypeEle->FirstChildElement(); currNameEle != NULL; currNameEle=currNameEle->NextSiblingElement()){
+            auto asdf2=currNameEle->Value();
+            qDebug()<<"(ProjectsInfo::addProjectFromXML) currTypeEle->value()="<<asdf2;
             map<string,string> datasetAttrMap;
             // 遍历节点属性
             TiXmlAttribute *pAttr=currNameEle->FirstAttribute();

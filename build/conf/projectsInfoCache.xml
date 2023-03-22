@@ -1,34 +1,35 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <globalProjectInfo datasetTypeNum="4">
-    <FEATURE typeID="1" />
+    <FEATURE typeID="1">
+        <基于特征数据的ABFC网络 nameID="1">
+            <Project_Path>N:/207/GUI207_V3.0/db/projects/基于特征数据的ABFC网络</Project_Path>
+        </基于特征数据的ABFC网络>
+    </FEATURE>
     <HRRP typeID="2">
-        <HRRP_Densenet121 nameID="1">
-            <Dataset_AzimuthAngle>5</Dataset_AzimuthAngle>
-            <Dataset_Freq>5</Dataset_Freq>
-            <Dataset_IncidentMode>5</Dataset_IncidentMode>
-            <Dataset_Name>modulation</Dataset_Name>
-            <Dataset_Note>test</Dataset_Note>
-            <Dataset_Path>null</Dataset_Path>
-            <Dataset_PitchAngle>5</Dataset_PitchAngle>
-            <Dataset_SamplingNum>5</Dataset_SamplingNum>
-            <Dataset_TargetNum>6</Dataset_TargetNum>
-            <Dataset_TargetNumEachCla>200</Dataset_TargetNumEachCla>
-            <Model_AccuracyOnTest>98</Model_AccuracyOnTest>
-            <Model_AccuracyOnTrain>99</Model_AccuracyOnTrain>
-            <Model_Algorithm>densenet121</Model_Algorithm>
-            <Model_Framework>keras</Model_Framework>
-            <Model_Name>Hrrpdensenet</Model_Name>
-            <Model_Path>keras</Model_Path>
-            <Model_TrainDataset>keras</Model_TrainDataset>
-            <Model_TrainEpoch>keras</Model_TrainEpoch>
-            <Model_TrainLR>keras</Model_TrainLR>
-            <Model_Visualize>yes</Model_Visualize>
-            <Project_Path>N:/207/GUI207_V3.0/db/projects/HRRP_Densenet121</Project_Path>
-        </HRRP_Densenet121>
-        <HRRP数据格式 nameID="2">
-            <Project_Path>N:/207/GUI207_V3.0/db/projects/HRRP数据格式</Project_Path>
-        </HRRP数据格式>
+        <基于HRRP数据的ABFC网络 nameID="2">
+            <Project_Path>N:/207/GUI207_V3.0/db/projects/基于HRRP数据的ABFC网络</Project_Path>
+        </基于HRRP数据的ABFC网络>
+        <基于HRRP数据的ATEC网络 nameID="3">
+            <Project_Path>N:/207/GUI207_V3.0/db/projects/基于HRRP数据的ATEC网络</Project_Path>
+        </基于HRRP数据的ATEC网络>
+        <基于HRRP数据的Baseline_CNN网络 nameID="4">
+            <Project_Path>N:/207/GUI207_V3.0/db/projects/基于HRRP数据的Baseline_CNN网络</Project_Path>
+        </基于HRRP数据的Baseline_CNN网络>
+        <基于HRRP数据的Densenet网络 nameID="5">
+            <Project_Path>N:/207/GUI207_V3.0/db/projects/基于HRRP数据的Densenet网络</Project_Path>
+        </基于HRRP数据的Densenet网络>
+        <基于HRRP数据的Resnet50网络 nameID="6">
+            <Project_Path>N:/207/GUI207_V3.0/db/projects/基于HRRP数据的Resnet50网络</Project_Path>
+        </基于HRRP数据的Resnet50网络>
     </HRRP>
-    <IMAGE typeID="3" />
-    <RCS typeID="4" />
+    <IMAGE typeID="3">
+        <基于历程图数据的Resnet101网络 nameID="7">
+            <Project_Path>N:/207/GUI207_V3.0/db/projects/基于历程图数据的Resnet101网络</Project_Path>
+        </基于历程图数据的Resnet101网络>
+    </IMAGE>
+    <RCS typeID="4">
+        <基于RCS数据的Efficientnet网络 nameID="8">
+            <Project_Path>N:/207/GUI207_V3.0/db/projects/基于RCS数据的Efficientnet网络</Project_Path>
+        </基于RCS数据的Efficientnet网络>
+    </RCS>
 </globalProjectInfo>

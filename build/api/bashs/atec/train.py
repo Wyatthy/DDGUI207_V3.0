@@ -18,9 +18,9 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Train a detector')
 parser.add_argument('--data_dir', help='the directory of the training data',default="db/datasets/local_dir/基于HRRP数据的ATEC网络")
-parser.add_argument('--batch_size', help='the number of batch size',default=32)
-parser.add_argument('--max_epochs', help='the number of epochs',default=1)
-parser.add_argument('--class_number', help="class_number", default="6")
+parser.add_argument('--batch_size', type=int, help='the number of batch size',default=32)
+parser.add_argument('--max_epochs', type=int, help='the number of epochs',default=1)
+parser.add_argument('--class_number', type=int, help="class_number", default="6")
 args = parser.parse_args()
 
 # 数据归一化
@@ -128,7 +128,7 @@ def data_save(data, folder_file_name, file_class_num, work_dir, feature_folder_n
             save_mat_path = work_dir + '/feature_save/' + feature_folder_name + '/' + mat_folder_name[i] + '/'
             if not os.path.exists(save_mat_path):
                 os.makedirs(save_mat_path)
-            sio.savemat(save_mat_path+folder_file_name[mat_folder_name[i]][j], mdict={'data': one_data})
+            sio.savemat(save_mat_path+folder_file_name[mat_folder_name[i]][j], mdict={'data': one_data.T})
 
 
 # 训练过程中准确率曲线
@@ -284,10 +284,10 @@ def convert_hdf5_to_trt(model_type, work_dir, model_naming, abfcmode_Idx, worksp
     try:
         inputNodeName, outputNodeName, inputShape = convert_h5to_pb(hdfPath, pbPath)
         # pb converto onnx
-        '''python -m tf2onnx.convert  --input temp.pb --inputs Input:0 --outputs Identity:0 --output temp.onnx --opset 11'''
-        os.system("python -m tf2onnx.convert  --input "+pbPath+" --inputs "+inputNodeName+":0 --outputs "+outputNodeName+":0 --output "+oxPath+" --opset 11")
+        '''python -m tf2onnx.convert --input temp.pb --inputs Input:0 --outputs Identity:0 --output temp.onnx --opset 11'''
+        os.system("python -m tf2onnx.convert --input "+pbPath+" --inputs "+inputNodeName+":0 --outputs "+outputNodeName+":0 --output "+oxPath+" --opset 11")
         # onnx converto trt
-        '''trtexec --explicitBatch --workspace=3072  --minShapes=Input:0:1x128x64x1 --optShapes=Input:0:20x128x64x1 --maxShapes=Input:0:100x128x64x1 --onnx=temp.onnx --saveEngine=temp.trt --fp16'''
+        '''trtexec --explicitBatch --workspace=3072 --minShapes=Input:0:1x128x64x1 --optShapes=Input:0:20x128x64x1 --maxShapes=Input:0:100x128x64x1 --onnx=temp.onnx --saveEngine=temp.trt --fp16'''
         os.system("trtexec --onnx="+oxPath+" --saveEngine="+trtPath+" --workspace="+workspace+" --minShapes=Input:0:1x"+inputShape+\
         " --optShapes=Input:0:"+optBatch+"x"+inputShape+" --maxShapes=Input:0:"+maxBatch+"x"+str(inputShape)+" --fp16")
     except Exception as e:
@@ -308,18 +308,18 @@ def generator_model_documents(args):
     model_type.appendChild(model_item)
 
     model_infos = {
-        'name':str(model_naming),
-        'type':'FEA_RELE',
-        'algorithm':'ATEC',
-        'framework':'keras',
-        'accuracy':str(args.valAcc),
-        'trainDataset':project_path.split("/")[-1],
-        'trainEpoch':str(args.max_epochs),
-        'trainLR':'0.001',
-        'class':str(args.class_number), 
-        'PATH':os.path.abspath(os.path.join(project_path,model_naming+'.trt')),
-        'batch':str(args.batch_size),
-        'note':'-'
+        'Model_Name':str(model_naming),
+        'Model_Algorithm':'ATEC',
+        'Model_AccuracyOnTrain':'-',
+        'Model_AccuracyOnVal':str(args.valAcc),
+        'Model_Framework':'Keras',
+        'Model_TrainDataset':args.data_dir.split("/")[-1],
+        'Model_TrainEpoch':str(args.max_epochs),
+        'Model_TrainLR':'0.001',
+        'Model_NumClassCategories':str(args.class_number), 
+        'Model_Path':os.path.abspath(os.path.join(project_path,model_naming+'.trt')),
+        'Model_TrainBatchSize':str(args.batch_size),
+        'Model_Note':'-'
     } 
 
     for key in model_infos.keys():
@@ -363,6 +363,6 @@ if __name__ == '__main__':
     train_x, train_y, val_x, val_y, folder_name, folder_file_name, file_class_num = read_project(project_path)
     inference(train_x, train_y, val_x, val_y, batch_size, max_epochs, folder_name, project_path)
 
-    # convert_hdf5_to_trt(model_name, project_path, model_naming, '1')
+    convert_hdf5_to_trt(model_name, project_path, model_naming, '1')
     generator_model_documents(args)
     print("Train Ended:")

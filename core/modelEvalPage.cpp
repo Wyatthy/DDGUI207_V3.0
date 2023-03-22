@@ -35,9 +35,9 @@ ModelEvalPage::ModelEvalPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal
     processSampleInfer = new QProcess();
     connect(processSampleInfer, &QProcess::readyReadStandardOutput, this, &ModelEvalPage::processSampleInferFinished);
 
-    //cmd调用python做优化模型的推理
-    this->condaEnvName = "PT";
-    this->pythonApiPath = "./lib/algorithm/optimizeInfer/optimizeInfer.py";
+    // //cmd调用python做优化模型的推理
+    // this->condaEnvName = "PT";
+    // this->pythonApiPath = "./lib/algorithm/optimizeInfer/optimizeInfer.py";
 
     //混淆矩阵模块的py嵌入
     Py_SetPythonHome(L"D:/win_anaconda");
@@ -106,8 +106,8 @@ void ModelEvalPage::refreshGlobalInfo(){
         choicedDatasetPATH = projectsInfo->pathOfSelectedDataset;
         choicedModelPATH = projectsInfo->pathOfSelectedModel_forInfer;
         //TODO 
-        this->choicedClass = "NULL";
-        this->choicedFileInClass = "NULL";
+        this->choicedClass = "";
+        this->choicedFileInClass = "";
         ui->comboBox_chosFile->clear();
         // ui->comboBox_sampleType->clear();
     }
@@ -137,14 +137,11 @@ void ModelEvalPage::takeSample(){
         mxArray* pMxArray = NULL;
         pMatFile = matOpen(matFilePath.toStdString().c_str(), "r");
         if(!pMatFile){qDebug()<<"(ModelEvnameOfMatFilealPage::takeSample)文件指针空！！！！！！";return;}
-        std::string matVariable=nameOfMatFile.substr(0,nameOfMatFile.find_last_of('.')).c_str();//假设数据变量名同文件名的话
-
-        QString chartTitle="Temporary Title";
-        if(projectsInfo->dataTypeOfSelectedProject=="HRRP") {chartTitle="HRRP(Ephi),Polarization HP(1)[Magnitude in dB]";}// matVariable="hrrp128";}
-        else if (projectsInfo->dataTypeOfSelectedProject=="RADIO") {chartTitle="RADIO Temporary Title";}// matVariable="radio101";}
-
-        pMxArray = matGetVariable(pMatFile,matVariable.c_str());
-        if(!pMxArray){qDebug()<<"(ModelEvalPage::takeSample)pMxArray变量没找到！！！！！！";return;}
+        pMxArray = matGetNextVariable(pMatFile, NULL);
+        if(!pMxArray){
+            qDebug()<<"(Chart::readHRRPmat)pMxArray变量没找到！！！！！！";
+            return;
+        }
         int N = mxGetN(pMxArray);  //N 列数
         examIdx = examIdx>N?N-1:examIdx;
 
@@ -186,9 +183,9 @@ void removeLayout(QLayout *layout){
 
 void  ModelEvalPage::testOneSample(){
     struct stat buffer; 
-    int modelfileExist=(stat (choicedModelPATH.c_str(), &buffer) == 0);
+    bool modelfileExist = std::filesystem::exists(std::filesystem::u8path(this->choicedModelPATH));
     QString modelFormat=QString::fromStdString(choicedModelPATH).split('.').last();
-    if(!choicedModelPATH.empty() && !choicedSamplePATH.empty()&& (modelfileExist==1)){
+    if(choicedModelPATH!="" && choicedSamplePATH!="" && modelfileExist){
         std::cout<<"(ModelEvalPage::testOneSample)choicedSamplePATH"<<choicedSamplePATH<<endl;
         std::vector<float> degrees; int predIdx;
         //classnum==(datasetInfo->selectedClassNames.size())
@@ -203,7 +200,7 @@ void  ModelEvalPage::testOneSample(){
             dataProcess=false;
             flag="RCS_";
         }
-        if(projectsInfo->modelTypeOfSelectedProject=="FEA_OPTI"){   
+        if(projectsInfo->modelTypeOfSelectedProject=="OPTI" || projectsInfo->modelTypeOfSelectedProject=="OPTI_CAM"){   
             if(modelFormat!="pth"){
                 QMessageBox::warning(NULL, "提示", "优化模型文件需为.pth模型!");
                 return;
@@ -266,132 +263,188 @@ void  ModelEvalPage::testOneSample(){
 }
 
 void ModelEvalPage::testAllSample(){
-    // 获取批处理量
-    int inferBatch = ui->comboBox_inferBatchsize->currentText().toInt();
-    QString modelFormat=QString::fromStdString(choicedModelPATH).split('.').last();
-    qDebug()<<"(ModelEvalPage::testAllSample)batchsize=="<<inferBatch;
-    /*这里涉及到的全局变量有除了模型数据集路径，还有准确度和混淆矩阵*/
-    if(!choicedDatasetPATH.empty() && !choicedModelPATH.empty() ){
-        qDebug()<<"(ModelEvalPage::testAllSample)choicedDatasetPATH=="<<QString::fromStdString(choicedDatasetPATH);
-        qDebug()<<"(ModelEvalPage::testAllSample)choicedModelPATH=="<<QString::fromStdString(choicedModelPATH);
-        // QMessageBox::warning(NULL, "提示", "就先止步于此叭~");
-        // return;
-        qDebug()<<"(ModelEvalPage::testAllSample)dataTypeOfSelectedProject=="<<QString::fromStdString(projectsInfo->dataTypeOfSelectedProject);
-        qDebug()<<"(ModelEvalPage::testAllSample)modelTypeOfSelectedProject=="<<QString::fromStdString(projectsInfo->modelTypeOfSelectedProject);
+    if(choicedDatasetPATH.empty() || choicedModelPATH.empty() ){
+        QMessageBox::warning(NULL, "所有样本测试", "数据集或模型未指定！");
+        return;
+    }
 
-        float acc = 0.96;
-        int classNum=label2class.size();
-        std::vector<std::vector<int>> confusion_matrix(classNum, std::vector<int>(classNum, 0));
-        std::vector<std::vector<float>> degrees_matrix(classNum, std::vector<float>(0, 0));
-        // std::vector<std::vector<float>> degrees_matrix;
-        bool dataProcess=true;
-        std::string flag="";
-        //下面判断一些数据处理的情况
-        if(projectsInfo->dataTypeOfSelectedProject=="RCS") {
-            dataProcess=false;
-            flag="RCS_";
+    std::string modelType = projectsInfo->modelTypeOfSelectedProject;
+    std::string dataType = projectsInfo->dataTypeOfSelectedProject;
+    QString projectPath = QString::fromStdString(projectsInfo->pathOfSelectedProject);
+    QString windowsLength;
+    QString windowsStep;
+
+    int inferBatch = ui->comboBox_inferBatchsize->currentText().toInt();
+    QString modelFormat = QString::fromStdString(choicedModelPATH).split('.').last();
+
+    if(dataType == "RCS" || dataType == "IMAGE"){
+        windowsLength = QString::fromStdString(
+            projectsInfo->getAllAttri(dataType,projectsInfo->nameOfSelectedProject)["Model_WindowsLength"]);
+        windowsStep = QString::fromStdString(
+            projectsInfo->getAllAttri(dataType,projectsInfo->nameOfSelectedProject)["Model_WindowsStep"]);
+    }
+
+    //如果使用未知类别集测试,则调python测
+    if(projectsInfo->typeOfSelectedDataset == "unknown_test"){
+        QString command;
+        if(modelType=="OPTI" || modelType=="OPTI_CAM" || modelType == "CIL"){
+            QMessageBox::warning(NULL, "提示", "当前模型暂不支持未知类别测试");
+            return;
         }
-        else if(projectsInfo->dataTypeOfSelectedProject=="FEATURE") {
+        //下面根据各种凭据判断当前活动工程使用哪种模型测试,test内部会找工程文件夹下工程同名的模型
+        if(dataType == "RCS"){
+            command="activate tf24 && python ./api/bashs/RCS/unknown_test.py --data_dir "+projectPath+ \
+                " --windows_length "+ windowsLength+" --windows_step "+ windowsStep;
+        }
+        else if(dataType == "IMAGE"){
+            command="activate tf24 && python ./api/bashs/HRRP历程图/unknown_test.py --data_dir "+projectPath+ \
+                " --windows_length "+ windowsLength+" --windows_step "+ windowsStep;
+        }
+        else if(dataType == "FEATURE"){
+            command="activate tf24 && python ./api/bashs/ABFC/unknown_test.py --data_dir "+projectPath;
+        }
+        else if (dataType == "HRRP"){
+            if(modelType == "TRAD"){
+                command="activate tf24 && python ./api/bashs/HRRP_Tr/unknown_test.py --data_dir "+projectPath;
+            }else if(modelType == "BASE"){
+                command="activate tf24 && python ./api/bashs/baseline/unknown_test.py --data_dir "+projectPath;
+            }else if(modelType == "ATEC"){
+                command="activate tf24 && python ./api/bashs/ATEC/unknown_test.py --data_dir "+projectPath;
+            }else if(modelType == "ABFC"){
+                command="activate tf24 && python ./api/bashs/ABFC/unknown_test.py --data_dir "+projectPath;
+            }
+        }
+        this->terminal->print(command);
+        this->execuCmdProcess(processDatasetInfer, command);
+        return;
+    }
+
+    //如果是ABFC模型,则调python测
+    else if(modelType=="ABFC"){
+        if(dataType != "HRRP" && dataType != "FEATURE"){
+            QMessageBox::warning(NULL, "提示", "ABFC仅支持HRRP或特征数据");
+            return;
+        }
+        QString command="activate tf24 && python ./api/bashs/ABFC/test.py --data_dir "+projectPath;
+        this->terminal->print(command);
+        this->execuCmdProcess(processDatasetInfer, command);
+        return;
+    }
+
+    //如果是优化模型,则调python测
+    else if(modelType=="OPTI" || modelType=="OPTI_CAM"){
+        if(dataType != "HRRP"){
+            QMessageBox::warning(NULL, "提示", "优化模型仅支持HRRP数据");
+            return;
+        }
+        QString command = "conda activate PT && python ./lib/algorithm/optimizeInfer/optimizeInfer.py --choicedDatasetPATH="+ \
+            QString::fromStdString(choicedDatasetPATH)+ \
+            " --choicedModelPATH="          + QString::fromStdString(choicedModelPATH)+ \
+            " --inferMode=dataset";
+        this->terminal->print(command);
+        this->execuCmdProcess(processDatasetInfer, command);
+        return;
+    }
+
+    //下面调TensorRt测
+    qDebug()<<"(ModelEvalPage::testAllSample)choicedDatasetPATH=="<<QString::fromStdString(choicedDatasetPATH);
+    qDebug()<<"(ModelEvalPage::testAllSample)choicedModelPATH=="<<QString::fromStdString(choicedModelPATH);
+    qDebug()<<"(ModelEvalPage::testAllSample)dataTypeOfSelectedProject=="<<QString::fromStdString(dataType);
+    qDebug()<<"(ModelEvalPage::testAllSample)modelTypeOfSelectedProject=="<<QString::fromStdString(modelType);
+
+    float acc = 0.96;
+    int classNum = label2class.size();
+    std::vector<std::vector<int>> confusion_matrix(classNum, std::vector<int>(classNum, 0));
+    std::vector<std::vector<float>> degrees_matrix(classNum, std::vector<float>(0, 0));
+    bool dataProcess = true;
+    std::string flag = "";
+    //下面判断一些数据处理的情况
+    if(dataType== "RCS") {
+        dataProcess = false;
+        flag = "RCS_";
+    }
+    else if(dataType == "FEATURE") {
+        flag="ABFC";
+    }
+    else if(dataType == "ATEC") {
+        dataProcess=false;
+    }
+    else if(dataType == "CIL") dataProcess=false; //目前增量模型接受的数据是不做预处理的
+    if(dataType == "ABFC"){
+        std::string feaWeightTxtPath=choicedModelPATH.substr(0, choicedModelPATH.rfind("/"))+"/attention.txt";
+        if(this->dirTools->exist(feaWeightTxtPath)){//判断是abfc还是atec,依据就是有没有attention文件
+            int modelIdx=1,tempi=0;std::vector<int> dataOrder;std::string line;
+            std::ifstream infile(feaWeightTxtPath);
+            while (getline(infile, line)){//找到目标模型索引和特征顺序
+                if(++tempi==40){modelIdx=std::stoi(line);break;}
+                dataOrder.push_back(std::stoi(line));
+                //cout<<std::stoi(line)<<endl;
+            }infile.close();
+            trtInfer->setParmsOfABFC(modelIdx, dataOrder);
             flag="ABFC";
         }
-        else if(projectsInfo->dataTypeOfSelectedProject=="ATEC") {
-            dataProcess=false;
-        }
-        else if(projectsInfo->modelTypeOfSelectedProject=="CIL") dataProcess=false; //目前增量模型接受的数据是不做预处理的
-        if(projectsInfo->modelTypeOfSelectedProject=="ABFC"){
-            std::string feaWeightTxtPath=choicedModelPATH.substr(0, choicedModelPATH.rfind("/"))+"/attention.txt";
-            if(this->dirTools->exist(feaWeightTxtPath)){//判断是abfc还是atec,依据就是有没有attention文件
-                int modelIdx=1,tempi=0;std::vector<int> dataOrder;std::string line;
-                std::ifstream infile(feaWeightTxtPath);
-                while (getline(infile, line)){//找到目标模型索引和特征顺序
-                    if(++tempi==40){modelIdx=std::stoi(line);break;}
-                    dataOrder.push_back(std::stoi(line));
-                    //cout<<std::stoi(line)<<endl;
-                }infile.close();
-                trtInfer->setParmsOfABFC(modelIdx, dataOrder);
-                flag="ABFC";
-            }
-        }
-        if(projectsInfo->modelTypeOfSelectedProject=="FEA_OPTI"){
-            if(modelFormat!="pth"){
-                QMessageBox::warning(NULL, "提示", "优化模型文件需为.pth模型!");
-                return;
-            }
-            // 激活conda python环境
-            QString activateEnv = "conda activate "+this->condaEnvName+"&&";
-            QString command = activateEnv + "python " + this->pythonApiPath+ \
-                " --choicedDatasetPATH="        + QString::fromStdString(choicedDatasetPATH)+ \
-                " --choicedModelPATH="          + QString::fromStdString(choicedModelPATH)+ \
-                " --inferMode=dataset";
-            // 执行python脚本
-            this->terminal->print(command);
-            this->execuCmdProcess(processDatasetInfer, command);
-            return;
-        }
-        if(modelFormat!="trt"){
-            QMessageBox::warning(NULL, "提示", "模型文件需为.trt模型!");
-            return;
-        }
-        if(!trtInfer->testAllSample(choicedDatasetPATH,choicedModelPATH,inferBatch,dataProcess,acc,confusion_matrix,flag,degrees_matrix)){
-            qDebug()<<"(modelEvalPage::testAllSample) trtInfer-testAll failed~";
-            return ;
-        }
-        
-        /*************************Use Python Draw Confusion Matrix******************************/
-        int* numpyptr= new int[classNum*classNum];
-        for(int i=0;i<classNum;i++){
-            for(int j=0;j<classNum;j++){
-                numpyptr[i*classNum+j]=confusion_matrix[i][j];
-            }
-        }
-
-        npy_intp dims[2] = {classNum,classNum};//矩阵维度
-        PyArray = PyArray_SimpleNewFromData(2, dims, NPY_INT, numpyptr);//将数据变为numpy
-        //用tuple装起来传入python
-        args_draw = PyTuple_New(2);
-        std::string stringparm="";
-        for(int i=0;i<classNum;i++) stringparm=stringparm+label2class[i]+"#";
-        PyTuple_SetItem(args_draw, 0, Py_BuildValue("s", stringparm.c_str()));
-        PyTuple_SetItem(args_draw, 1, PyArray);
-        //函数调用
-        pRet_draw = (PyArrayObject*)PyObject_CallObject(pFunc_drawConfusionMatrix, args_draw);
-        delete [ ] numpyptr;
-        qDebug()<<"(ModelEvalPage::testAllSample) python done";
-        /*************************Draw Done******************************/
-
-        //显示混淆矩阵到前端
-        QString imgPath = QString::fromStdString("./confusion_matrix.jpg");
-        if(all_Images[ui->graphicsView_3_evalpageMatrix]){ //delete 原来的图
-            qgraphicsScene->removeItem(all_Images[ui->graphicsView_3_evalpageMatrix]);
-            delete all_Images[ui->graphicsView_3_evalpageMatrix]; //空悬指针
-            all_Images[ui->graphicsView_3_evalpageMatrix]=NULL;
-        }
-        if(this->dirTools->exist(imgPath.toStdString())){
-            recvShowPicSignal(QPixmap(imgPath), ui->graphicsView_3_evalpageMatrix);
-        }
-        ui->label_testAllAcc->setText(QString("%1").arg(acc*100));
-
-        for(int i=0;i<label2class.size();i++){
-            QLabel *imageLabel=new QLabel("数据集样本在"+QString::fromStdString(label2class[i])+"类上的隶属度曲线");
-            QLabel *imageLabel_sig=new QLabel();
-            imageLabel_sig->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred); 
-            imageLabel_sig->setStyleSheet("border: 3px black");
-            QVector<float> meaninglessCiQ = QVector<float>(degrees_matrix[i].begin(), degrees_matrix[i].end());
-            Chart *previewChart = new Chart(imageLabel_sig,"usualData","");
-            previewChart->drawImageWithSingleSignal(imageLabel_sig,meaninglessCiQ);
-            imageLabel_sig->setMinimumHeight(120);
-            ui->verticalLayout_22->addWidget(imageLabel);
-            ui->verticalLayout_22->addWidget(imageLabel_sig);
-        }
-        
-        // qDebug()<<"ModelEvalPage::testall degrees_matrix.size()"<<degrees_matrix.size()<<" degrees_matrix[0].size()=="<<degrees_matrix[0].size();
-
-        QMessageBox::information(NULL, "所有样本测试", "识别结果已输出！");
-
     }
-    else{
-        QMessageBox::warning(NULL, "所有样本测试", "数据集或模型未指定！");
+    
+
+    
+    if(!trtInfer->testAllSample(choicedDatasetPATH,choicedModelPATH,inferBatch,dataProcess,acc,confusion_matrix,flag,degrees_matrix)){
+        qDebug()<<"(modelEvalPage::testAllSample) trtInfer-testAll failed~";
+        return ;
     }
+    
+    /*************************Use Python Draw Confusion Matrix******************************/
+    int* numpyptr= new int[classNum*classNum];
+    for(int i=0;i<classNum;i++){
+        for(int j=0;j<classNum;j++){
+            numpyptr[i*classNum+j]=confusion_matrix[i][j];
+        }
+    }
+
+    npy_intp dims[2] = {classNum,classNum};//矩阵维度
+    PyArray = PyArray_SimpleNewFromData(2, dims, NPY_INT, numpyptr);//将数据变为numpy
+    //用tuple装起来传入python
+    args_draw = PyTuple_New(2);
+    std::string stringparm="";
+    for(int i=0;i<classNum;i++) stringparm=stringparm+label2class[i]+"#";
+    PyTuple_SetItem(args_draw, 0, Py_BuildValue("s", stringparm.c_str()));
+    PyTuple_SetItem(args_draw, 1, PyArray);
+    //函数调用
+    pRet_draw = (PyArrayObject*)PyObject_CallObject(pFunc_drawConfusionMatrix, args_draw);
+    delete [ ] numpyptr;
+    qDebug()<<"(ModelEvalPage::testAllSample) python done";
+    /*************************Draw Done******************************/
+
+    //显示混淆矩阵到前端
+    QString imgPath = QString::fromStdString("./confusion_matrix.jpg");
+    if(all_Images[ui->graphicsView_3_evalpageMatrix]){ //delete 原来的图
+        qgraphicsScene->removeItem(all_Images[ui->graphicsView_3_evalpageMatrix]);
+        delete all_Images[ui->graphicsView_3_evalpageMatrix]; //空悬指针
+        all_Images[ui->graphicsView_3_evalpageMatrix]=NULL;
+    }
+    if(this->dirTools->exist(imgPath.toStdString())){
+        recvShowPicSignal(QPixmap(imgPath), ui->graphicsView_3_evalpageMatrix);
+    }
+    ui->label_testAllAcc->setText(QString("%1").arg(acc*100));
+
+    for(int i=0;i<label2class.size();i++){
+        QLabel *imageLabel=new QLabel("数据集样本在"+QString::fromStdString(label2class[i])+"类上的隶属度曲线");
+        QLabel *imageLabel_sig=new QLabel();
+        imageLabel_sig->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred); 
+        imageLabel_sig->setStyleSheet("border: 3px black");
+        QVector<float> meaninglessCiQ = QVector<float>(degrees_matrix[i].begin(), degrees_matrix[i].end());
+        Chart *previewChart = new Chart(imageLabel_sig,"usualData","");
+        previewChart->drawImageWithSingleSignal(imageLabel_sig,meaninglessCiQ);
+        imageLabel_sig->setMinimumHeight(120);
+        ui->verticalLayout_22->addWidget(imageLabel);
+        ui->verticalLayout_22->addWidget(imageLabel_sig);
+    }
+    
+    // qDebug()<<"ModelEvalPage::testall degrees_matrix.size()"<<degrees_matrix.size()<<" degrees_matrix[0].size()=="<<degrees_matrix[0].size();
+
+    QMessageBox::information(NULL, "所有样本测试", "识别结果已输出！");
+
+    
+
 }
 
 void ModelEvalPage::disDegreeChart(QString &classGT, std::vector<float> &degrees, std::map<int, std::string> &classNames){

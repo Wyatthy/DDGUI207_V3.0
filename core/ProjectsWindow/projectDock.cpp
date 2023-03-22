@@ -222,16 +222,17 @@ void ProjectDock::onAction_ShotProject(){
     QMessageBox::information(NULL, "设为活动工程", QString::fromStdString("活动工程已设定为"+rightSelName));
 
     //根据工程名字确定projectsInfo->modelTypeOfSelectedProject
-    if(rightSelName.find("atec") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "ATEC";
-    else if(rightSelName.find("abfc") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "ABFC";
-    else if(rightSelName.find("opti") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "FEA_OPTI";
-    else if(rightSelName.find("incre") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "INCRE";
-    else projectsInfo->modelTypeOfSelectedProject = "TRA_DL";
-
-    //根据工程名字确定projectsInfo->modelNameOfSelectedProject
-
+    std::string tempProjectName = rightSelName;
+    std::transform(tempProjectName.begin(), tempProjectName.end(), tempProjectName.begin(),
+                   [](unsigned char c){ return std::tolower(c); });
+    if(tempProjectName.find("atec") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "ATEC";
+    else if(tempProjectName.find("abfc") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "ABFC";
+    else if(tempProjectName.find("cam") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "OPTI_CAM";
+    else if(tempProjectName.find("优化") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "OPTI";
+    else if(tempProjectName.find("增量") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "CIL";
+    else if(tempProjectName.find("baseline") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "BASE";
+    else projectsInfo->modelTypeOfSelectedProject = "TRAD";
     
-
     //根据project类型设置projectsInfo中的pathOfSelectedModel_forInfer和pathOfSelectedModel_forVis
     string tempModelType = projectsInfo->modelTypeOfSelectedProject;
     QString project_path = QString::fromStdString(projectsInfo->getAttri(rightSelType,rightSelName,"Project_Path"));
@@ -301,8 +302,23 @@ void ProjectDock::onAction_AddProject(){
         QMessageBox::warning(NULL,"提示","工程名称不能以数字或'-'开头!");
         return;
     }
+    //根据工程名字确定projectsInfo->modelTypeOfSelectedProject
+    std::string tempProjectName = projectName.toStdString();
+    std::string tempProjectDataType = "";
+    std::transform(tempProjectName.begin(), tempProjectName.end(), tempProjectName.begin(),
+        [](unsigned char c){ return std::tolower(c); });
+
+    if(tempProjectName.find("hrrp") != std::string::npos) tempProjectDataType = "HRRP";
+    else if(tempProjectName.find("rcs") != std::string::npos) tempProjectDataType = "RCS";
+    else if(tempProjectName.find("特征") != std::string::npos) tempProjectDataType = "FEATURE";
+    else if(tempProjectName.find("历程图") != std::string::npos) tempProjectDataType = "IMAGE";
+    if(rightSelType!=tempProjectDataType){
+        QMessageBox::warning(NULL, "添加工程", "工程添加失败，当前数据类型与欲添加的项目数据类型不符");
+        return;
+    }
+
     vector<string> allXmlNames;
-    dirTools->getFiles(allXmlNames, ".xml",projectPath.toStdString());
+    dirTools->getFilesplus(allXmlNames, ".xml",projectPath.toStdString());
     auto xmlIdx = std::find(allXmlNames.begin(), allXmlNames.end(), rightSelName+".xml");
     if (xmlIdx == allXmlNames.end()){
         terminal->print("工程添加成功，但该工程没有说明文件.xml！");

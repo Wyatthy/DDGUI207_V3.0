@@ -1,3 +1,4 @@
+#因为环境原因,ABFCtrain中不能直接转trt,所以有了这个文件
 ##default : Dynamic Batch
 import argparse
 import tensorflow as tf
@@ -55,15 +56,15 @@ def convert_hdf5_to_trt(model_type, work_dir, model_name, abfcmode_Idx, workspac
     if model_type=='HRRP':
         hdfPath = work_dir+"/model/"+model_name+".hdf5"
     elif model_type=='ABFC':
-        hdfPath = work_dir+"/model/"+model_name+"_feature_"+abfcmode_Idx+".hdf5"
-        trtPath = work_dir+"/"+model_name+"_feature_"+abfcmode_Idx+".trt"
+        hdfPath = work_dir+"/ABFC_feature_"+abfcmode_Idx+".hdf5"
+        trtPath = work_dir+"/"+model_name+".trt"
     elif model_type=='FewShot':
         hdfPath = work_dir+"/model/"+model_name+".hdf5"
     elif model_type=='ATEC':
         hdfPath = work_dir+"/model/fea_ada_trans.hdf5"
         trtPath = work_dir+"/"+model_name+".trt"
-    pbPath  = work_dir+"/model/temp.pb"
-    oxPath  = work_dir+"/model/temp.onnx"
+    pbPath  = work_dir+"/temp.pb"
+    oxPath  = work_dir+"/temp.onnx"
     
     
     try:

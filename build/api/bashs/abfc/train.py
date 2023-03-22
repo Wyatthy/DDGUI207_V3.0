@@ -11,20 +11,21 @@ import tensorflow.compat.v1 as tfv1
 from functools import reduce
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import classification_report
-from data_process import show_feature_selection, show_confusion_matrix, read_project
+from data_process import show_feature_selection, show_confusion_matrix, read_project, show_feature_weights
 from data_process import storage_characteristic_matrix, data_normalization, data_norm_hrrp
 from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
 import shutil
 import argparse
 
+model_num="1"
 parser = argparse.ArgumentParser(description='Train a detector')
 parser.add_argument('--data_dir', help='the directory of the training data',default="db/datasets/local_dir/基于特征数据的ABFC网络")
-parser.add_argument('--batch_size', help='the number of batch size',default=32)
-parser.add_argument('--max_epochs', help='the number of epochs',default=1)
-parser.add_argument('--class_number', help="class_number", default="6")
-parser.add_argument('--fea_num', help="fea_num", default=128)
-parser.add_argument('--fea_start', help="fea_start", default=16)
-parser.add_argument('--fea_step', help="fea_step", default=16)
+parser.add_argument('--batch_size', type=int, help='the number of batch size',default=32)
+parser.add_argument('--max_epochs', type=int, help='the number of epochs',default=1)
+parser.add_argument('--class_number', type=int, help="class_number", default="6")
+parser.add_argument('--fea_num', type=int, help="fea_num", default=128)
+parser.add_argument('--fea_start', type=int, help="fea_start", default=16)
+parser.add_argument('--fea_step', type=int, help="fea_step", default=16)
 parser.add_argument('--data_type', help='the type of the training data', default='HRRP')
 args = parser.parse_args()
 
@@ -47,11 +48,11 @@ def test(train_X, train_Y, val_X, val_Y, output_size, fea_num, work_dir):
     callbacks_list = [checkpoint, learn_rate_reduction]
     train_model.fit(train_X, train_Y, batch_size=batch_size, epochs=max_epochs, shuffle=True,
                    validation_data=(val_X, val_Y), callbacks=callbacks_list, verbose=0, validation_freq=1)
-    # h_parameter = train_model.history
+    h_parameter = train_model.history
     val_model = keras.models.load_model(save_model_path)
     Y_val = np.argmax(val_Y, axis=1)
     Y_pred = np.argmax(val_model.predict(val_X), axis=1)
-    # args.valAcc=round(max(h_parameter['val_accuracy'])*100,2)
+    args.valAcc=round(max(h_parameter['val_accuracy'])*100,2)
     return Y_val, Y_pred
 
 
@@ -118,6 +119,7 @@ def inference(train_step, batchsize, f_start, f_end, f_interval, work_dir, data_
     for i in range(0, len(at)):
         feature_weights.write(str(at[i])+'\n')
     feature_weights.close()
+    show_feature_weights(at, work_dir)
     A_wight_rank = list(np.argsort(at))[::-1]
     save_A_path = work_dir + '/'+'attention_weight_rank.txt'
     attention_weights = open(save_A_path, 'w', encoding='utf-8')
@@ -141,60 +143,9 @@ def inference(train_step, batchsize, f_start, f_end, f_interval, work_dir, data_
     attention_params_save.write(str(f_start)+'\n')
     attention_params_save.write(str(f_interval)+'\n')
     attention_params_save.close()
-    print(max(ac_score_list))
-
-def convert_h5to_pb(h5Path, pbPath):
-    model = tf.keras.models.load_model(h5Path, compile=False)
-    full_model = tf.function(lambda Input: model(Input))
-    full_model = full_model.get_concrete_function(tf.TensorSpec(model.inputs[0].shape, model.inputs[0].dtype))
-
-    # Get frozen ConcreteFunction
-    frozen_func = convert_variables_to_constants_v2(full_model)
-    frozen_func.graph.as_graph_def()
-
-    layers = [op.name for op in frozen_func.graph.get_operations()]
-
-    # Save frozen graph from frozen ConcreteFunction to hard drive
-    tf.io.write_graph(graph_or_graph_def=frozen_func.graph,
-                      logdir=pbPath[:pbPath.rfind(r"/")],
-                      name=pbPath[pbPath.rfind(r"/")+1:],
-                      as_text=False)
-    ipsN, opsN = str(frozen_func.inputs[0]), str(frozen_func.outputs[0])
-    inputNodeName = ipsN[ipsN.find("\"")+1:ipsN.find(":")]
-    outputNodeName = opsN[opsN.find("\"")+1:opsN.find(":")]
-    inputShapeK = ipsN[ipsN.find("=(")+2:ipsN.find("),")]
-    inputShapeF = re.findall(r"\d+\.?\d*", inputShapeK)
-    inputShape = reduce(lambda x, y: x + 'x' + y, inputShapeF)
-
-    return inputNodeName, outputNodeName, inputShape
-
-
-def convert_hdf5_to_trt(model_type, work_dir, model_naming, abfcmode_Idx, workspace='3072', optBatch='20', maxBatch='100'):
-    if model_type == 'HRRP':
-        hdfPath = work_dir+"/"+model_naming+".hdf5"
-        trtPath = work_dir+"/"+model_naming+".trt"
-    elif model_type == 'ABFC':
-        hdfPath = work_dir+"/"+model_naming+"_feature_"+abfcmode_Idx+".hdf5"
-        trtPath = work_dir+"/"+model_naming+"_feature_"+abfcmode_Idx+".trt"
-    elif model_type == 'FewShot':
-        hdfPath = work_dir+"/"+model_naming+".hdf5"
-    elif model_type == 'ATEC':
-        hdfPath = work_dir+"/fea_ada_trans.hdf5"
-        trtPath = work_dir+"/"+model_naming+".trt"
-    pbPath = work_dir+"/temp.pb"
-    oxPath = work_dir+"/temp.onnx"
-
-    try:
-        inputNodeName, outputNodeName, inputShape = convert_h5to_pb(hdfPath, pbPath)
-        # pb converto onnx
-        '''python -m tf2onnx.convert  --input temp.pb --inputs Input:0 --outputs Identity:0 --output temp.onnx --opset 11'''
-        os.system("python -m tf2onnx.convert  --input "+pbPath+" --inputs "+inputNodeName+":0 --outputs "+outputNodeName+":0 --output "+oxPath+" --opset 11")
-        # onnx converto trt
-        '''trtexec --explicitBatch --workspace=3072  --minShapes=Input:0:1x128x64x1 --optShapes=Input:0:20x128x64x1 --maxShapes=Input:0:100x128x64x1 --onnx=temp.onnx --saveEngine=temp.trt --fp16'''
-        os.system("trtexec --onnx="+oxPath+" --saveEngine="+trtPath+" --workspace="+workspace+" --minShapes=Input:0:1x"+inputShape+\
-        " --optShapes=Input:0:"+optBatch+"x"+inputShape+" --maxShapes=Input:0:"+maxBatch+"x"+str(inputShape)+" --fp16")
-    except Exception as e:
-        print(e)
+    sys.stdout.flush()
+    global model_num
+    model_num = int(f_start) + int(ac_score_list.index(max(ac_score_list))) * int(f_interval)
 
 def generator_model_documents(args):
     from xml.dom.minidom import Document
@@ -211,18 +162,18 @@ def generator_model_documents(args):
     model_type.appendChild(model_item)
 
     model_infos = {
-        'name':str(model_naming),
-        'type':'FEA_RELE',
-        'algorithm':'ABFC',
-        'framework':'keras',
-        'accuracy':'-',
-        'trainDataset':args.data_dir.split("/")[-1],
-        'trainEpoch':str(args.max_epochs),
-        'trainLR':'0.001',
-        'class':str(args.class_number), 
-        'PATH':os.path.abspath(os.path.join(project_path,model_naming+'.trt')),
-        'batch':str(args.batch_size),
-        'note':'-'
+        'Model_Name':str(model_naming),
+        'Model_Algorithm':'ABFC',
+        'Model_AccuracyOnTrain':'-',
+        'Model_AccuracyOnVal':str(args.valAcc),
+        'Model_Framework':'Keras',
+        'Model_TrainDataset':args.data_dir.split("/")[-1],
+        'Model_TrainEpoch':str(args.max_epochs),
+        'Model_TrainLR':'0.001',
+        'Model_NumClassCategories':str(args.class_number), 
+        'Model_Path':os.path.abspath(os.path.join(project_path,model_naming+'.trt')),
+        'Model_TrainBatchSize':str(args.batch_size),
+        'Model_Note':'-'
     } 
 
     for key in model_infos.keys():
@@ -273,5 +224,8 @@ if __name__ == '__main__':
     save_params()
     inference(max_epochs, batch_size, fea_start, fea_num, fea_step, project_path, data_type)
     generator_model_documents(args)
-    # convert_hdf5_to_trt(model_name, project_path, model_naming, '1')
+
+    # cmd="python ./api/bashs/hdf52trt.py --model_type ABFC --work_dir "+ \
+    #     project_path+" --model_name "+model_naming+" --abfcmode_Idx " + str(model_num)
+    # os.system(cmd)
     print("Train Ended:")

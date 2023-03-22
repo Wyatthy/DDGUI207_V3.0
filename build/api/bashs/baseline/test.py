@@ -14,7 +14,6 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Test')
 parser.add_argument('--data_dir', help='the directory of the project dir', default="db/datasets/local_dir/基于HRRP数据的Baseline_CNN网络")
-parser.add_argument('--model_type', help='the type of the model', default="CNN")
 args = parser.parse_args()
 
 # 归一化
@@ -151,7 +150,10 @@ def test_trained_model(x_test, y_test, folder_name, model_name, model_naming, wo
 if __name__ == '__main__':
     project_path = args.data_dir  # 工程目录
     model_naming = project_path.split('/')[-1]
-    model_name = args.model_type  # 网络名称
-
+    lowProjectPath = model_naming.lower()
+    if 'dnn' in lowProjectPath:
+        model_name = 'DNN'
+    elif 'cnn' in lowProjectPath:
+        model_name = 'CNN'
     x_test, y_test, folder_name = read_project(project_path)
     test_trained_model(x_test, y_test, folder_name, model_name, model_naming, project_path)

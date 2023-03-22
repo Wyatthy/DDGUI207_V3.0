@@ -26,12 +26,10 @@ plt.rcParams['font.sans-serif'] = ['SimHei']
 
 
 parser = argparse.ArgumentParser(description='Train a detector')
-parser.add_argument('--data_dir', help='the directory of the training data',default="db/datasets/local_dir/基于HRRP数据的Resnet50网络")
-parser.add_argument('--batch_size', help='the number of batch size',default=32)
-parser.add_argument('--max_epochs', help='the number of epochs',default=1)
-parser.add_argument('--class_number', help="class_number", default="6")
-parser.add_argument('--windows_length', help="windows_length", default=32)
-parser.add_argument('--windows_step', help="windows_step", default=10)
+parser.add_argument('--data_dir', help='the directory of the training data',default="N:/207/GUI207_V3.0/db/projects/基于HRRP数据的Resnet50网络")
+parser.add_argument('--batch_size', type=int, help='the number of batch size',default=32)
+parser.add_argument('--max_epochs', type=int, help='the number of epochs',default=1)
+parser.add_argument('--class_number', type=int, help="class_number", default="6")
 args = parser.parse_args()
 
 
@@ -86,6 +84,12 @@ def read_mat(read_path):
         if os.path.isdir(folder_path+'/'+file_name[i]):
             folder_name.append(file_name[i])
     folder_name.sort()  # 按文件夹名进行排序
+    
+    # 将指定类别放到首位
+    for i in range(0, len(folder_name)):
+        if folder_name[i] == 'DT':
+            folder_name.insert(0, folder_name.pop(i))
+
     args.class_number = len(folder_name)
     # 读取单个文件夹下的内容
     for i in range(0, len(folder_name)):
@@ -329,10 +333,12 @@ def convert_hdf5_to_trt(model_type, work_dir, model_naming, abfcmode_Idx, worksp
     try:
         inputNodeName, outputNodeName, inputShape = convert_h5to_pb(hdfPath, pbPath)
         # pb converto onnx
-        '''python -m tf2onnx.convert  --input temp.pb --inputs Input:0 --outputs Identity:0 --output temp.onnx --opset 11'''
-        os.system("python -m tf2onnx.convert  --input "+pbPath+" --inputs "+inputNodeName+":0 --outputs "+outputNodeName+":0 --output "+oxPath+" --opset 11")
+        '''python -m tf2onnx.convert --input temp.pb --inputs Input:0 --outputs Identity:0 --output temp.onnx --opset 11'''
+        # print("inputNodeName=",inputNodeName,"outputNodeName=",outputNodeName)
+        print(pbPath)
+        os.system("python -m tf2onnx.convert --input "+pbPath+" --inputs "+inputNodeName+":0 --outputs "+outputNodeName+":0 --output "+oxPath+" --opset 11")
         # onnx converto trt
-        '''trtexec --explicitBatch --workspace=3072  --minShapes=Input:0:1x128x64x1 --optShapes=Input:0:20x128x64x1 --maxShapes=Input:0:100x128x64x1 --onnx=temp.onnx --saveEngine=temp.trt --fp16'''
+        '''trtexec --explicitBatch --workspace=3072 --minShapes=Input:0:1x128x64x1 --optShapes=Input:0:20x128x64x1 --maxShapes=Input:0:100x128x64x1 --onnx=temp.onnx --saveEngine=temp.trt --fp16'''
         os.system("trtexec --onnx="+oxPath+" --saveEngine="+trtPath+" --workspace="+workspace+" --minShapes=Input:0:1x"+inputShape+\
         " --optShapes=Input:0:"+optBatch+"x"+inputShape+" --maxShapes=Input:0:"+maxBatch+"x"+str(inputShape)+" --fp16")
     except Exception as e:
@@ -353,18 +359,18 @@ def generator_model_documents(args):
     model_type.appendChild(model_item)
 
     model_infos = {
-        'name':str(model_naming),
-        'type':'TRA_DL',
-        'algorithm':'HRRP',
-        'framework':'keras',
-        'accuracy':str(args.valAcc),
-        'trainDataset':args.data_dir.split("/")[-1],
-        'trainEpoch':str(args.max_epochs),
-        'trainLR':'0.001',
-        'class':str(args.class_number), 
-        'PATH':os.path.abspath(os.path.join(project_path,model_naming+'.trt')),
-        'batch':str(args.batch_size),
-        'note':'-'
+        'Model_Name':model_naming,
+        'Model_Algorithm':'TRAD_'+str(model_name),
+        'Model_AccuracyOnTrain':'-',
+        'Model_AccuracyOnVal':str(args.valAcc),
+        'Model_Framework':'Keras',
+        'Model_TrainDataset':args.data_dir.split("/")[-1],
+        'Model_TrainEpoch':str(args.max_epochs),
+        'Model_TrainLR':'0.001',
+        'Model_NumClassCategories':str(args.class_number), 
+        'Model_Path':os.path.abspath(os.path.join(project_path,model_naming+'.trt')),
+        'Model_TrainBatchSize':str(args.batch_size),
+        'Model_Note':'-'
     } 
 
     for key in model_infos.keys():
@@ -413,8 +419,6 @@ if __name__ == '__main__':
     model_type = 'HRRP'  # 网络类型
     max_epochs = args.max_epochs  # 训练轮数
     batch_size = args.batch_size  # 批处理数量
-    picture_length = args.windows_length  # RCS滑窗长度
-    picture_step = args.windows_step  # RCS滑窗步长
 
     save_params()
     x_train, y_train, x_val, y_val, folder_name = read_project(project_path)
@@ -424,5 +428,5 @@ if __name__ == '__main__':
     h5Path = project_path + '/' + model_naming + '.hdf5'
     pbPath = project_path + '/' + model_naming + '.pb'
     generator_model_documents(args)
-    # convert_hdf5_to_trt(model_type, project_path, model_naming, '1')
+    convert_hdf5_to_trt(model_type, project_path, model_naming, '1')
     print("Train Ended:")

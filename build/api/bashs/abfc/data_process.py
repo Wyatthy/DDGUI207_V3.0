@@ -182,4 +182,14 @@ def show_feature_selection(ac_score_list, feature_start, feature_end, feature_in
     plt.xticks(x_interval)
     plt.xlabel("Number of features used")
     plt.ylabel("Accuracy")
-    plt.savefig(path + '/features_Accuracy.jpg', dpi=1000)
+    plt.savefig(path + '/features_Accuracy.jpg', dpi=775)
+
+# 绘制特征权重展示图
+def show_feature_weights(feature_weights, path):
+    pic_x = np.arange(len(feature_weights)) + 1
+    for i in range(0, len(feature_weights)):
+        plt.bar(pic_x[i], feature_weights[i])
+    plt.title("特征权重展示")
+    plt.xlabel("特征")
+    plt.ylabel("权重")
+    plt.savefig(path + '/features_weights.jpg', dpi=1000)

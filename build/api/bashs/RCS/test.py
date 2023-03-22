@@ -69,8 +69,7 @@ def read_mat(read_path, windows_length, windows_step):
             one_mat_path = folder_path + '/' + folder_name[i] + '/' + class_mat_name[j]
             one_mat_data = sio.loadmat(one_mat_path)
             one_mat_data = one_mat_data[list(one_mat_data.keys())[-1]]
-            one_mat_data_norm = trans_norm(one_mat_data)
-            one_mat_data_norm = np.squeeze(one_mat_data_norm)
+            one_mat_data_norm = np.squeeze(one_mat_data)
             one_mat_data_win = RCS_windows_cut(one_mat_data_norm, windows_length, windows_step)
             if j == 0:
                 all_mat_data_win = one_mat_data_win

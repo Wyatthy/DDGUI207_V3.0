@@ -20,11 +20,11 @@ plt.rcParams['font.sans-serif'] = ['SimHei']
 
 parser = argparse.ArgumentParser(description='Train a detector')
 parser.add_argument('--data_dir', help='the directory of the training data',default="db/datasets/local_dir/基于RCS数据的Resnet50网络")
-parser.add_argument('--batch_size', help='the number of batch size',default=32)
-parser.add_argument('--max_epochs', help='the number of epochs',default=1)
-parser.add_argument('--class_number', help="class_number", default="6")
-parser.add_argument('--windows_length', help="windows_length", default=32)
-parser.add_argument('--windows_step', help="windows_step", default=10)
+parser.add_argument('--batch_size', type=int, help='the number of batch size',default=32)
+parser.add_argument('--max_epochs', type=int, help='the number of epochs',default=1)
+parser.add_argument('--class_number', type=int, help="class_number", default=6)
+parser.add_argument('--windows_length', type=int, help="windows_length", default=32)
+parser.add_argument('--windows_step', type=int, help="windows_step", default=10)
 args = parser.parse_args()
 
 # 归一化
@@ -85,8 +85,8 @@ def read_mat(read_path, windows_length, windows_step):
             one_mat_path = folder_path + '/' + folder_name[i] + '/' + class_mat_name[j]
             one_mat_data = sio.loadmat(one_mat_path)
             one_mat_data = one_mat_data[list(one_mat_data.keys())[-1]]
-            one_mat_data_norm = trans_norm(one_mat_data)
-            one_mat_data_norm = np.squeeze(one_mat_data_norm)
+            # one_mat_data_norm = trans_norm(one_mat_data)
+            one_mat_data_norm = np.squeeze(one_mat_data)
             one_mat_data_win = RCS_windows_cut(one_mat_data_norm, windows_length, windows_step)
             if j == 0:
                 all_mat_data_win = one_mat_data_win
@@ -308,10 +308,10 @@ def convert_hdf5_to_trt(model_type, work_dir, model_naming, abfcmode_Idx, worksp
     try:
         inputNodeName, outputNodeName, inputShape = convert_h5to_pb(hdfPath, pbPath)
         # pb converto onnx
-        '''python -m tf2onnx.convert  --input temp.pb --inputs Input:0 --outputs Identity:0 --output temp.onnx --opset 11'''
-        os.system("python -m tf2onnx.convert  --input "+pbPath+" --inputs "+inputNodeName+":0 --outputs "+outputNodeName+":0 --output "+oxPath+" --opset 11")
+        '''python -m tf2onnx.convert --input temp.pb --inputs Input:0 --outputs Identity:0 --output temp.onnx --opset 11'''
+        os.system("python -m tf2onnx.convert --input "+pbPath+" --inputs "+inputNodeName+":0 --outputs "+outputNodeName+":0 --output "+oxPath+" --opset 11")
         # onnx converto trt
-        '''trtexec --explicitBatch --workspace=3072  --minShapes=Input:0:1x128x64x1 --optShapes=Input:0:20x128x64x1 --maxShapes=Input:0:100x128x64x1 --onnx=temp.onnx --saveEngine=temp.trt --fp16'''
+        '''trtexec --explicitBatch --workspace=3072 --minShapes=Input:0:1x128x64x1 --optShapes=Input:0:20x128x64x1 --maxShapes=Input:0:100x128x64x1 --onnx=temp.onnx --saveEngine=temp.trt --fp16'''
         os.system("trtexec --onnx="+oxPath+" --saveEngine="+trtPath+" --workspace="+workspace+" --minShapes=Input:0:1x"+inputShape+\
         " --optShapes=Input:0:"+optBatch+"x"+inputShape+" --maxShapes=Input:0:"+maxBatch+"x"+str(inputShape)+" --fp16")
     except Exception as e:
@@ -332,18 +332,20 @@ def generator_model_documents(args):
     model_type.appendChild(model_item)
 
     model_infos = {
-        'name':str(model_naming),
-        'type':'TRA_DL',
-        'algorithm':'DenseNet121',
-        'framework':'keras',
-        'accuracy':str(args.valAcc),
-        'trainDataset':args.data_dir.split("/")[-1],
-        'trainEpoch':str(args.max_epochs),
-        'trainLR':'0.001',
-        'class':str(args.class_number), 
-        'PATH':os.path.abspath(os.path.join(project_path,model_naming+'.trt')),
-        'batch':str(args.batch_size),
-        'note':'-'
+        'Model_Name':model_naming,
+        'Model_Algorithm':'TRAD_'+str(model_name),
+        'Model_AccuracyOnTrain':'-',
+        'Model_AccuracyOnVal':str(args.valAcc),
+        'Model_Framework':'Keras',
+        'Model_TrainDataset':args.data_dir.split("/")[-1],
+        'Model_TrainEpoch':str(args.max_epochs),
+        'Model_TrainLR':'0.001',
+        'Model_NumClassCategories':str(args.class_number), 
+        'Model_Path':os.path.abspath(os.path.join(project_path,model_naming+'.trt')),
+        'Model_TrainBatchSize':str(args.batch_size),
+        'Model_WindowsLength':str(args.windows_length), 
+        'Model_WindowsStep':str(args.windows_step), 
+        'Model_Note':'-'
     } 
 
     for key in model_infos.keys():
@@ -406,5 +408,5 @@ if __name__ == '__main__':
     h5Path = project_path + '/' + model_naming + '.hdf5'
     pbPath = project_path + '/' + model_naming + '.pb'
     
-    # convert_hdf5_to_trt(model_type, project_path, model_naming, '1')
+    convert_hdf5_to_trt(model_type, project_path, model_naming, '1')
     print("Train Ended:")

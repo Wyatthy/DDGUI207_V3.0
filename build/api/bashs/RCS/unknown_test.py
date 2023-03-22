@@ -78,7 +78,7 @@ def read_unkown_test_mat(unkown_test_mat_path, windows_length, windows_step):
         one_unkown_mat_data = one_unkown_mat_data[list(one_unkown_mat_data.keys())[-1]].T
 
         one_unkown_data = []
-        one_mat_data_norm = np.squeeze(data_normalization(one_unkown_mat_data))
+        one_mat_data_norm = np.squeeze(one_unkown_mat_data)
         one_mat_data_win = RCS_windows_cut(one_mat_data_norm, windows_length, windows_step)
         for j in range(0, len(one_mat_data_win)):
             unknown_data_one = one_mat_data_win[j]

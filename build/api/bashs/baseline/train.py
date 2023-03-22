@@ -3,21 +3,23 @@ import re,shutil
 import argparse
 import numpy as np
 import scipy.io as sio
+import tensorflow as tf
+import tensorflow.keras as keras
+from functools import reduce
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 import tensorflow.keras as keras
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import classification_report, confusion_matrix
+from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
 
 plt.rcParams['font.sans-serif'] = ['SimHei']
 
 parser = argparse.ArgumentParser(description='Train a detector')
 parser.add_argument('--data_dir', help='the directory of the training data',default="./db/datasets/local_dir/基于HRRP数据的Baseline_CNN网络")
-parser.add_argument('--batch_size', help='the number of batch size',default=32)
-parser.add_argument('--max_epochs', help='the number of epochs',default=10)
-parser.add_argument('--net', help="network frame", default="DNN")
-parser.add_argument('--modeldir', help="model saved path", default="./db/models")
-parser.add_argument('--class_number', help="class_number", default="6")
+parser.add_argument('--batch_size', type=int, help='the number of batch size',default=32)
+parser.add_argument('--max_epochs', type=int, help='the number of epochs',default=10)
+parser.add_argument('--class_number', type=int, help="class_number", default="6")
 args = parser.parse_args()
 
 # 归一化
@@ -276,6 +278,51 @@ def inference_CNN(train_x, train_y, val_x, val_y, folder_name, work_dir, model_n
     characteristic_matrix = confusion_matrix(y_val, y_pred)
     show_confusion_matrix(labels, characteristic_matrix, work_dir)
 
+def convert_h5to_pb(h5Path, pbPath):
+    model = tf.keras.models.load_model(h5Path, compile=False)
+    full_model = tf.function(lambda Input: model(Input))
+    full_model = full_model.get_concrete_function(tf.TensorSpec(model.inputs[0].shape, model.inputs[0].dtype))
+
+    # Get frozen ConcreteFunction
+    frozen_func = convert_variables_to_constants_v2(full_model)
+    frozen_func.graph.as_graph_def()
+
+    layers = [op.name for op in frozen_func.graph.get_operations()]
+
+    # Save frozen graph from frozen ConcreteFunction to hard drive
+    tf.io.write_graph(graph_or_graph_def=frozen_func.graph,
+                      logdir=pbPath[:pbPath.rfind(r"/")],
+                      name=pbPath[pbPath.rfind(r"/")+1:],
+                      as_text=False)
+    ipsN, opsN = str(frozen_func.inputs[0]), str(frozen_func.outputs[0])
+    inputNodeName = ipsN[ipsN.find("\"")+1:ipsN.find(":")]
+    outputNodeName = opsN[opsN.find("\"")+1:opsN.find(":")]
+    inputShapeK = ipsN[ipsN.find("=(")+2:ipsN.find("),")]
+    inputShapeF = re.findall(r"\d+\.?\d*", inputShapeK)
+    inputShape = reduce(lambda x, y: x + 'x' + y, inputShapeF)
+
+    return inputNodeName, outputNodeName, inputShape
+
+
+def convert_hdf5_to_trt(work_dir, model_name, workspace='3072', optBatch='20', maxBatch='100'):
+    hdfPath = work_dir+"/"+model_name+".hdf5"
+    trtPath = work_dir+"/"+model_name+".trt"
+
+    pbPath = work_dir+"/temp.pb"
+    oxPath = work_dir+"/temp.onnx"
+
+    try:
+        inputNodeName, outputNodeName, inputShape = convert_h5to_pb(hdfPath, pbPath)
+        # pb converto onnx
+        '''python -m tf2onnx.convert --input temp.pb --inputs Input:0 --outputs Identity:0 --output temp.onnx --opset 11'''
+        os.system("python -m tf2onnx.convert --input "+pbPath+" --inputs "+inputNodeName+":0 --outputs "+outputNodeName+":0 --output "+oxPath+" --opset 11")
+        # onnx converto trt
+        '''trtexec --explicitBatch --workspace=3072 --minShapes=Input:0:1x128x64x1 --optShapes=Input:0:20x128x64x1 --maxShapes=Input:0:100x128x64x1 --onnx=temp.onnx --saveEngine=temp.trt --fp16'''
+        os.system("trtexec --onnx="+oxPath+" --saveEngine="+trtPath+" --workspace="+workspace+" --minShapes=Input:0:1x"+inputShape+\
+        " --optShapes=Input:0:"+optBatch+"x"+inputShape+" --maxShapes=Input:0:"+maxBatch+"x"+str(inputShape)+" --fp16")
+    except Exception as e:
+        print(e)
+
 def generator_model_documents(args):
     from xml.dom.minidom import Document
     doc = Document()  #创建DOM文档对象
@@ -291,18 +338,18 @@ def generator_model_documents(args):
     model_type.appendChild(model_item)
 
     model_infos = {
-        'name':str(model_naming),
-        'type':'TRA_DL',
-        'algorithm':'DenseNet121',
-        'framework':'keras',
-        'accuracy':str(args.valAcc),
-        'trainDataset':project_path.split("/")[-1],
-        'trainEpoch':str(args.max_epochs),
-        'trainLR':'0.001',
-        'class':str(args.class_number),
-        'PATH':os.path.abspath(os.path.join(project_path,model_naming+'.trt')),
-        'batch':str(args.batch_size),
-        'note':'-'
+        'Model_Name':str(model_naming),
+        'Model_Algorithm':"Baseline_"+str(model_name),
+        'Model_AccuracyOnTrain':'-',
+        'Model_AccuracyOnVal':str(args.valAcc),
+        'Model_Framework':'Keras',
+        'Model_TrainDataset':args.data_dir.split("/")[-1],
+        'Model_TrainEpoch':str(args.max_epochs),
+        'Model_TrainLR':'0.001',
+        'Model_NumClassCategories':str(args.class_number), 
+        'Model_Path':os.path.abspath(os.path.join(project_path,model_naming+'.trt')),
+        'Model_TrainBatchSize':str(args.batch_size),
+        'Model_Note':'-'
     } 
 
     for key in model_infos.keys():
@@ -347,5 +394,5 @@ if __name__ == '__main__':
 
     save_params()
     generator_model_documents(args)
-    # convert_hdf5_to_trt('HRRP', project_path, args.model_name)
+    convert_hdf5_to_trt(project_path, model_naming)
     print("Train Ended:")
