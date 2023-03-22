@@ -7,25 +7,18 @@ import torch
 import scipy.io as scio
 import argparse
 
-from utils.CAM import t2n, HookValues, GradCAM, GradCAMpp, XGradCAM, EigenGradCAM, LayerCAM
+from utils.CAM import t2n, HookValues, GradCAM, GradCAMpp, XGradCAM, \
+    EigenGradCAM, LayerCAM
+from dataset.HRRP_mat import read_project
 
-
-name2label = {
-    "Big_ball": 0,
-    "DT": 1,
-    "Spherical_cone": 2,
-    "Small_ball": 3,
-    "Cone": 4
-}
-
-def vis_cam(checkpoint_path, vis_layer, signal, label, name, method, top1 = False, gt_known = True):
+def vis_cam(args, mat_data, top1 = False, gt_known = True):
     # model
-    model = torch.load(checkpoint_path)    # load checkpoint
-    # print(model)
+    model = torch.load(f'{args.project_path}/{args.model_name}')
+    print(model)
     model.cuda()
 
     try:
-        target_layer = eval(f'model.{vis_layer}')
+        target_layer = eval(f'model.{args.visualize_layer}')
     except Exception as e:
         print(model)
         raise RuntimeError('layer does not exist', e)
@@ -43,7 +36,7 @@ def vis_cam(checkpoint_path, vis_layer, signal, label, name, method, top1 = Fals
         # GT-Known指标
         batch_size, _ = logits.shape
         _range = torch.arange(batch_size)
-        pred_scores = logits[_range, label]
+        pred_scores = logits[_range, labels]
     else: 
         print("Error in indicator designation!!!")
         exit()
@@ -54,103 +47,94 @@ def vis_cam(checkpoint_path, vis_layer, signal, label, name, method, top1 = Fals
     # Calculate CAM
     activations = hookValues.activations    # ([1, 15, 124, 1])
     gradients = hookValues.gradients        # ([1, 15, 124, 1])
-    signal_array = t2n(signal.permute(0, 2, 3, 1))      # bz, nc, h, w -> bz, h, w, nc
+    signal_array = t2n(signal.permute(0, 2, 3, 1)) # bz, nc, h, w -> bz, h, w, nc
     
     camCalculator = eval(method)(signal_array, [name])
     scaledCAMs = camCalculator(t2n(activations), t2n(gradients))    # bz, h, w (1, 512, 1)
     camsOverlay = camCalculator._overlay_cam_on_image(layerName="model."+vis_layer)
 
-    return camsOverlay
-        
-def data_normalization(data):
-    """
-        Func:
-            数据归一化
-        Args:
-            data: 待归一化的数据
-        Return:
-            data: 归一化后的数据
-    """
-    for i in range(0, len(data)):
-        data[i] -= np.min(data[i])
-        data[i] /= np.max(data[i])
-    return data
-
-
-def read_mat(matPath):
-    ''' 读取.mat文件 '''
-    mat = scio.loadmat(matPath)
-    matrix_base = os.path.basename(matPath)
-    labelName = os.path.splitext(matrix_base)[0]  # 获取去除扩展名的.mat文件名称
-    signals = scio.loadmat(matPath)[labelName].T  # 读入.mat文件,并转置
-    signals_normalization = data_normalization(signals)  # 归一化处理
-    labels = [name2label[labelName]] * len(signals_normalization)  # 标签   
-
-    return signals_normalization, labels, labelName
+    return camsOverlay, scaledCAMs
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='MMDet Visualize a model'
+        description='基于HRRP数据的Pytorch模型CAM决策可视化'
     )
     parser.add_argument(
-        '--checkpoint', 
-        default="./checkpoints/CNN_HRRP512.pth",
+        '--project_path',
+        default="../../../work_dirs/基于-14db仿真HRRP的DropBlock模型",
         type=str,
-        help='checkpoint file'
+        help='工程文件路径, 包含数据集的工程文件夹路径'
     )
     parser.add_argument(
-        '--visualize_layer',
-        default="Block_3[0]",
+        '--model_name', 
+        default="CNN_HRRP128.pth",
         type=str,
-        help='Name of the hidden layer of the model to visualize'
+        help='工程路径下模型名指定'
     )
     parser.add_argument(
-        '--mat_path',
-        default="./dataset/HRRP_simulate_test_512xN_c5/DQ/DQ.mat",
+        '--dataset',
+        default='test',
         type=str,
-        help='The .mat path of signal to visualize'
+        help='数据集指定, 可选数据集: train, val, test'
+    )
+    parser.add_argument(
+        '--mat_name',
+        default="DT.mat",
+        type=str,
+        help='指定要可视化的.mat文件名'
     )
     parser.add_argument(
         '--mat_idx',
-        default=0,
+        default=[1, 10],
+        type=list,
+        help='指定.mat文件的索引,指定起始和终止位置,支持单个或多个索引'
+    )
+    parser.add_argument(
+        '--batch_size',
+        default=10,
         type=int,
-        help='The .mat index of visual signal'
+        help='批大小'
+    )
+    parser.add_argument(
+        '--num_workers',
+        default=4,
+        type=int,
+        help='数据加载时的线程数'
     )
     parser.add_argument(
         '--cam_method',
         default="GradCAMpp",
         type=str,
-        help='Visualization Algorithm Designation'
+        help='CAM决策可视化算法指定'
     )
     parser.add_argument(
-        '--save_path',
-        default="./figs/cam_output",
+        '--visualize_layer',
+        default="Block_3[0]",
         type=str,
-        help='The path of feature map to save'
+        help='可视化的隐层名'
     )
     args = parser.parse_args()
 
     # 读取数据
-    signals, labels, labelName = read_mat(args.mat_path)
-    signal = signals[args.mat_idx][None, None, :, None]
-    label = labels[args.mat_idx] 
+    ori_data = read_project(args.project_path, stages=[args.dataset], repeat=0)
 
     # 计算CAM
-    camsOverlay = vis_cam(
-        args.checkpoint, 
-        args.visualize_layer, 
-        signal, 
-        label, 
-        labelName, 
-        args.cam_method
-    )
+    camsOverlay, scaledCAMs = vis_cam(args, ori_data)
 
     # 保存图像
-    if not os.path.exists(args.save_path):
-        os.makedirs(args.save_path)
-    saveImgPath = args.save_path + "/"+args.cam_method+".png"
-    cv2.imwrite(saveImgPath, camsOverlay[0])
+    saveImgPath = args.project_path + "/CAM_Output/" + args.dataset +"/"+ \
+                args.mat_name
+    if not os.path.exists(saveImgPath):
+        os.makedirs(saveImgPath)
+    for i, (camOverlay, scaledCAM) in enumerate(camsOverlay, scaledCAMs):
+        # 保存CAM图像
+        cv2.imwrite(saveImgPath +"/"+ str(args.mat_idx[0]+i) + \
+                    +'_'+ args.cam_method + ".png", camOverlay)
+        # 保存CAM矩阵数据
+        scio.savemat(saveImgPath +"/"+ str(args.mat_idx[0]+i) + \
+                    +'_'+ args.cam_method + ".mat", {'scaledCAM': scaledCAM})
+        
 
     print("finished")
 

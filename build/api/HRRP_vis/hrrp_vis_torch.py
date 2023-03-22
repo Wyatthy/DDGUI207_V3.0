@@ -16,11 +16,11 @@ from utils.CAM import t2n, HookValues, GradCAM, GradCAMpp, XGradCAM, EigenGradCA
 
 
 name2label = {
-    "Big_ball": 0,
+    "DQ": 0,
     "DT": 1,
-    "Spherical_cone": 2,
-    "Small_ball": 3,
-    "Cone": 4
+    "QDZ": 2,
+    "XQ": 3,
+    "Z": 4
 }
 
 def vis_fea(checkpoint_path, vis_layer, signal, label):

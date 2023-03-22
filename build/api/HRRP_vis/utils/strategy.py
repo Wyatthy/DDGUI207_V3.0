@@ -27,9 +27,9 @@
 
 def step_lr(epoch, lr):
     learning_rate = lr
-    if epoch < 2000:
+    if epoch < 50:
         learning_rate = lr
-    elif epoch % 2000 == 0:
+    elif epoch % 50 == 0:
         learning_rate = lr * 0.5
     return learning_rate
 
