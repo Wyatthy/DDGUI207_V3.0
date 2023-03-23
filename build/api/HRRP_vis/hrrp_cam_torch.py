@@ -7,26 +7,21 @@ import torch
 import scipy.io as scio
 import argparse
 
+from dataset.HRRP_mat import data_normalization
 from utils.CAM import t2n, HookValues, GradCAM, GradCAMpp, XGradCAM, \
     EigenGradCAM, LayerCAM
-from dataset.HRRP_mat import read_project
 
-def vis_cam(args, mat_data, top1 = False, gt_known = True):
-    # model
-    model = torch.load(f'{args.project_path}/{args.model_name}')
-    print(model)
-    model.cuda()
-
+def vis_cam(model, signals, labels, label_names, cam_method, vis_layer, \
+             top1 = False, gt_known = True):
     try:
-        target_layer = eval(f'model.{args.visualize_layer}')
+        target_layer = eval(f'model.{vis_layer}')
     except Exception as e:
         print(model)
         raise RuntimeError('layer does not exist', e)
     hookValues = HookValues(target_layer)
-    signal = torch.from_numpy(signal).cuda().float()
+    signals = torch.from_numpy(signals).cuda().float()
 
-    # forward
-    logits = model(signal)
+    logits = model(signals)
     logits = torch.sigmoid(logits)
 
     # backward
@@ -47,9 +42,11 @@ def vis_cam(args, mat_data, top1 = False, gt_known = True):
     # Calculate CAM
     activations = hookValues.activations    # ([1, 15, 124, 1])
     gradients = hookValues.gradients        # ([1, 15, 124, 1])
-    signal_array = t2n(signal.permute(0, 2, 3, 1)) # bz, nc, h, w -> bz, h, w, nc
+    assert activations.ndim == 4 and gradients.ndim == 4, \
+        "维度错误, 全连接层不能进行CAM可视化"
+    signal_array = t2n(signals.permute(0, 2, 3, 1)) # bz, nc, h, w -> bz, h, w, nc
     
-    camCalculator = eval(method)(signal_array, [name])
+    camCalculator = eval(cam_method)(signal_array, label_names)
     scaledCAMs = camCalculator(t2n(activations), t2n(gradients))    # bz, h, w (1, 512, 1)
     camsOverlay = camCalculator._overlay_cam_on_image(layerName="model."+vis_layer)
 
@@ -73,66 +70,69 @@ if __name__ == '__main__':
         help='工程路径下模型名指定'
     )
     parser.add_argument(
-        '--dataset',
-        default='test',
-        type=str,
-        help='数据集指定, 可选数据集: train, val, test'
-    )
-    parser.add_argument(
-        '--mat_name',
-        default="DT.mat",
+        '--mat_path',
+        default="../../../work_dirs/基于-14db仿真HRRP的DropBlock模型/train/DT/DT.mat",
         type=str,
         help='指定要可视化的.mat文件名'
     )
     parser.add_argument(
         '--mat_idx',
-        default=[1, 10],
+        default=[1, 3],
         type=list,
         help='指定.mat文件的索引,指定起始和终止位置,支持单个或多个索引'
     )
     parser.add_argument(
-        '--batch_size',
-        default=10,
-        type=int,
-        help='批大小'
-    )
-    parser.add_argument(
-        '--num_workers',
-        default=4,
-        type=int,
-        help='数据加载时的线程数'
-    )
-    parser.add_argument(
         '--cam_method',
-        default="GradCAMpp",
+        default="GradCAM",
         type=str,
-        help='CAM决策可视化算法指定'
+        help='CAM决策可视化算法指定, \
+            可选: GradCAM, GradCAMpp, XGradCAM, EigenGradCAM, LayerCAM'
     )
     parser.add_argument(
         '--visualize_layer',
-        default="Block_3[0]",
+        default="Block_1[1]",
         type=str,
         help='可视化的隐层名'
     )
     args = parser.parse_args()
 
+    # 获取dataset的类别名, 并进行排序，保证与模型对应
+    dataset_path, class_name, mat_name = args.mat_path.rsplit('/', 2)
+    folder_names = [folder for folder in os.listdir(dataset_path) \
+                    if os.path.isdir(dataset_path+'/'+folder)]
+    folder_names.sort()                         # 按文件夹名进行排序
+    for i in range(0, len(folder_names)):
+        if folder_names[i].casefold() == 'dt':  # 将指定类别放到首位
+            folder_names.insert(0, folder_names.pop(i))
     # 读取数据
-    ori_data = read_project(args.project_path, stages=[args.dataset], repeat=0)
+    ori_data = scio.loadmat(args.mat_path)
+    signals = data_normalization(ori_data[list(ori_data.keys())[-1]].T)
+    signals = signals[args.mat_idx[0]-1:args.mat_idx[1]]
+    signals = signals[:, None, :, None]
+    # 分配标签
+    labels = np.full((signals.shape[0],), folder_names.index(class_name))
+    label_names = [class_name for i in range(signals.shape[0])]
+
+    # 载入模型
+    model = torch.load(f'{args.project_path}/{args.model_name}')
+    # print(model)
+    model.cuda()
 
     # 计算CAM
-    camsOverlay, scaledCAMs = vis_cam(args, ori_data)
+    camsOverlay, scaledCAMs = vis_cam(model, signals, labels, label_names, \
+                                      args.cam_method, args.visualize_layer)
 
     # 保存图像
-    saveImgPath = args.project_path + "/CAM_Output/" + args.dataset +"/"+ \
-                args.mat_name
+    saveImgPath = args.project_path + "/CAM_Output/" + \
+                dataset_path.rsplit('/', 1)[-1] +"/"+ class_name +"/"+ mat_name
     if not os.path.exists(saveImgPath):
         os.makedirs(saveImgPath)
-    for i, (camOverlay, scaledCAM) in enumerate(camsOverlay, scaledCAMs):
+    for i, (camOverlay, scaledCAM) in enumerate(zip(camsOverlay, scaledCAMs)):
         # 保存CAM图像
-        cv2.imwrite(saveImgPath +"/"+ str(args.mat_idx[0]+i) + \
-                    +'_'+ args.cam_method + ".png", camOverlay)
+        cv2.imencode('.png', camOverlay)[1].tofile(saveImgPath +"/"+ \
+                        str(args.mat_idx[0]+i) +'_'+ args.cam_method + ".png")
         # 保存CAM矩阵数据
-        scio.savemat(saveImgPath +"/"+ str(args.mat_idx[0]+i) + \
+        scio.savemat(saveImgPath +"/"+ str(args.mat_idx[0]+i) \
                     +'_'+ args.cam_method + ".mat", {'scaledCAM': scaledCAM})
         
 
