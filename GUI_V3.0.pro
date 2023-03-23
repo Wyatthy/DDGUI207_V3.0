@@ -49,7 +49,8 @@ HEADERS += \
     build/lib/guiLogic/tools/searchFolder.h \
     build/lib/TRANSFER/ToHrrp.h \
     build/lib/guiLogic/tools/socketclient.h \
-    build/lib/guiLogic/tools/socketserver.h
+    build/lib/guiLogic/tools/socketserver.h \
+    uis/DialogNewProject.h
 
 SOURCES += \
     core/modelCAMPage.cpp \
@@ -83,11 +84,13 @@ SOURCES += \
     build/lib/guiLogic/tinyXml/tinyxml.cpp \
     build/lib/guiLogic/tinyXml/tinyxmlerror.cpp \
     build/lib/guiLogic/tinyXml/tinyxmlparser.cpp \
-    build/lib/guiLogic/tools/searchFolder.cpp
+    build/lib/guiLogic/tools/searchFolder.cpp \
+    uis/DialogNewProject.cpp
 
 FORMS += \
     ./build/conf/QRibbon/qribbon.ui \
-    ./uis/MainWindow.ui
+    ./uis/MainWindow.ui \
+    ./uis/DialogNewProject.ui
 
 TRANSLATIONS += \
     ./build/conf/QRibbon_yue_CN.ts

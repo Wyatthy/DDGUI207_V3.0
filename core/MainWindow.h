@@ -11,7 +11,7 @@
 #include "./core/modelEvalPage.h"
 #include "./core/modelTrainPage.h"
 #include "./core/monitorPage.h"
-
+#include "./uis/DialogNewProject.h"
 #include "./core/modelVisPage.h"
 #include "./core/modelCAMPage.h"
 
@@ -52,7 +52,7 @@ class MainWindow: public QMainWindow{
         
     private:
         Ui::MainWindow *ui; 
-
+        Ui::DialogNewProject *ui_newProject;
         ProjectDock *projectDock;
 //        DatasetDock *datasetDock;
 //        ModelDock *modelDock;
