@@ -72,19 +72,20 @@ class CNN_HRRP512(nn.Module):
         self.dropout = nn.Dropout(0.5)
         self.fc2 = nn.Linear(100, num_classes)
 
-    def forward(self, x):
+    def forward(self, x, **kwargs):
         x = self.Block_1(x)
-        x = self.Block_2(x)
-        x = self.Block_3(x)
-        x = self.Block_4(x)
+        x = self.Block_2(kwargs["layer1"]) if "layer1" in kwargs else self.Block_2(x) 
+        x = self.Block_3(kwargs["layer2"]) if "layer2" in kwargs else self.Block_3(x) 
+        x = self.Block_4(kwargs["layer3"]) if "layer3" in kwargs else self.Block_4(x) 
 
-        x = self.flatten(x)
+        x = self.flatten(kwargs["layer4"]) if "layer4" in kwargs else self.flatten(x)
         x = self.fc1(x)
         x = self.relu(x)
         x = self.dropout(x)
         x = self.fc2(x)
 
         return x
+
 
 class CNN_HRRP128(nn.Module):
     ''' 
@@ -123,18 +124,18 @@ class CNN_HRRP128(nn.Module):
             nn.MaxPool2d(kernel_size=(2, 1), stride=(2, 1))
         )
         self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(435, 100)
+        self.fc1 = nn.Linear(75, 10)
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(0.5)
-        self.fc2 = nn.Linear(100, num_classes)
+        self.fc2 = nn.Linear(10, num_classes)
 
-    def forward(self, x):
+    def forward(self, x, **kwargs):
         x = self.Block_1(x)
-        x = self.Block_2(x)
-        x = self.Block_3(x)
-        x = self.Block_4(x)
+        x = self.Block_2(kwargs["layer1"]) if "layer1" in kwargs else self.Block_2(x) 
+        x = self.Block_3(kwargs["layer2"]) if "layer2" in kwargs else self.Block_3(x) 
+        x = self.Block_4(kwargs["layer3"]) if "layer3" in kwargs else self.Block_4(x)
 
-        x = self.flatten(x)
+        x = self.flatten(kwargs["layer4"]) if "layer4" in kwargs else self.flatten(x)
         x = self.fc1(x)
         x = self.relu(x)
         x = self.dropout(x)
@@ -142,10 +143,11 @@ class CNN_HRRP128(nn.Module):
 
         return x
 
+
 if __name__ == "__main__":
     ''' 测试hrrpCNN.py,测试网络结构构建是否构建正确,并打印每层参数 '''
-    model = CNN_HRRP512(num_classes=6)
+    model = CNN_HRRP128(num_classes=6)
     model.cuda()
     print(model)
     # 统计网络参数及输出大小
-    summary(model, (110, 1, 512, 1), device="cuda")
+    summary(model, (110, 1, 128, 1), device="cuda")

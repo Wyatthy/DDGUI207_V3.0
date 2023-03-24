@@ -106,7 +106,7 @@ class BaseCAM():
             cam = cam / np.max(cam)     
             sig_min, sig_max = np.min(sig), np.max(sig)    
 
-            plt.figure(figsize=(18, 4))
+            plt.figure(figsize=(18, 4),dpi=400)
             plt.title("Signal Type: "+CLASS+"    Model Layer: "+str(layerName))
             plt.xlabel('N')
             plt.ylabel("Value")

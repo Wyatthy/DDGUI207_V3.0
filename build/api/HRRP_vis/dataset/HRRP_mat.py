@@ -28,8 +28,8 @@
 
 import os
 import numpy as np
-import scipy.io as scio
-from tqdm import tqdm
+import scipy.io as sio
+# from tqdm import tqdm
 from torchvision import transforms
 from torch.utils.data.dataset import Dataset
 from torch.utils.data import DataLoader
@@ -37,10 +37,11 @@ from torch.utils.data import DataLoader
 
 class HRRPDataset(Dataset):
     ''' 定义HRRPDataset类,继承Dataset方法,并重写__getitem__()和__len__()方法 '''
-    def __init__(self, datasetPath, transform=None):
+    def __init__(self, data_dict, transform=None):
         ''' 初始化函数,得到数据 '''
-        self.signals, self.labels, _ = read_mat(datasetPath)
-        print(_)
+        self.signals = data_dict["data"]
+        self.labels = data_dict["label"]
+        self.label_names = data_dict["label_name"]
         self.transform = transform
 
     def __getitem__(self, index):
@@ -56,75 +57,82 @@ class HRRPDataset(Dataset):
         return len(self.labels)
 
 
-def read_mat(folder_path):
-    """
-        Func:
-            从.mat文件读取数据并预处理
-        Args:
-            folder_path: 数据集路径
-        Return:
-            signals: 数据
-            labels: 标签
-            folder_name: 数据标签名
-    """
-    # 读取路径下所有文件夹的名称并保存
-    file_name = os.listdir(folder_path)     # 读取所有文件夹,将文件夹名存在列表中
-    folder_name = []
-    for i in range(0, len(file_name)):
-        # 判断文件夹与文件
-        if os.path.isdir(folder_path+'/'+file_name[i]):
-            folder_name.append(file_name[i])
-    folder_name.sort()  # 按文件夹名进行排序
+def read_mat(folder_path, repeat=64):
+    ''' 从mat文件中读取数据 '''
+    folder_names = [folder for folder in os.listdir(folder_path) \
+                    if os.path.isdir(folder_path+'/'+folder)]
+    folder_names.sort()                         # 按文件夹名进行排序
 
-    signals = []
-    labels = []
+    for i in range(0, len(folder_names)):
+        if folder_names[i].casefold() == 'dt':  # 将指定类别放到首位
+            folder_names.insert(0, folder_names.pop(i))
+
     # 读取单个文件夹下的内容
-    for i in range(0, len(folder_name)):
-        class_mat_name = os.listdir(folder_path + '/' + folder_name[i])  # 获取类别文件夹下的.mat文件名称
-        class_path = folder_path + '/' + folder_name[i] + '/' + class_mat_name[0]   # 类别的.mat文件路径
-        matrix_base = os.path.basename(class_path)
-        matrix_name = os.path.splitext(matrix_base)[0]  # 获取去除扩展名的.mat文件名称
-        class_data = scio.loadmat(class_path)[matrix_name].T  # 读入.mat文件,并转置
+    all_data = []
+    all_label = []
+    for class_name in folder_names:
+        mat_files = [file for file in os.listdir(folder_path+'/'+class_name) \
+                      if file.endswith(".mat")]
+        concate_data = []
+        for file in mat_files:
+            ori_data = sio.loadmat(folder_path +'/'+ class_name +'/'+ file)
+            concate_data.append(ori_data[list(ori_data.keys())[-1]].T)
+        # 归一化处理
+        concate_data = data_normalization(np.concatenate(concate_data, axis=0))
+        # 重复堆叠数据
+        if repeat > 1:
+            concate_data = concate_data[:,:,None].repeat(repeat, 2)
+        # 分配标签
+        label = np.zeros((concate_data.shape[0], len(folder_names)))
+        label[:, folder_names.index(class_name)] = 1
 
-        class_data_normalization = data_normalization(class_data)  # 归一化处理
-        # 设置标签
-        label = np.zeros((len(class_data_normalization), len(folder_name)))
-        label[:, i] = 1
+        all_data.append(concate_data)
+        all_label.append(label)
 
-        signals += class_data_normalization.tolist()
-        labels += label.tolist()
-    return np.array(signals), np.array(labels), folder_name
+    all_data = np.concatenate(all_data, axis=0)
+    all_label = np.concatenate(all_label, axis=0)
+    return {"data":all_data, "label":np.argmax(all_label, axis=1), \
+            "label_name":folder_names}
+
+
+def read_project(folder_path, stages=['train', 'val', 'test'], repeat=64):
+    ''' 从工程文件路径中制作训练集、验证集、测试集 '''
+    folder_names = [folder.casefold() for folder in os.listdir(folder_path) \
+                    if os.path.isdir(folder_path+'/'+folder)]
+    assert folder_names.sort() == stages.sort(), "工程目录下不包含指定文件夹"
+
+    data = {stage: read_mat(folder_path +'/'+ stage +'/', repeat) for stage in stages}
+    if 'train' in stages and 'val' in stages:
+        assert data["train"]["label_name"] == data["val"]["label_name"], \
+            "训练集和验证集的类别不一致"
+    return data
 
 
 def data_normalization(data):
-    """
-        Func:
-            数据归一化
-        Args:
-            data: 待归一化的数据
-        Return:
-            data: 归一化后的数据
-    """
+    ''' 数据归一化处理 '''
     for i in range(0, len(data)):
         data[i] -= np.min(data[i])
         data[i] /= np.max(data[i])
     return data
 
 
-
 if __name__ == "__main__":
     ''' 测试HRRP.py,测试dataLoader是否正常读取、处理数据 '''
+    ori_data = read_project('./work_dirs/基于-14db仿真HRRP的DropBlock模型', stages=['train'], repeat=0)
 
     transform = transforms.Compose([ 
                                     # waiting add
                                     ])
-    # 通过ACARSDataset将数据进行加载,返回Dataset对象,包含data和labels
-    dataset = HRRPDataset(datasetPath='./dataset/HRRP_simulate_train_512xN_c5', transform=transform)
+    dataset = HRRPDataset(ori_data["train"], transform=transform)
     # 通过DataLoader读取数据
-    hrrpLoader = DataLoader( dataset, \
-                        batch_size=160, \
-                        num_workers=4, \
-                        shuffle=True, \
-                        drop_last=False)
-    for data, i in tqdm(hrrpLoader):
-        print("Size:", data.shape)
+    HRRPLoader = DataLoader( 
+        dataset,
+        batch_size=64,
+        num_workers=4,
+        shuffle=True,
+        drop_last=False
+    )
+    for data, i in HRRPLoader:
+        print("Size:", data.shape, i.shape)
+    # for data, i in tqdm(HRRPLoader):
+    #     print("Size:", data.shape, i.shape)

@@ -36,25 +36,22 @@ font1 = {'family': 'Times New Roman',
         }
 
 
-def draw_curve(y1, y2=None):
+def draw_curve(y1, y2=None, save_path=None):
     ''' 绘制训练收敛曲线 '''
     x1 = [i for i in range(len(y1))]
-    # y1 = smooth(y1, weight=0.95)
+    y1 = smooth(y1, weight=0.95)
     plt.plot(x1, y1, color='b', label='train')
     if y2 is not None:
         x2 = [i for i in range(len(y2))]
-        # y2 = smooth(y2, weight=0.95)
+        y2 = smooth(y2, weight=0.95)
         plt.plot(x2, y2, color='coral', label='validation')
     plt.legend(loc='lower right', prop=font1, frameon=False)
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
-    if not os.path.exists('./figs'):
-        os.makedirs('./figs')
-    plt.savefig('./figs/acc.jpg')
-    plt.savefig('./figs/acc.eps')
+    plt.savefig(save_path, dpi=800)
 
 
-def plot_confusion_matrix(y_true, y_pred, labels, title='Normalized confusion matrix'):
+def plot_confusion_matrix(y_true, y_pred, labels, title='Normalized confusion matrix', save_path=None):
     ''' 绘制混淆矩阵 '''
     cmap = plt.cm.Blues
     ''' 颜色参考http://blog.csdn.net/haoji007/article/details/52063168'''
@@ -62,7 +59,7 @@ def plot_confusion_matrix(y_true, y_pred, labels, title='Normalized confusion ma
     tick_marks = np.array(range(len(labels))) + 0.5
     np.set_printoptions(precision=2)
     cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-    plt.figure(figsize=(10, 9), dpi=360)
+    plt.figure(figsize=(11, 9), dpi=800)
     ind_array = np.arange(len(labels))
     x, y = np.meshgrid(ind_array, ind_array)
     intFlag = 1 # 标记在图片中对文字是整数型还是浮点型
@@ -95,7 +92,7 @@ def plot_confusion_matrix(y_true, y_pred, labels, title='Normalized confusion ma
     plt.yticks(xlocations, labels)
     plt.ylabel('Index of True Classes')
     plt.xlabel('Index of Predict Classes')
-    plt.savefig('./figs/confusion_matrix.jpg', dpi=300)
+    plt.savefig(save_path)
     # plt.title(title)
     # plt.show()
 

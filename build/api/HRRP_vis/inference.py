@@ -29,68 +29,53 @@
 --------------------------------------------------------------------------
 '''
 
-import os
+import time
+import argparse
 
 import torch
 from torchvision import transforms
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 
-from configs import cfgs
-from dataset.RML2016 import RMLDataset, loadNpy
-from dataset.ACARS import ACARSDataset, loadNpy_acars
+from dataset.HRRP_mat import HRRPDataset, read_project
+from networks.hrrpCNN import CNN_HRRP512, CNN_HRRP128
 from utils.strategy import accuracy
-from utils.plot import plot_confusion_matrix
-from dataset.RML2016_10a.classes import modName
+from utils.plot import plot_confusion_matrix, confusion_matrix
 
 
 def inference():
+    # Dataset
+    ori_data = read_project(args.project_path, stages=[args.dataset], repeat=0)
+    transform = transforms.Compose([])
+    # Test data
+    test_dataset = HRRPDataset(ori_data[args.dataset], transform=transform) 
+    dataloader_train = DataLoader(
+        test_dataset,
+        batch_size=args.batch_size,
+        num_workers=args.num_workers,
+        shuffle=False,
+        drop_last=False
+    )
     # model
-    model = torch.load(os.path.join('./checkpoints', cfgs.checkpoint_name))    # load checkpoint
+    # model = eval(args.model)(num_classes=len(ori_data[args.dataset]["label_name"]))
+    model = torch.load(f'{args.project_path}/{args.model_name}')
     print(model)
-    # model = torch.nn.DataParallel(model)  # 多卡预留
     model.cuda()
-    
-   # Dataset
-    if cfgs.dataset_name == "RML2016.04c":
-        x_train, y_train, x_test, y_test = loadNpy(
-            cfgs.train_path,
-            cfgs.test_path,
-            cfgs.process_IQ
-        )
-        Dataset = RMLDataset
-    elif cfgs.dataset_name == "ACARS":
-        x_train, y_train, x_test, y_test = loadNpy_acars(
-            cfgs.train_path_x,
-            cfgs.train_path_y,
-            cfgs.test_path_x,
-            cfgs.test_path_y,
-            cfgs.process_IQ
-        )
-        Dataset = ACARSDataset
-    else :
-        print('ERROR: No Dataset {}!!!'.format(cfgs.model))
-        
-    # Valid data
-    # BUG,BUG,BUG,FIXME
-    transform = transforms.Compose([ 
-                                        # transforms.ToTensor()
-                                        # waiting add
-                                    ])
 
-    valid_dataset = Dataset(x_test, y_test, transform=transform)
-    dataloader_valid = DataLoader(valid_dataset, \
-                                batch_size=cfgs.batch_size, \
-                                num_workers=cfgs.num_workers, \
-                                shuffle=True, \
-                                drop_last=False)
+    # log
+    log = open(f'{args.project_path}/Test_log.txt', 'a+')
+    log.write('-'*30+time.strftime('%Y-%m-%d %H:%M:%S',\
+                                    time.localtime(time.time()))+'-'*30+'\n')
+    for name, value in args.__dict__.items():
+        log.write(f"{name}: {value} \n") 
+    log.write("\n")
 
     sum = 0
     val_top1_sum = 0
     labels = []
     preds = []
     model.eval()
-    for ims, label in dataloader_valid:
+    for ims, label in dataloader_train:
         labels += label.numpy().tolist()
 
         input = Variable(ims).cuda().float()
@@ -105,13 +90,64 @@ def inference():
         sum += 1
         val_top1_sum += top1_val[0]
     avg_top1 = val_top1_sum / sum
+
+    log.write('acc: {}\n'.format(avg_top1.data))
+    cm = confusion_matrix(labels, preds)
+    log.write('confusion matrix:\n                    ')
+    for pre_name in ori_data[args.dataset]["label_name"]:
+        log.write("%15s"%pre_name)
+    log.write('\n')
+    for i in range(len(cm)):
+        log.write("%20s" % ori_data[args.dataset]["label_name"][i])
+        for j in range(len(cm[0])):
+            log.write("%15s"%str(cm[i][j]))
+        log.write('\n')
+        
+    log.write("\n\n")
+    log.close()
+              
     print('acc: {}'.format(avg_top1.data))
-    if cfgs.dataset_name == "RML2016.04c":
-        labels_ = modName
-    elif cfgs.dataset_name == "ACARS":
-        labels_ = range(cfgs.num_classes)
-    plot_confusion_matrix(labels, preds, labels_)
+    plot_confusion_matrix(
+        labels, preds, 
+        ori_data[args.dataset]["label_name"],
+        save_path=f'{args.project_path}/Test_ConfusionMatrix.png'
+    )
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description='基于HRRP数据的Pytorch模型的训练参数'
+    )
+    parser.add_argument(
+        '--project_path',
+        default="../../../work_dirs/基于-14db仿真HRRP的DropBlock模型",
+        type=str,
+        help='数据集指定, 包含数据集的工程文件夹路径'
+    )
+    parser.add_argument(
+        '--model_name', 
+        default="CNN_HRRP128.pth",
+        type=str,
+        help='工程路径下模型名指定'
+    )
+    parser.add_argument(
+        '--dataset',
+        default='test',
+        type=str,
+        help='数据集指定, 可选数据集: train, val, test'
+    )
+    parser.add_argument(
+        '--batch_size',
+        default=10,
+        type=int,
+        help='批大小'
+    )
+    parser.add_argument(
+        '--num_workers',
+        default=4,
+        type=int,
+        help='数据加载时的线程数'
+    )
+    args = parser.parse_args()
+
     inference()
