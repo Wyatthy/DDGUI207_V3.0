@@ -191,21 +191,21 @@ void ModelVisPage::nextFeaImgsPage(){
 void ModelVisPage::refreshGlobalInfo(){
     // 数据集信息更新
     if(datasetInfo->checkMap(datasetInfo->selectedType, datasetInfo->selectedName, "PATH")){
-        ui->label_mV_dataset->setText(QString::fromStdString(datasetInfo->selectedName));
+        // ui->label_mV_dataset->setText(QString::fromStdString(datasetInfo->selectedName));
         this->choicedDatasetPATH = datasetInfo->getAttri(datasetInfo->selectedType, datasetInfo->selectedName, "PATH");
     }
     else{
         this->choicedDatasetPATH = "";
-        ui->label_mV_dataset->setText("空");
+        // ui->label_mV_dataset->setText("空");
     }
     // 模型信息更新
     if(!modelInfo->selectedName.empty() && modelInfo->checkMap(modelInfo->selectedType, modelInfo->selectedName, "PATH")){
-        ui->label_mV_model->setText(QString::fromStdString(modelInfo->selectedName));
+        // ui->label_mV_model->setText(QString::fromStdString(modelInfo->selectedName));
         this->choicedModelPATH = modelInfo->getAttri(modelInfo->selectedType, modelInfo->selectedName, "PATH");
     }
     else{
         this->choicedModelPATH = "";
-        ui->label_mV_model->setText(QString::fromStdString("空"));
+        // ui->label_mV_model->setText(QString::fromStdString("空"));
     }
 
     // 模型类型，目前可视化仅支持.hdf5和.pth
@@ -377,7 +377,7 @@ int ModelVisPage::randomImage(){
             if(datasetInfo->selectedType=="HRRP") {chartTitle="HRRP(Ephi),Polarization HP(1)[Magnitude in dB]";}
             Chart *previewChart = new Chart(ui->label_mV_choicedImg,QString::fromStdString(datasetInfo->selectedType),matFilePath);
             previewChart->drawImage(ui->label_mV_choicedImg,randomIdx);
-            ui->label_mV_choicedImgName->setText(QString::fromStdString(allMatFile[0])+"/"+QString::number(randomIdx));
+            // ui->label_mV_choicedImgName->setText(QString::fromStdString(allMatFile[0])+"/"+QString::number(randomIdx));
 
             return 1;
         }
@@ -397,7 +397,7 @@ int ModelVisPage::importImage(){
     }
     this->choicedSamplePATH = filePath;
 //    recvShowPicSignal(QPixmap(filePath), ui->graphicsView_mV_choicedImg);
-    ui->label_mV_choicedImgName->setText(choicedSamplePATH.split("/").last());
+    // ui->label_mV_choicedImgName->setText(choicedSamplePATH.split("/").last());
 
     return 1;
 }

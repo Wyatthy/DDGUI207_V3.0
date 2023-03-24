@@ -7,7 +7,6 @@
 #include "./lib/guiLogic/projectsInfo.h"
 // 主页面类
 #include "./core/sensePage.h"
-#include "./core/modelChoicePage.h"
 #include "./core/modelEvalPage.h"
 #include "./core/modelTrainPage.h"
 #include "./core/monitorPage.h"
@@ -58,7 +57,7 @@ class MainWindow: public QMainWindow{
 //        ModelDock *modelDock;
 
         SenseSetPage *senseSetPage;
-        ModelChoicePage *modelChoicePage;
+        // ModelChoicePage *modelChoicePage;
         ModelEvalPage *modelEvalPage;
         ModelTrainPage *modelTrainPage;
         MonitorPage *monitorPage;

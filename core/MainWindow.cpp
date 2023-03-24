@@ -17,7 +17,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent){
 
 	// 功能模块:切换页面
 	connect(ui->action_SceneSetting, &QAction::triggered, this, &MainWindow::switchPage);
-    connect(ui->action_ModelChoice, &QAction::triggered, this, &MainWindow::switchPage);
+    // connect(ui->action_ModelChoice, &QAction::triggered, this, &MainWindow::switchPage);
     connect(ui->action_Evaluate, &QAction::triggered, this, &MainWindow::switchPage);
     connect(ui->action_ModelTrain, &QAction::triggered, this, &MainWindow::switchPage);
     connect(ui->action_Monitor, &QAction::triggered, this, &MainWindow::switchPage);
@@ -35,6 +35,8 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent){
     //文档
     connect(ui->action_manual, &QAction::triggered, this, &MainWindow::showManual);
 
+
+
     // 调试控制台设置
     terminal = new BashTerminal(ui->lineEdit, ui->textEdit);
     connect(ui->pushButton_bashCommit, &QPushButton::clicked, terminal, &BashTerminal::commitBash);
@@ -48,7 +50,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent){
     // 场景选择页面
     this->senseSetPage = new SenseSetPage(this->ui, this->terminal, this->globalDatasetInfo, this->globalProjectInfo);
 
-    this->modelChoicePage = new ModelChoicePage(this->ui, this->terminal, this->globalModelInfo, this->globalProjectInfo);
+    // this->modelChoicePage = new ModelChoicePage(this->ui, this->terminal, this->globalModelInfo, this->globalProjectInfo);
 
     this->modelEvalPage = new ModelEvalPage(this->ui, this->terminal,this->globalDatasetInfo, this->globalModelInfo, this->globalProjectInfo);
 
@@ -59,7 +61,6 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent){
     this->modelVisPage = new ModelVisPage(this->ui, this->terminal, this->globalDatasetInfo, this->globalModelInfo);
 
     this->modelCAMPage = new ModelCAMPage(this->ui, this->terminal, this->globalDatasetInfo, this->globalModelInfo);
-    
 }
 
 
@@ -72,10 +73,10 @@ void MainWindow::switchPage(){
     QAction *action = qobject_cast<QAction*>(sender());
     if(action==ui->action_SceneSetting)
         ui->stackedWidget_MultiPage->setCurrentWidget(ui->page_senseSet);
-    else if(action==ui->action_ModelChoice){
-        ui->stackedWidget_MultiPage->setCurrentWidget(ui->page_modelChoice);
-        this->modelChoicePage->refreshGlobalInfo();
-    }
+    // else if(action==ui->action_ModelChoice){
+    //     ui->stackedWidget_MultiPage->setCurrentWidget(ui->page_modelChoice);
+    //     this->modelChoicePage->refreshGlobalInfo();
+    // }
     else if(action==ui->action_Evaluate){
         ui->stackedWidget_MultiPage->setCurrentWidget(ui->page_modelEval);
         this->modelEvalPage->refreshGlobalInfo();
@@ -102,7 +103,7 @@ void MainWindow::switchPage(){
 void MainWindow::refreshPages(){
     this->modelEvalPage->refreshGlobalInfo();
     this->monitorPage->refresh();
-    this->modelChoicePage->refreshGlobalInfo();
+    // this->modelChoicePage->refreshGlobalInfo();
     this->modelTrainPage->refreshGlobalInfo();
 }
 

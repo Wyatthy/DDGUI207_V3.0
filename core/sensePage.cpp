@@ -14,6 +14,8 @@ SenseSetPage::SenseSetPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, 
     datasetInfo(globalDatasetInfo),
     projectsInfo(globalProjectInfo)
 {
+    //模型最大类别数
+    classNum = 10;
     // 数据集类别选择框事件相应
     BtnGroup_typeChoice->addButton(ui->radioButton_train_choice, 0);
     BtnGroup_typeChoice->addButton(ui->radioButton_test_choice, 1);
@@ -29,49 +31,70 @@ SenseSetPage::SenseSetPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, 
 //    connect(ui->pushButton_saveDatasetAttri, &QPushButton::clicked, this, &SenseSetPage::saveDatasetAttri);
 
     // 下一批数据
-    connect(ui->pushButton_nextSenseChart, &QPushButton::clicked, this, &SenseSetPage::nextBatchChart);
+    // connect(ui->pushButton_nextSenseChart, &QPushButton::clicked, this, &SenseSetPage::nextBatchChart);
 
     // 数据集属性显示框
-    this->attriLabelGroup["Dataset_TargetNum"] = ui->label_sense_claNum;
-    this->attriLabelGroup["Project_Path"] = ui->label_sense_PATH;
-    this->attriLabelGroup["Dataset_Name"] = ui->label_sense_datasetName;
-    this->attriLabelGroup["Dataset_TargetNumEachCla"] = ui->label_sense_targetNumEachCla;
-    this->attriLabelGroup["Dataset_PitchAngle"] = ui->label_sense_pitchAngle;
-    this->attriLabelGroup["Dataset_AzimuthAngle"] = ui->label_sense_azimuthAngle;
-    this->attriLabelGroup["Dataset_SamplingNum"] = ui->label_sense_samplingNum;
-    this->attriLabelGroup["Dataset_IncidentMode"] = ui->label_sense_incidentMode;
-    this->attriLabelGroup["Dataset_Freq"] = ui->label_sense_freq;
-    this->attriLabelGroup["Dataset_Note"] = ui->label_sense_note;
+    // this->attriLabelGroup["Dataset_TargetNum"] = ui->label_sense_claNum;
+    // this->attriLabelGroup["Project_Path"] = ui->label_sense_PATH;
+    // this->attriLabelGroup["Dataset_Name"] = ui->label_sense_datasetName;
+    // this->attriLabelGroup["Dataset_TargetNumEachCla"] = ui->label_sense_targetNumEachCla;
+    // this->attriLabelGroup["Dataset_PitchAngle"] = ui->label_sense_pitchAngle;
+    // this->attriLabelGroup["Dataset_AzimuthAngle"] = ui->label_sense_azimuthAngle;
+    // this->attriLabelGroup["Dataset_SamplingNum"] = ui->label_sense_samplingNum;
+    // this->attriLabelGroup["Dataset_IncidentMode"] = ui->label_sense_incidentMode;
+    // this->attriLabelGroup["Dataset_Freq"] = ui->label_sense_freq;
+    // this->attriLabelGroup["Dataset_Note"] = ui->label_sense_note;
 
-    // 图片显示label成组
+    // 图片显示label成组,一共十个
     imgGroup.push_back(ui->label_datasetClaImg1);
-    imgGroup.push_back(ui->label_datasetClaImg2);
-    imgGroup.push_back(ui->label_datasetClaImg3);
-    imgGroup.push_back(ui->label_datasetClaImg4);
-    imgGroup.push_back(ui->label_datasetClaImg5);
-    imgGroup.push_back(ui->label_datasetClaImg6);
+    imgGroup.push_back(ui->label_datasetClaImg1_2);
+    imgGroup.push_back(ui->label_datasetClaImg1_3);
+    imgGroup.push_back(ui->label_datasetClaImg1_4);
+    imgGroup.push_back(ui->label_datasetClaImg1_5);
+    imgGroup.push_back(ui->label_datasetClaImg1_6);
+    imgGroup.push_back(ui->label_datasetClaImg1_7);
+    imgGroup.push_back(ui->label_datasetClaImg1_8);
+    imgGroup.push_back(ui->label_datasetClaImg1_9);
+    imgGroup.push_back(ui->label_datasetClaImg1_10);
 
     imgInfoGroup.push_back(ui->label_datasetCla1);
-    imgInfoGroup.push_back(ui->label_datasetCla2);
-    imgInfoGroup.push_back(ui->label_datasetCla3);
-    imgInfoGroup.push_back(ui->label_datasetCla4);
-    imgInfoGroup.push_back(ui->label_datasetCla5);
-    imgInfoGroup.push_back(ui->label_datasetCla6);
+    imgInfoGroup.push_back(ui->label_datasetCla1_2);
+    imgInfoGroup.push_back(ui->label_datasetCla1_3);
+    imgInfoGroup.push_back(ui->label_datasetCla1_4);
+    imgInfoGroup.push_back(ui->label_datasetCla1_5);
+    imgInfoGroup.push_back(ui->label_datasetCla1_6);
+    imgInfoGroup.push_back(ui->label_datasetCla1_7);
+    imgInfoGroup.push_back(ui->label_datasetCla1_8);
+    imgInfoGroup.push_back(ui->label_datasetCla1_9);
+    imgInfoGroup.push_back(ui->label_datasetCla1_10);
 
-    // 显示图表成组
-    chartGroup.push_back(ui->label_senseChart1);
-    chartGroup.push_back(ui->label_senseChart2);
-    chartGroup.push_back(ui->label_senseChart3);
-    chartGroup.push_back(ui->label_senseChart4);
-    chartGroup.push_back(ui->label_senseChart5);
-    chartGroup.push_back(ui->label_senseChart6);
+    // // 显示图表成组
+    chartGroup.push_back(ui->label_senseChartInfo1);
+    chartGroup.push_back(ui->label_senseChartInfo1_2);
+    chartGroup.push_back(ui->label_senseChartInfo1_3);
+    chartGroup.push_back(ui->label_senseChartInfo1_4);
+    chartGroup.push_back(ui->label_senseChartInfo1_5);
+    chartGroup.push_back(ui->label_senseChartInfo1_6);
+    chartGroup.push_back(ui->label_senseChartInfo1_7);
+    chartGroup.push_back(ui->label_senseChartInfo1_8);
+    chartGroup.push_back(ui->label_senseChartInfo1_9);
+    chartGroup.push_back(ui->label_senseChartInfo1_10);
+    // chartGroup.push_back(ui->label_senseChart2);
+    // chartGroup.push_back(ui->label_senseChart3);
+    // chartGroup.push_back(ui->label_senseChart4);
+    // chartGroup.push_back(ui->label_senseChart5);
+    // chartGroup.push_back(ui->label_senseChart6);
 
-    chartInfoGroup.push_back(ui->label_senseChartInfo_1);
-    chartInfoGroup.push_back(ui->label_senseChartInfo_2);
-    chartInfoGroup.push_back(ui->label_senseChartInfo_3);
-    chartInfoGroup.push_back(ui->label_senseChartInfo_4);
-    chartInfoGroup.push_back(ui->label_senseChartInfo_5);
-    chartInfoGroup.push_back(ui->label_senseChartInfo_6);
+    // chartInfoGroup.push_back(ui->label_senseChartInfo1);
+    // chartInfoGroup.push_back(ui->label_senseChartInfo1_2);
+    // chartInfoGroup.push_back(ui->label_senseChartInfo1_3);
+    // chartInfoGroup.push_back(ui->label_senseChartInfo1_4);
+    // chartInfoGroup.push_back(ui->label_senseChartInfo1_5);
+    // chartInfoGroup.push_back(ui->label_senseChartInfo1_6);
+    // chartInfoGroup.push_back(ui->label_senseChartInfo1_7);
+    // chartInfoGroup.push_back(ui->label_senseChartInfo1_8);
+    // chartInfoGroup.push_back(ui->label_senseChartInfo1_9);
+    // chartInfoGroup.push_back(ui->label_senseChartInfo1_10);
 
 
 }
@@ -82,12 +105,15 @@ SenseSetPage::~SenseSetPage(){
 
 void SenseSetPage::confirmDataset(bool notDialog = false){
     QString project_path = QString::fromStdString(projectsInfo->pathOfSelectedProject);
+    qDebug() << "project_path: " << project_path;
     QString selectedType = this->BtnGroup_typeChoice->checkedButton()->objectName().split("_")[1];
+    qDebug() << "selectedType: " << selectedType;
     if(selectedType.isEmpty()||projectsInfo->pathOfSelectedProject==""){
         QMessageBox::warning(NULL, "数据集切换提醒", "数据集切换失败，活动工程或数据集未指定");
         return;
     }
     QString dataset_path = project_path + "/" + selectedType;
+    qDebug() << "dataset_path: " << dataset_path;
     bool ifDbExists = std::filesystem::exists(std::filesystem::u8path(dataset_path.toStdString()));
     if(!ifDbExists){
         QMessageBox::warning(NULL, "数据集切换提醒", "数据集切换失败，该工程下不存在"+selectedType+"数据集");
@@ -120,7 +146,8 @@ void SenseSetPage::confirmDataset(bool notDialog = false){
     }
     // qDebug()<<"SenseSetPage::confirmDataset dataset_path== "<<dataset_path;
     // 更新属性显示标签
-    updateAttriLabel();
+
+    // updateAttriLabel();
 
     // 绘制类别图
     for(int i = 0; i<6; i++){
@@ -129,15 +156,15 @@ void SenseSetPage::confirmDataset(bool notDialog = false){
     }
     drawClassImage();
 
-    ui->progressBar->setValue(40);
+    // ui->progressBar->setValue(40);
 
     // 绘制曲线
     for(int i=0;i<6;i++){
         if(!chartGroup[i]->layout()) delete chartGroup[i]->layout();
-        chartInfoGroup[i]->clear();
+        // chartInfoGroup[i]->clear();
         chartGroup[i]->clear();
     }
-    nextBatchChart();
+    // nextBatchChart();
 
     // 绘制表格 TODO
     if(!notDialog)
@@ -160,6 +187,10 @@ void SenseSetPage::updateAttriLabel(){
 void SenseSetPage::drawClassImage(){
     string rootPath = projectsInfo->pathOfSelectedDataset;
     vector<string> subDirNames = projectsInfo->classNamesOfSelectedDataset;
+    // 打印类别名称
+    for(int i=0; i<subDirNames.size(); i++){
+        qDebug() << "subDirNames[" << i << "]: " << QString::fromStdString(subDirNames[i]);
+    }
     for(int i = 0; i<subDirNames.size(); i++){
         imgInfoGroup[i]->setText(QString::fromStdString(subDirNames[i]));
         QString imgPath = QString::fromStdString(rootPath +"/"+ subDirNames[i] +".png");
@@ -200,7 +231,7 @@ void SenseSetPage::nextBatchChart(){
             //绘图
             previewChart = new Chart(ui->label_mE_chartGT,QString::fromStdString(projectsInfo->dataTypeOfSelectedProject),matFilePath);
             previewChart->drawImage(chartGroup[i],randomIdx);
-            chartInfoGroup[i]->setText(QString::fromStdString(choicedClass+":Index")+QString::number(randomIdx));
+            // chartInfoGroup[i]->setText(QString::fromStdString(choicedClass+":Index")+QString::number(randomIdx));
         }
     }
 }
