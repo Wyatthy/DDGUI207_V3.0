@@ -29,7 +29,7 @@
 /build/lib/algorithm/optimizeInfer/networks/__pycache__/*
 /build/lib/TRANSFER/ToHrrp_mcr/*
 /build/lib/guiLogic/tools/__pycache__/*
-
+/work_dirs/*
 /.qt_for_python/*
 /temp
 

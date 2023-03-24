@@ -15,7 +15,7 @@ Chart::Chart(QWidget* parent, QString dataSetType_, QString _filefullpath){
     if(dataSetType=="HRRP") {chartTitle="HRRP(Ephi),Polarization HP(1)[Magnitude in dB]";}
     else if (dataSetType=="RADIO") {chartTitle="RADIO Temporary Title";}
     else if (dataSetType=="RCS") {chartTitle="RCS Temporary Title";}
-
+    else {chartTitle="Temporary Title";}
     filefullpath = _filefullpath;
     series = new QSplineSeries(this);
     qchart = new QChart;
@@ -122,17 +122,6 @@ void Chart::drawImageWithSingleSignal(QLabel* chartLabel, QVector<float>& dataFr
         setAxis("Time/mm",xmin,xmax,10, "dB(V/m)",ymin,ymax,10);
     }
     else if(dataSetType=="usualData"){
-        // points.clear();
-        // float y_min = -1,y_max = 1;
-        // for(int i=0;i<dataFrameQ.size();i++){
-        //     float y=dataFrameQ[i];
-        //     y_min = fmin(y_min,y);
-        //     y_max = fmax(y_max,y);
-        //     points.append(QPointF(i,y));
-        // }
-        // xmin = 0; xmax = dataFrameQ.size()+4;
-        // ymin = y_min-0.2; ymax = y_max+0.2;
-        // setAxis("Sample Index",xmin,xmax,10, "dB(V/m)",ymin,ymax,0.1);
         points.clear();
         float y_min = FLT_MAX, y_max = -FLT_MAX;
         for (int i = 0; i < dataFrameQ.size(); i++) {
@@ -146,11 +135,38 @@ void Chart::drawImageWithSingleSignal(QLabel* chartLabel, QVector<float>& dataFr
         ymin = y_min - 0.2;
         ymax = y_max + 0.2;
         setAxis("Sample Index", xmin, xmax, 10, "Degree of sample", ymin, ymax, (ymax - ymin) / 10);
-
     }
     buildChart(points);
     showChart(chartLabel);
 }
+
+void Chart::drawImageWithMultipleVector(QLabel* chartLabel, QVector<QVector<float>> dataFrames, QString mesg){
+    multipleSeries = true ;
+    points_mapfea.clear();
+    points_tradfea.clear();
+    float y_min = FLT_MAX, y_max = -FLT_MAX;
+    for (int i = 0; i < dataFrames[0].size(); i++) {
+        float y = dataFrames[0][i];
+        y_min = fmin(y_min, y);
+        y_max = fmax(y_max, y);
+        points_mapfea.append(QPointF(i, y));
+    }
+    for (int i = 0; i < dataFrames[1].size(); i++) {
+        float y = dataFrames[1][i];
+        y_min = fmin(y_min, y);
+        y_max = fmax(y_max, y);
+        points_tradfea.append(QPointF(i, y));
+    }  
+    chartTitle = mesg;
+    xmin = 0;
+    xmax = dataFrames[0].size() + 4;
+    ymin = y_min - 0.2;
+    ymax = y_max + 0.2;
+    setAxis("Sample Index", xmin, xmax, 10, "Feature Value", ymin, ymax, (ymax - ymin) / 10);
+    buildChartWithNiceColor(points_mapfea,points_tradfea);
+    showChart(chartLabel);
+}
+
 
 void Chart::readRadiomat(int emIdx){
     points.clear();
@@ -417,6 +433,41 @@ void Chart::buildChart(QList<QPointF> pointlist)
     qchart->setAxisY(axisY, series);
 }
 
+void Chart::buildChartWithNiceColor(QList<QPointF> pointlistF1, QList<QPointF> pointlistF2)
+{
+    //创建数据源
+    series_mapfea = new QSplineSeries(this);
+    series_tradfea = new QSplineSeries(this);
+    series_mapfea->setPen(QPen(Qt::red,0.5,Qt::SolidLine));
+    series_tradfea->setPen(QPen(Qt::blue,0.5,Qt::SolidLine));
+    series_mapfea->clear();
+    series_tradfea->clear();
+    points_mapfea.clear();
+    points_tradfea.clear();
+
+
+    for(int i=0;i<pointlistF1.size();i++){
+        series_mapfea->append(pointlistF1.at(i).x(), pointlistF1.at(i).y());
+        points_mapfea.append(QPointF(pointlistF1.at(i).x(), pointlistF1.at(i).y()));
+    }
+    for(int i=0;i<pointlistF1.size();i++){
+        series_tradfea->append(pointlistF2.at(i).x(), pointlistF2.at(i).y());
+        points_tradfea.append(QPointF(pointlistF2.at(i).x(), pointlistF2.at(i).y()));
+    }
+
+
+
+    // qchart->setAnimationOptions(QChart::SeriesAnimations);//设置曲线动画模式
+    qchart->legend()->hide(); //隐藏图例
+    qchart->addSeries(series_mapfea);//输入数据
+    qchart->addSeries(series_tradfea);//输入数据
+
+    qchart->setAxisX(axisX, series_mapfea);
+    qchart->setAxisX(axisX, series_tradfea);
+    qchart->setAxisY(axisY, series_mapfea);
+    qchart->setAxisY(axisY, series_tradfea);
+
+}
 
 void Chart::showChart(QLabel *imagelabel){
     QHBoxLayout *pHLayout = (QHBoxLayout *)imagelabel->layout();
@@ -495,19 +546,43 @@ void Chart::Show_Save(){
     newchart->addAxis(newaxisY, Qt::AlignLeft);   //左：Qt::AlignLeft    右：Qt::AlignRight
     newchart->setContentsMargins(0, 0, 0, 0);  //设置外边界全部为0
     newchart->setMargins(QMargins(0, 0, 0, 0));
-    newchart->setAnimationOptions(QChart::SeriesAnimations);//设置曲线动画模式
+    // newchart->setAnimationOptions(QChart::SeriesAnimations);//设置曲线动画模式
+    if(!multipleSeries){
+        QSplineSeries *newseries = new QSplineSeries();
+        newseries->setPen(QPen(Qt::blue,1,Qt::SolidLine));
+        newseries->clear();
+        for(int i=0; i<points.size();i++)
+            newseries->append(points.at(i).x(), points.at(i).y());
+        newchart->setTitle(chartTitle);
+        newchart->legend()->hide(); //隐藏图例
+        newchart->addSeries(newseries);//输入数据
+        newchart->setAxisX(newaxisX, newseries);
+        newchart->setAxisY(newaxisY, newseries);
+    }else{
+        QSplineSeries *newseriesA = new QSplineSeries();
+        newseriesA->setPen(QPen(Qt::red,1,Qt::SolidLine));
+        newseriesA->clear();
+        QSplineSeries *newseriesB = new QSplineSeries();
+        newseriesB->setPen(QPen(Qt::blue,1,Qt::SolidLine));
+        newseriesB->clear();
+        for(int i=0; i<points_mapfea.size();i++)
+            newseriesA->append(points_mapfea.at(i).x(), points_mapfea.at(i).y());
+        for(int i=0; i<points_tradfea.size();i++)
+            newseriesB->append(points_tradfea.at(i).x(), points_tradfea.at(i).y());
+        newchart->setTitle(chartTitle);
+        // newchart->legend()->hide(); //隐藏图例
+//        QLegendMarker *markerA = newchart->legend()->markers().at(0);
+//        markerA->setLabel("mapping_feature");
+//        QLegendMarker *markerB = newchart->legend()->markers().at(1);
+//        markerB->setLabel("traditional_feature");
+        newchart->addSeries(newseriesA);//输入数据
+        newchart->addSeries(newseriesB);
+        newchart->setAxisX(newaxisX, newseriesA);
+        newchart->setAxisY(newaxisY, newseriesA);
+        newchart->setAxisX(newaxisX, newseriesB);
+        newchart->setAxisY(newaxisY, newseriesB);
+    }
 
-    QSplineSeries *newseries = new QSplineSeries();
-    newseries->setPen(QPen(Qt::blue,1,Qt::SolidLine));
-    newseries->clear();
-    for(int i=0; i<points.size();i++)
-        newseries->append(points.at(i).x(), points.at(i).y());
-
-    newchart->setTitle(chartTitle);
-    newchart->legend()->hide(); //隐藏图例
-    newchart->addSeries(newseries);//输入数据
-    newchart->setAxisX(newaxisX, newseries);
-    newchart->setAxisY(newaxisY, newseries);
 
     newchart->resize(800,600);
     QChartView *bigView = new QChartView(newchart);

@@ -15,6 +15,10 @@
 #include "./lib/guiLogic/modelInfo.h"
 #include "./lib/guiLogic/datasetInfo.h"
 #include "./lib/guiLogic/projectsInfo.h"
+#include "./lib/dataprocess/MatDataProcess_ATECfea.h"
+#include "core/projectsWindow/chart.h"
+
+
 #include "./lib/guiLogic/tools/searchFolder.h"
 
 class ModelTrainPage:public QObject
@@ -78,6 +82,8 @@ private:
     std::map<QGraphicsView*, ImageWidget*> all_Images;     // 防止内存泄露
     void recvShowPicSignal(QPixmap image, QGraphicsView* graphicsView);
 
+    void showATECfeatrend();
+    std::string trainingProjectName,trainingProjectPath,trainingDataType;
 };
 
 

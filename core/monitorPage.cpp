@@ -49,9 +49,28 @@ void MonitorPage::startListen(){
         //qDebug()<<"modelInfo->selectedType=="<<QString::fromStdString(modelInfo->selectedType);
         return;
     }
+    std::string dataType = projectsInfo->dataTypeOfSelectedProject;
+    std::string modelType = projectsInfo->modelTypeOfSelectedProject;
+
+    if(modelType == "ABFC"|| modelType == "ATEC" || modelType == "OPTI" || modelType == "CIL" || modelType == "OPTI_CAM"){
+        QMessageBox::warning(NULL, "实时监测", "监听失败,当前工程属性不支持");
+        return;
+    }
+    // QString projectPath = QString::fromStdString(projectsInfo->pathOfSelectedProject);
+    QString windowsLength = "";
+    QString windowsStep = "";
+    QString flag = "";
     std::string datasetlPath = projectsInfo->pathOfSelectedDataset;
     // 准备CustomDataset，把CustomDataset单个样本的长度传给server
-    myDataset = CustomDataset(datasetlPath, false, ".mat", class2label, -1, projectsInfo->modelTypeOfSelectedProject);
+    if(dataType == "RCS" || dataType == "IMAGE"){
+        windowsLength = QString::fromStdString(
+            projectsInfo->getAllAttri(dataType,projectsInfo->nameOfSelectedProject)["Model_WindowsLength"]);
+        windowsStep = QString::fromStdString(
+            projectsInfo->getAllAttri(dataType,projectsInfo->nameOfSelectedProject)["Model_WindowsStep"]);
+        if(dataType == "RCS") flag = "RCS_infer_param"+windowsLength+"_param"+windowsStep;
+        else if(dataType == "IMAGE") flag = "IMAGE_infer"+windowsLength+"_param"+windowsStep;
+    }
+    myDataset = CustomDataset(datasetlPath, false, ".mat", class2label, -1, flag);
     server->setInputLen(myDataset.data[0].size());
     server->start();
     terminal->print("开始监听,等待模型及数据载入中...");

@@ -84,17 +84,19 @@ void ProjectDock::drawExample(){//TODO mat变量不合适和样本索引范围�
         QLineEdit样本索引号：ui->projectDock_examIdx
         QLabel数据文件名：ui->projectDock_matfilename
     */
+    srand((unsigned)time(NULL));
+    int randomIdx = 1 + rand() % 100;
     QString examIdx_str = ui->projectDock_examIdx->text();
     QDir dir(this->selectedMatFilePath);
     // qDebug()<<"selectedMatFilePath ="<<selectedMatFilePath;
-    if(selectedMatFilePath=="" || !std::filesystem::exists(std::filesystem::u8path(selectedMatFilePath.toStdString()))){        //TODO 文件不存在的情况
+    if(selectedMatFilePath=="" || !std::filesystem::exists(std::filesystem::u8path(selectedMatFilePath.toStdString()))){  
         QMessageBox::information(NULL, "绘制错误", "目标数据文件不存在");
         return;
     }
     int examIdx=1;
     if(examIdx_str==""){
-        examIdx=1;
-        ui->projectDock_examIdx->setText("1");
+        examIdx=randomIdx;
+        ui->projectDock_examIdx->setText(QString::number(randomIdx));
     }
     else examIdx = examIdx_str.toInt();
 
@@ -137,6 +139,7 @@ void ProjectDock::treeItemClicked(const QModelIndex &index){
         qDebug()<<"depth3 "<<itemPath;
         this->selectedMatFilePath = itemPath;
         ui->projectDock_matfilename->setText(selectedMatFilePath.split('/').last());
+        drawExample();
     }
 }
 
@@ -238,8 +241,11 @@ void ProjectDock::onAction_ShotProject(){
     QString project_path = QString::fromStdString(projectsInfo->getAttri(rightSelType,rightSelName,"Project_Path"));
     QStringList filters;
     QStringList files;
-    if(projectsInfo->modelTypeOfSelectedProject == "FEA_OPTI"){     //优化的模型测试用的是pth,其他都是trt
+    if(projectsInfo->modelTypeOfSelectedProject == "OPTI" || projectsInfo->modelTypeOfSelectedProject == "OPTI_CAM"){     //优化的模型测试用的是pth,其他都是trt
         filters << "*.pth";  
+    }
+    else if(projectsInfo->modelTypeOfSelectedProject == "ABFC" || projectsInfo->modelTypeOfSelectedProject == "ATEC"){
+        filters << "*.hdf5";  
     }
     else{
         filters << "*.trt";  
@@ -247,6 +253,12 @@ void ProjectDock::onAction_ShotProject(){
     files = QDir(project_path).entryList(filters, QDir::Files);
     foreach(QString filename, files) {
         if (filename.contains(QString::fromStdString(rightSelName))) {
+            projectsInfo->pathOfSelectedModel_forInfer = project_path.toStdString() + "/" + filename.toStdString();
+        }
+    }
+    //OPTI最特殊 直接找最后一个hdf5作为推理模型
+    if(projectsInfo->modelTypeOfSelectedProject == "OPTI" || projectsInfo->modelTypeOfSelectedProject == "OPTI_CAM"){
+        foreach(QString filename, files) {
             projectsInfo->pathOfSelectedModel_forInfer = project_path.toStdString() + "/" + filename.toStdString();
         }
     }
@@ -297,40 +309,45 @@ void ProjectDock::onAction_AddProject(){
         QMessageBox::warning(NULL,"提示","工程文件打开失败!");
         return;
     }
-    QString projectName = projectPath.split('/').last();
-    if((projectName[0]<='9'&&projectName[0]>='0')||projectName[0]=='-'){
+    QString projectNameQ = projectPath.split('/').last();
+    if((projectNameQ[0]<='9'&&projectNameQ[0]>='0')||projectNameQ[0]=='-'){
         QMessageBox::warning(NULL,"提示","工程名称不能以数字或'-'开头!");
         return;
     }
     //根据工程名字确定projectsInfo->modelTypeOfSelectedProject
-    std::string tempProjectName = projectName.toStdString();
-    std::string tempProjectDataType = "";
-    std::transform(tempProjectName.begin(), tempProjectName.end(), tempProjectName.begin(),
+    std::string projectNameLow = projectNameQ.toStdString();
+    std::string projectDataType = "";
+    std::transform(projectNameLow.begin(), projectNameLow.end(), projectNameLow.begin(),
         [](unsigned char c){ return std::tolower(c); });
 
-    if(tempProjectName.find("hrrp") != std::string::npos) tempProjectDataType = "HRRP";
-    else if(tempProjectName.find("rcs") != std::string::npos) tempProjectDataType = "RCS";
-    else if(tempProjectName.find("特征") != std::string::npos) tempProjectDataType = "FEATURE";
-    else if(tempProjectName.find("历程图") != std::string::npos) tempProjectDataType = "IMAGE";
-    if(rightSelType!=tempProjectDataType){
+    if(projectNameLow.find("hrrp") != std::string::npos) projectDataType = "HRRP";
+    else if(projectNameLow.find("rcs") != std::string::npos) projectDataType = "RCS";
+    else if(projectNameLow.find("特征") != std::string::npos) projectDataType = "FEATURE";
+    else if(projectNameLow.find("历程图") != std::string::npos) projectDataType = "IMAGE";
+    if(rightSelType!=projectDataType){
         QMessageBox::warning(NULL, "添加工程", "工程添加失败，当前数据类型与欲添加的项目数据类型不符");
         return;
     }
 
     vector<string> allXmlNames;
     dirTools->getFilesplus(allXmlNames, ".xml",projectPath.toStdString());
-    auto xmlIdx = std::find(allXmlNames.begin(), allXmlNames.end(), rightSelName+".xml");
+    auto xmlIdx = std::find(allXmlNames.begin(), allXmlNames.end(), projectNameQ.toStdString()+".xml");
     if (xmlIdx == allXmlNames.end()){
-        terminal->print("工程添加成功，但该工程没有说明文件.xml！");
-        QMessageBox::warning(NULL, "添加工程", "工程添加成功，但该工程没有说明文件.xml！");
+        terminal->print("工程添加成功，但该工程没有说明文件.xml!");
+        QMessageBox::warning(NULL, "添加工程", "工程添加成功，但该工程没有说明文件.xml!");
+        xmlIdx = std::find(allXmlNames.begin(), allXmlNames.end(), "model.xml");
+        if(xmlIdx != allXmlNames.end()){
+            QString xmlPath = projectPath + "/model.xml";
+            projectsInfo->addProjectFromXML(xmlPath.toStdString());
+        }
     }
     else{
-        QString xmlPath = projectPath + "/" + QString::fromStdString(rightSelName) + ".xml";
+        QString xmlPath = projectPath + "/" + projectNameQ + ".xml";
         projectsInfo->addProjectFromXML(xmlPath.toStdString());
         terminal->print("工程添加成功:"+xmlPath);
-        QMessageBox::information(NULL, "添加工程", "工程添加成功！");
+        QMessageBox::information(NULL, "添加工程", "工程添加成功!");
     }
-    this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"Project_Path", projectPath.toStdString());
+    this->projectsInfo->modifyAttri(rightSelType, projectNameQ.toStdString(),"Project_Path", projectPath.toStdString());
     this->reloadTreeView();
     qDebug()<<"import and writeToXML";
     this->projectsInfo->writeToXML(projectsInfo->defaultXmlPath);
@@ -368,13 +385,6 @@ QModelIndex ProjectDock::findModelIndexByName(QStandardItem *item, const QString
 //addFilesToItem遍历projectPath文件夹下所有结构到QStandardItem
 void ProjectDock::addFilesToItem(QStandardItem *parentItem, const QString &path) {
     QDir dir(path);
-    QFileInfoList fileList = dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
-    for (int i = 0; i < fileList.count(); i++) {
-        QFileInfo fileInfo = fileList.at(i);
-        QStandardItem *item = new QStandardItem(fileInfo.fileName());
-        item->setData(fileInfo.absoluteFilePath(), Qt::UserRole);
-        parentItem->appendRow(item);
-    }
     QFileInfoList dirList = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
     for (int i = 0; i < dirList.count(); i++) {
         QFileInfo dirInfo = dirList.at(i);
@@ -383,6 +393,14 @@ void ProjectDock::addFilesToItem(QStandardItem *parentItem, const QString &path)
         parentItem->appendRow(item);
         addFilesToItem(item,dirInfo.absoluteFilePath());
     }
+    QFileInfoList fileList = dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
+    for (int i = 0; i < fileList.count(); i++) {
+        QFileInfo fileInfo = fileList.at(i);
+        QStandardItem *item = new QStandardItem(fileInfo.fileName());
+        item->setData(fileInfo.absoluteFilePath(), Qt::UserRole);
+        parentItem->appendRow(item);
+    }
+
 }
 
 void ProjectDock::reloadTreeView(){

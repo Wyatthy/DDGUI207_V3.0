@@ -46,9 +46,9 @@ def test(train_X, train_Y, val_X, val_Y, output_size, fea_num, work_dir):
     checkpoint = keras.callbacks.ModelCheckpoint(save_model_path, monitor='val_accuracy', verbose=0,
                                                  save_best_only=True, mode='max')
     callbacks_list = [checkpoint, learn_rate_reduction]
-    train_model.fit(train_X, train_Y, batch_size=batch_size, epochs=max_epochs, shuffle=True,
+    h = train_model.fit(train_X, train_Y, batch_size=batch_size, epochs=max_epochs, shuffle=True,
                    validation_data=(val_X, val_Y), callbacks=callbacks_list, verbose=0, validation_freq=1)
-    h_parameter = train_model.history
+    h_parameter = h.history
     val_model = keras.models.load_model(save_model_path)
     Y_val = np.argmax(val_Y, axis=1)
     Y_pred = np.argmax(val_model.predict(val_X), axis=1)
@@ -101,7 +101,7 @@ def inference(train_step, batchsize, f_start, f_end, f_interval, work_dir, data_
     train_X, train_Y, val_X, val_Y, class_label = read_project(work_dir)
     if data_type == 'HRRP':
         train_X, val_X = data_norm_hrrp(train_X), data_norm_hrrp(val_X)
-    if data_type == 'feature':
+    if data_type == 'FEATURE':
         train_X, val_X = data_normalization(train_X), data_normalization(val_X)
     Train_Size = len(train_X)
     total_batch = Train_Size / batchsize
@@ -153,11 +153,11 @@ def generator_model_documents(args):
     root = doc.createElement('ModelInfo') #创建根元素
     doc.appendChild(root)
     
-    model_type = doc.createElement('FEA_RELE')
+    model_type = doc.createElement(data_type)
     #model_type.setAttribute('typeID','1')
     root.appendChild(model_type)
 
-    model_item = doc.createElement(model_naming+'.trt')
+    model_item = doc.createElement(model_naming)
     #model_item.setAttribute('nameID','1')
     model_type.appendChild(model_item)
 
@@ -182,7 +182,7 @@ def generator_model_documents(args):
         info_item.appendChild(info_text)
         model_item.appendChild(info_item)
 
-    with open(os.path.join(project_path,model_naming+'.xml'),'w',encoding='utf-8') as f:
+    with open(os.path.join(project_path,'model.xml'),'w',encoding='utf-8') as f:
         doc.writexml(f,indent = '\t',newl = '\n', addindent = '\t',encoding='utf-8')
 
 # 保存参数
@@ -210,7 +210,7 @@ if __name__ == '__main__':
     batch_size = args.batch_size  # 批处理数量
     fea_start = args.fea_start  # 首次选择特征的个数
     fea_step = args.fea_step  # 选择特征的步长
-    data_type = args.data_type  # 输入数据的类型，'HRRP'或'feature'
+    data_type = args.data_type  # 输入数据的类型，'HRRP'或'FEATURE'
 
     file_name = os.listdir(project_path)  # 读取所有文件夹，将文件夹名存在列表中
     folder_name = []
@@ -224,7 +224,7 @@ if __name__ == '__main__':
     save_params()
     inference(max_epochs, batch_size, fea_start, fea_num, fea_step, project_path, data_type)
     generator_model_documents(args)
-
+    shutil.copy(project_path + '/ABFC_feature_' + str(model_num) + '.hdf5',project_path + '/'+model_naming+'.hdf5')
     # cmd="python ./api/bashs/hdf52trt.py --model_type ABFC --work_dir "+ \
     #     project_path+" --model_name "+model_naming+" --abfcmode_Idx " + str(model_num)
     # os.system(cmd)

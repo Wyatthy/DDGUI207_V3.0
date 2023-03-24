@@ -109,7 +109,7 @@ def unknown_trained_model(unknown_data, folder_name, work_dir):
         unknown_one_data = unknown_data[list(unknown_data.keys())[i]]
         if data_type == 'HRRP':
             unknown_one_data_norm = data_norm_hrrp(unknown_one_data)
-        if data_type == 'feature':
+        if data_type == 'FEATURE':
             unknown_one_data_norm = data_normalization(unknown_one_data)
         unknown_one_data_rank = unknown_one_data_norm[:, feature_rank]
         unknown_one_data_select = unknown_one_data_rank[:, :model_num]
@@ -126,7 +126,7 @@ def unknown_trained_model(unknown_data, folder_name, work_dir):
 
 if __name__ == '__main__':
     project_path = args.data_dir  # 工程文件路径
-    data_type = 'HRRP'  # 输入数据的类型，'HRRP'或'feature'
+    data_type = 'HRRP'  # 输入数据的类型，'HRRP'或'FEATURE'
 
     unknown_data, folder_name = read_project(project_path)
     unknown_trained_model(unknown_data, folder_name, project_path)

@@ -101,6 +101,13 @@ void ModelTrainPage::changeTrainType(){
 
 
 void ModelTrainPage::startTrain(){
+    this->trainingProjectName = projectsInfo->nameOfSelectedProject;
+    this->trainingProjectPath = projectsInfo->pathOfSelectedProject;
+    this->trainingDataType = projectsInfo->dataTypeOfSelectedProject;
+    if(projectsInfo->modelTypeOfSelectedProject == "OPTI" || projectsInfo->modelTypeOfSelectedProject == "OPTI_CAM"){
+        QMessageBox::information(NULL, "模型训练", "优化模型暂不支持训练");
+        return;
+    }
     QString datasetPath=this->choicedDatasetPATH;
     QDateTime dateTime(QDateTime::currentDateTime());
     time = dateTime.toString("yyyy-MM-dd-hh-mm-ss");
@@ -133,7 +140,7 @@ void ModelTrainPage::startTrain(){
     else if(dataType == "FEATURE"){
         cmd="activate tf24 && python ./api/bashs/ABFC/train.py --data_dir "+projectPath+ \
             " --batch_size "+batchSize+" --max_epochs "+epoch+" --fea_num "+ fea_num+ \
-            " --fea_start "+ fea_start + " --data_type feature";
+            " --fea_start "+ fea_start + " --data_type FEATURE";
     }
     else if (dataType == "HRRP"){
         if(modelType == "TRAD"){
@@ -226,6 +233,10 @@ void ModelTrainPage::monitorTrainProcess(){
                 showLog=false;
                 ui->startTrainButton->setEnabled(true);
                 //导入训练好的模型至系统
+                QString xmlPath = projectPath + "/model.xml";
+                projectsInfo->addProjectFromXML(xmlPath.toStdString());
+                projectsInfo->modifyAttri(trainingDataType, trainingProjectName, "Project_Path", trainingProjectPath);
+                projectsInfo->writeToXML(projectsInfo->defaultXmlPath);
                 showTrianResult();
                 if(processTrain->state()==QProcess::Running){
                     processTrain->close();
@@ -269,8 +280,7 @@ void ModelTrainPage::showTrianResult(){
         recvShowPicSignal(QPixmap(projectPath+"/training_accuracy.jpg"), ui->graphicsView_train_trainacc);
         recvShowPicSignal(QPixmap(projectPath+"/verification_accuracy.jpg"), ui->graphicsView_train_valacc);
         recvShowPicSignal(QPixmap(projectPath+"/verification_confusion_matrix.jpg"), ui->graphicsView_train_confusion);
-        recvShowPicSignal(QPixmap("C:/Users/dell/Pictures/Screenshots/besth.png"), ui->graphicsView_train_atecf1);
-        recvShowPicSignal(QPixmap("C:/Users/dell/Pictures/Screenshots/besth.png"), ui->graphicsView_train_atecf2);
+        showATECfeatrend();
     } 
     else {
         recvShowPicSignal(QPixmap(projectPath+"/training_accuracy.jpg"), ui->graphicsView_train_trainacc);
@@ -280,6 +290,36 @@ void ModelTrainPage::showTrianResult(){
 
 }
 
+void ModelTrainPage::showATECfeatrend(){
+    MatDataProcess_ATECfea *matDataPrcs_atecfea = new MatDataProcess_ATECfea(projectPath.toStdString());
+    int feaNum = matDataPrcs_atecfea->feaNum;
+    // for(int i=0;i<3;i++){
+    //     qDebug()<<matDataPrcs_atecfea->dataFrames[0][0][i];
+    //     qDebug()<<matDataPrcs_atecfea->dataFrames[0][1][i];
+    // }
+    while (QLayoutItem* item = ui->featureVerticalLayout->takeAt(0)){
+        if (QWidget* widget = item->widget())
+            widget->deleteLater();
+        if (QSpacerItem* spaerItem = item->spacerItem())
+            ui->featureVerticalLayout->removeItem(spaerItem);
+        delete item;
+    }
+    for(int i=0;i<feaNum;i++){//画feaNum个图
+        QVector<QVector<float>> dataFrame = matDataPrcs_atecfea->dataFrames[i];
+
+        QLabel *imageLabel=new QLabel("Feature"+QString::number(i+1)+":");
+        QLabel *imageLabel_sig=new QLabel();
+        imageLabel_sig->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred); 
+        imageLabel_sig->setStyleSheet("border: 3px black");
+
+        Chart *previewChart = new Chart(imageLabel_sig,"","");
+        // previewChart->drawImageWithSingleSignal(imageLabel_sig,dataFrame[0]);
+        previewChart->drawImageWithMultipleVector(imageLabel_sig,dataFrame,"fea"+QString::number(i));
+        imageLabel_sig->setMinimumHeight(120);
+        ui->featureVerticalLayout->addWidget(imageLabel);
+        ui->featureVerticalLayout->addWidget(imageLabel_sig);
+    }
+}
 void ModelTrainPage::editModelFile(){
     QString modelFilePath;
     if(dataType == "RCS"){

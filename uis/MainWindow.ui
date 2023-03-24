@@ -2203,6 +2203,9 @@
                      </widget>
                     </item>
                     <item>
+                     <widget class="QComboBox" name="comboBox"/>
+                    </item>
+                    <item>
                      <widget class="QLabel" name="label_93">
                       <property name="text">
                        <string/>
@@ -2921,7 +2924,7 @@
                       <enum>Qt::LeftToRight</enum>
                      </property>
                      <property name="currentIndex">
-                      <number>5</number>
+                      <number>4</number>
                      </property>
                      <widget class="QWidget" name="trainpage_trainAcc">
                       <attribute name="title">
@@ -2963,6 +2966,35 @@
                        </item>
                       </layout>
                      </widget>
+                     <widget class="QWidget" name="trainpage_featrend">
+                      <attribute name="title">
+                       <string>特征趋势</string>
+                      </attribute>
+                      <layout class="QVBoxLayout" name="verticalLayout_41">
+                       <item>
+                        <widget class="QScrollArea" name="scrollArea_10">
+                         <property name="widgetResizable">
+                          <bool>true</bool>
+                         </property>
+                         <widget class="QWidget" name="scrollAreaWidgetContents_8">
+                          <property name="geometry">
+                           <rect>
+                            <x>0</x>
+                            <y>0</y>
+                            <width>512</width>
+                            <height>194</height>
+                           </rect>
+                          </property>
+                          <layout class="QVBoxLayout" name="verticalLayout_72">
+                           <item>
+                            <layout class="QVBoxLayout" name="featureVerticalLayout"/>
+                           </item>
+                          </layout>
+                         </widget>
+                        </widget>
+                       </item>
+                      </layout>
+                     </widget>
                      <widget class="QWidget" name="trainpage_feaw">
                       <attribute name="title">
                        <string>特征权重</string>
@@ -2970,31 +3002,6 @@
                       <layout class="QVBoxLayout" name="verticalLayout_28">
                        <item>
                         <widget class="QGraphicsView" name="graphicsView_train_feaw"/>
-                       </item>
-                      </layout>
-                     </widget>
-                     <widget class="QWidget" name="trainpage_featrend">
-                      <attribute name="title">
-                       <string>特征趋势</string>
-                      </attribute>
-                      <layout class="QVBoxLayout" name="verticalLayout_41">
-                       <item>
-                        <widget class="QStackedWidget" name="stackedWidget">
-                         <widget class="QWidget" name="atec_fea1_2">
-                          <layout class="QVBoxLayout" name="verticalLayout_48">
-                           <item>
-                            <widget class="QGraphicsView" name="graphicsView_train_atecf2"/>
-                           </item>
-                          </layout>
-                         </widget>
-                         <widget class="QWidget" name="atec_fea1">
-                          <layout class="QVBoxLayout" name="verticalLayout_42">
-                           <item>
-                            <widget class="QGraphicsView" name="graphicsView_train_atecf1"/>
-                           </item>
-                          </layout>
-                         </widget>
-                        </widget>
                        </item>
                       </layout>
                      </widget>
@@ -3137,7 +3144,7 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>442</width>
+               <width>368</width>
                <height>563</height>
               </rect>
              </property>
@@ -3714,8 +3721,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1164</width>
-             <height>558</height>
+             <width>353</width>
+             <height>307</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_57">
@@ -3951,8 +3958,8 @@
                        <rect>
                         <x>0</x>
                         <y>0</y>
-                        <width>549</width>
-                        <height>336</height>
+                        <width>143</width>
+                        <height>85</height>
                        </rect>
                       </property>
                       <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -4099,7 +4106,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1143</width>
+             <width>714</width>
              <height>1095</height>
             </rect>
            </property>

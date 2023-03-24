@@ -60,7 +60,7 @@ void TrtInfer::doInference(IExecutionContext&context, float* input, float* outpu
 
 QString TrtInfer::testOneSample(
         std::string targetPath, int emIndex, std::string modelPath, bool dataProcess,
-        int *predIdx,std::vector<float> &degrees,std::string flag)
+        int *predIdx,std::vector<float> &degrees,QString flag)
 {
     qDebug()<<"(TrtInfer::testOneSample)modelPath="<<QString::fromStdString(modelPath);
     if (readTrtFile(modelPath,modelStream, engine)) qDebug()<< "(TrtInfer::testOneSample)tensorRT engine created successfully." ;
@@ -102,23 +102,29 @@ QString TrtInfer::testOneSample(
     //ready to send data to context
     float *indata=new float[inputLen]; std::fill_n(indata,inputLen,0);
     float *outdata=new float[outputLen]; std::fill_n(outdata,outputLen,0);
-    if(flag=="FEA_RELE_abfc"){
-        std::string theClassPath=targetPath.substr(0,targetPath.rfind("/"));
-        std::string theClass=theClassPath.substr(theClassPath.rfind("/")+1,theClassPath.size());
-        std::string dataset_path=theClassPath.substr(0,theClassPath.rfind("/"));
+    // if(flag=="FEA_RELE_abfc"){
+    //     std::string theClassPath=targetPath.substr(0,targetPath.rfind("/"));
+    //     std::string theClass=theClassPath.substr(theClassPath.rfind("/")+1,theClassPath.size());
+    //     std::string dataset_path=theClassPath.substr(0,theClassPath.rfind("/"));
 
-        CustomDataset test_dataset_for_abfc = CustomDataset(dataset_path,dataProcess, ".mat", class2label, inputLen ,flag, modelIdx, dataOrder);
-        test_dataset_for_abfc.getDataSpecifically(theClass,emIndex,indata);
+    //     CustomDataset test_dataset_for_abfc = CustomDataset(dataset_path,dataProcess, ".mat", class2label, inputLen ,flag, modelIdx, dataOrder);
+    //     test_dataset_for_abfc.getDataSpecifically(theClass,emIndex,indata);
 
-    }
-    else if(flag=="RCS_"){
+    // }
+    QStringList flags = flag.split("_param");
+    if(flags[0]=="RCS_infer"){//这样CustomDataset中单样本长度就是网络输入长度inputlen
+        int windowsLength = flags[1].toInt();
+        int windowsStep = flags[2].toInt();
         MatDataProcess_rcs matDataPrcs;
-        matDataPrcs.getDataFromMat(targetPath,emIndex,dataProcess,indata,inputLen);     
+        matDataPrcs.getDataFromMat(targetPath,emIndex,dataProcess,indata,inputLen,windowsLength,windowsStep);
     }
-    else{
-        MatDataProcess matDataPrcs;
-        matDataPrcs.getDataFromMat(targetPath,emIndex,dataProcess,indata,inputLen);
+    else if(flags[0]=="IMAGE_infer"){
+        int windowsLength = flags[1].toInt();
+        int windowsStep = flags[2].toInt();
+        MatDataProcess_image matDataPrcs;
+        matDataPrcs.getDataFromMat(targetPath,emIndex,dataProcess,indata,inputLen,windowsLength,windowsStep);
     }
+
     // std::cout<<"(TrtInfer::testOneSample) print data[0]:"<<std::endl;
     //for(int i=0;i<128;i++) std::cout<<indata[i]<<" ";std::cout<<std::endl;
 
@@ -149,7 +155,7 @@ QString TrtInfer::testOneSample(
 
 bool TrtInfer::testAllSample(
         std::string dataset_path,std::string modelPath,int inferBatch, bool dataProcess,
-        float &Acc,std::vector<std::vector<int>> &confusion_matrix,std::string flag,std::vector<std::vector<float>> &degrees_matrix){
+        float &Acc,std::vector<std::vector<int>> &confusion_matrix,QString flag,std::vector<std::vector<float>> &degrees_matrix){
     qDebug()<< "(TrtInfer::testAllSample) modelPath old = " << QString::fromStdString(modelPath);
 
     if (readTrtFile(modelPath,modelStream, engine)) qDebug()<< "(TrtInfer::testAllSample)tensorRT engine created successfully.";
@@ -195,7 +201,7 @@ bool TrtInfer::testAllSample(
     // LOAD DataSet
     clock_t start,end;
     start = clock();
-    CustomDataset test_dataset = CustomDataset(dataset_path, dataProcess, ".mat", class2label, inputLen ,flag, modelIdx, dataOrder);
+    CustomDataset test_dataset = CustomDataset(dataset_path, dataProcess, ".mat", class2label, inputLen , flag, modelIdx, dataOrder);
 
     qDebug()<<"(TrtInfer::testAllSample) test_dataset.data.size()==="<<test_dataset.data.size();
     //qDebug()<<"(TrtInfer::testAllSample) test_dataset.label.size()==="<<test_dataset.labels.size();

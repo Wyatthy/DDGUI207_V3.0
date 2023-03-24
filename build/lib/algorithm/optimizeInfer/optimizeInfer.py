@@ -200,14 +200,15 @@ def inferSample():
         output_val = model(input_val)  # cams_val,S_masks_val,B_masks_val) 
     T2 = time.perf_counter()
     degrees=output_val.cpu().detach().numpy()[0]
-    #degrees=softmax(degrees)
+    degrees=softmax(degrees)
     for i in degrees:
-        print(i,"$",end="")
+        print("$",i,end="")
     maxk = max((1,))
     _, pred = output_val.topk(maxk, 1, True, True) # [110,1]
     pred = pred.t().reshape((-1)).cpu().detach().numpy()
-    print(pred[0],"$",end="")
-    print("%.5f $" % (T2-T1),end="")
+    print("$",pred[0],end="")
+    print("$%.5f " % (T2-T1),end="")
+    print("$")
 
 if __name__ == '__main__':
     file_name = os.listdir(args.choicedDatasetPATH)  # 读取所有文件夹，将文件夹名存在列表中
@@ -216,10 +217,10 @@ if __name__ == '__main__':
         if os.path.isdir(args.choicedDatasetPATH+'/'+file_name[i]):
             folder_name.append(file_name[i])
     folder_name.sort()  # 按文件夹名进行排序
-
+    # print(folder_name)
     if(args.inferMode=="dataset"):
         inferMain()
         print("finished")
     elif(args.inferMode=="sample"):
         inferSample()
-        print("\nfinished")
+        print("finished")

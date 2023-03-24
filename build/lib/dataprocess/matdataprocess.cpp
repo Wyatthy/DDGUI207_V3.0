@@ -23,7 +23,7 @@ void MatDataProcess::getAllDataFromMat(std::string matPath,bool dataProcess,std:
     }
     pMxArray = matGetNextVariable(pMatFile, NULL);
     if(!pMxArray){
-        qDebug()<<"(MatDataProcess:getAllDataFromMat).mat文件变量没找到！！！("<<QString::fromStdString(matPath);
+        qDebug()<<"(MatDataProcess:getAllDataFromMat).mat文件变量没找到!!!("<<QString::fromStdString(matPath);
         return;
     }
     matdata = (double*)mxGetData(pMxArray);
@@ -56,7 +56,7 @@ void MatDataProcess::getAllDataFromMat(std::string matPath,bool dataProcess,std:
 void MatDataProcess::loadAllDataFromFolder(std::string datasetPath,std::string type,bool dataProcess,std::vector<std::vector<float>> &data,
                            std::vector<int> &labels,std::map<std::string, int> &class2label,int inputLen){
     SearchFolder *dirTools = new SearchFolder();
-    // 寻找子文件夹 WARN:数据集的路径一定不能包含汉字 否则遍历不到文件路径
+    // 寻找子文件夹 
     std::vector<std::string> subDirs;
     dirTools->getDirsplus(subDirs, datasetPath);
 
@@ -94,14 +94,9 @@ void MatDataProcess::getDataFromMat(std::string targetMatFile,int emIdx,bool dat
         qDebug()<<"(MatDataProcess:getDataFromMat)文件指针空！！！！！！";
         return;
     }
-
-    std::string matVariable=targetMatFile.substr(
-                targetMatFile.find_last_of('/')+1,
-                targetMatFile.find_last_of('.')-targetMatFile.find_last_of('/')-1).c_str();//假设数据变量名同文件名的话
-    qDebug()<<"(MatDataProcess:getDataFromMat)matVariable=="<<QString::fromStdString(matVariable);
-    pMxArray = matGetVariable(pMatFile,matVariable.c_str());
+    pMxArray = matGetNextVariable(pMatFile, NULL);
     if(!pMxArray){
-        qDebug()<<"(MatDataProcess:getDataFromMat)pMxArray变量没找到！！！！！！";
+        qDebug()<<"(MatDataProcess:getAllDataFromMat).mat文件变量没找到!!!("<<QString::fromStdString(targetMatFile);
         return;
     }
     matdata = (double*)mxGetData(pMxArray);

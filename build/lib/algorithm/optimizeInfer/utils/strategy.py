@@ -105,4 +105,4 @@ def drawConfusionMatrix(classes, savepath, output, target, topk=(1, 5)):
     plt.ylabel('True label', fontsize=16)
     plt.xlabel('Predict label', fontsize=16)
     plt.tight_layout()
-    plt.savefig(savepath[:savepath.rfind('/')]+'/confusion_matrix_temp.jpg', dpi=300)
+    plt.savefig(savepath[:savepath.rfind('/')]+'/confusion_matrix_datasetinfer.jpg', dpi=360)

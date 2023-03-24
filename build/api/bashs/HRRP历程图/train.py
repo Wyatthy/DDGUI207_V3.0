@@ -114,7 +114,7 @@ def read_mat(read_path, windows_length, windows_step):
 # 滑窗截取HRRP数据，制作HRRP历程图
 def HRRP_windows_cut(HRRP_data, windows_length, windows_step):
     data_num = len(HRRP_data)
-    windows_num = int((data_num-windows_length)/windows_step)
+    windows_num = int((data_num-windows_length)/windows_step) + 1
     HRRP_picture = []
     win_start = 0  # 滑窗截取开始位置
     for i in range(0, windows_num):
@@ -318,11 +318,11 @@ def generator_model_documents(args):
     root = doc.createElement('ModelInfo') #创建根元素
     doc.appendChild(root)
     
-    model_type = doc.createElement('TRA_DL')
+    model_type = doc.createElement('IMAGE')
     #model_type.setAttribute('typeID','1')
     root.appendChild(model_type)
 
-    model_item = doc.createElement(project_path+'.trt')
+    model_item = doc.createElement(model_naming)
     #model_item.setAttribute('nameID','1')
     model_type.appendChild(model_item)
 
@@ -349,7 +349,7 @@ def generator_model_documents(args):
         info_item.appendChild(info_text)
         model_item.appendChild(info_item)
 
-    with open(os.path.join(project_path,model_naming+'.xml'),'w',encoding='utf-8') as f:
+    with open(os.path.join(project_path,'model.xml'),'w',encoding='utf-8') as f:
         doc.writexml(f,indent = '\t',newl = '\n', addindent = '\t',encoding='utf-8')
 
 # 保存参数
@@ -401,5 +401,6 @@ if __name__ == '__main__':
     run_main(x_train, y_train, x_val, y_val, class_num, folder_name, project_path, model_name)
     h5Path = project_path + '/' + model_naming + '.hdf5'
     pbPath = project_path + '/' + model_naming + '.pb'
+    generator_model_documents(args)
     convert_hdf5_to_trt(model_type, project_path, model_naming, '1')
     print("Train Ended:")

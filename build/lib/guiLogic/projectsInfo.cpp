@@ -60,7 +60,7 @@ int ProjectsInfo::writeToXML(string xmlPath){
     writeDoc->LinkEndChild(decl); //写入文档
 
     TiXmlElement *RootElement = new TiXmlElement("globalProjectInfo");          //根元素
-    RootElement->SetAttribute("datasetTypeNum", this->typeNum());  //属性
+    RootElement->SetAttribute("dataTypeNum", this->typeNum());  //属性
     writeDoc->LinkEndChild(RootElement);
 
     int typeID = 0;
@@ -98,9 +98,15 @@ int ProjectsInfo::writeToXML(string xmlPath){
 }
 
 //将project单独的xml提供的信息写入XML
-int ProjectsInfo::addProjectFromXML(string xmlPath){    
-    TiXmlDocument projectInfoDoc(xmlPath.c_str());   //xml文档对象
-    bool loadOk=projectInfoDoc.LoadFile();                  //加载文档
+int ProjectsInfo::addProjectFromXML(string xmlpath){   
+    std::wstring wpath = QString::fromStdString(xmlpath).toStdWString();
+    FILE* xmlFile = _wfopen(wpath.c_str(), L"rb");
+    if(!xmlFile){
+         qDebug()<<"Could not load the projectInfo FILE*";
+         return 0;
+    }
+    TiXmlDocument projectInfoDoc("");
+    bool loadOk=projectInfoDoc.LoadFile(xmlFile);                  //加载文档
     if(!loadOk){
         cout<<"Could not load the projectInfo file.Error:"<<projectInfoDoc.ErrorDesc()<<endl;
         return 0;

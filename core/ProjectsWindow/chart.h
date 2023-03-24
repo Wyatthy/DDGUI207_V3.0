@@ -8,6 +8,7 @@
 #include <QSplineSeries>
 #include <QHBoxLayout>
 #include <QValueAxis>
+#include <QLegend>
 
 
 class Chart : public QWidget{
@@ -17,6 +18,8 @@ class Chart : public QWidget{
         QChart *qchart;
         QChartView *chartview;
         QSplineSeries *series;
+        QSplineSeries *series_mapfea;
+        QSplineSeries *series_tradfea;
 
         QHBoxLayout *layout;
         QValueAxis *axisX;
@@ -36,10 +39,14 @@ class Chart : public QWidget{
         int ytickc;
 
         QList<QPointF> points;
+        QList<QPointF> points_mapfea;
+        QList<QPointF> points_tradfea;
+
         QPushButton *zoom_btn;
         QPushButton *download_btn;
         int ShoworSave = 1;
 
+        bool multipleSeries = false;//是否多个曲线
     public:
         Chart(QWidget* parent, QString dataSetType_, QString filename);
         ~Chart();
@@ -52,8 +59,11 @@ class Chart : public QWidget{
         void readFeaturemat(int emIndex);
         void readRCSmat(int emIndex);
         void buildChart(QList<QPointF> pointlist);
+        void buildChartWithNiceColor(QList<QPointF> pointlist1,QList<QPointF> pointlist2);
+        void buildChartWithNiceColor2(QList<QPointF> pointlist1,QList<QPointF> pointlist2);
         void drawImage(QLabel* chartLabel, int examIdx=0);
         void drawImageWithSingleSignal(QLabel* chartLabel, QVector<float>& dataFrameQ);
+        void drawImageWithMultipleVector(QLabel* chartLabel, QVector<QVector<float>> dataFrames, QString mesg);
         QWidget* drawDisDegreeChart(QString &classGT, std::vector<float> &degrees, std::map<int, std::string> &classNames);
         void showChart(QLabel* imagelabel);
         void Show_Save();

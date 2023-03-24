@@ -329,11 +329,11 @@ def generator_model_documents(args):
     root = doc.createElement('ModelInfo') #创建根元素
     doc.appendChild(root)
     
-    model_type = doc.createElement('TRA_DL')
+    model_type = doc.createElement('HRRP')
     #model_type.setAttribute('typeID','1')
     root.appendChild(model_type)
 
-    model_item = doc.createElement(model_naming+'.trt')
+    model_item = doc.createElement(model_naming)
     #model_item.setAttribute('nameID','1')
     model_type.appendChild(model_item)
 

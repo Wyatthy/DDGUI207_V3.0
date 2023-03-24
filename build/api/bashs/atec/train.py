@@ -17,7 +17,7 @@ import shutil
 import argparse
 
 parser = argparse.ArgumentParser(description='Train a detector')
-parser.add_argument('--data_dir', help='the directory of the training data',default="db/datasets/local_dir/基于HRRP数据的ATEC网络")
+parser.add_argument('--data_dir', help='the directory of the training data',default="N:/207/GUI207_V3.0/db/projects/基于HRRP数据的ATEC网络")
 parser.add_argument('--batch_size', type=int, help='the number of batch size',default=32)
 parser.add_argument('--max_epochs', type=int, help='the number of epochs',default=1)
 parser.add_argument('--class_number', type=int, help="class_number", default="6")
@@ -128,7 +128,7 @@ def data_save(data, folder_file_name, file_class_num, work_dir, feature_folder_n
             save_mat_path = work_dir + '/feature_save/' + feature_folder_name + '/' + mat_folder_name[i] + '/'
             if not os.path.exists(save_mat_path):
                 os.makedirs(save_mat_path)
-            sio.savemat(save_mat_path+folder_file_name[mat_folder_name[i]][j], mdict={'data': one_data.T})
+            sio.savemat(save_mat_path+folder_file_name[mat_folder_name[i]][j], mdict={'data': np.float64(one_data.T)})
 
 
 # 训练过程中准确率曲线
@@ -299,11 +299,11 @@ def generator_model_documents(args):
     root = doc.createElement('ModelInfo') #创建根元素
     doc.appendChild(root)
     
-    model_type = doc.createElement('FEA_RELE')
+    model_type = doc.createElement('HRRP')
     #model_type.setAttribute('typeID','1')
     root.appendChild(model_type)
 
-    model_item = doc.createElement(project_path+'.trt')
+    model_item = doc.createElement(model_naming)
     #model_item.setAttribute('nameID','1')
     model_type.appendChild(model_item)
 
@@ -328,8 +328,9 @@ def generator_model_documents(args):
         info_item.appendChild(info_text)
         model_item.appendChild(info_item)
 
-    with open(os.path.join(project_path,model_naming+'.xml'),'w',encoding='utf-8') as f:
+    with open(os.path.join(project_path,'model.xml'),'w',encoding='utf-8') as f:
         doc.writexml(f,indent = '\t',newl = '\n', addindent = '\t',encoding='utf-8')
+
 
 # 保存参数
 def save_params():
@@ -363,6 +364,6 @@ if __name__ == '__main__':
     train_x, train_y, val_x, val_y, folder_name, folder_file_name, file_class_num = read_project(project_path)
     inference(train_x, train_y, val_x, val_y, batch_size, max_epochs, folder_name, project_path)
 
-    convert_hdf5_to_trt(model_name, project_path, model_naming, '1')
     generator_model_documents(args)
+    # convert_hdf5_to_trt(model_name, project_path, model_naming, '1')
     print("Train Ended:")

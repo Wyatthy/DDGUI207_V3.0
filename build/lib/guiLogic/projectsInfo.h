@@ -5,6 +5,9 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <locale>
+#include <codecvt>
+#include <fstream>
 
 class ProjectsInfo
 {
