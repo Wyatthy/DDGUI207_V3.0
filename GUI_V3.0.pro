@@ -22,7 +22,6 @@ HEADERS += \
     core/projectsWindow/projectDock.h \
     #core/datasetsWindow/datasetDock.h \
     core/modelCAMPage.h \
-    core/modelChoicePage.h \
     core/modelEvalPage.h \
     core/modelTrainPage.h \
     core/modelVisPage.h \
@@ -65,7 +64,6 @@ SOURCES += \
     core/projectsWindow/chart.cpp \
     core/projectsWindow/projectDock.cpp \
     #core/datasetsWindow/datasetDock.cpp \
-    core/modelChoicePage.cpp \
     core/modelEvalPage.cpp \
     core/modelTrainPage.cpp \
     core/monitorPage.cpp \

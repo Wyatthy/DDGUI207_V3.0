@@ -12,7 +12,6 @@
 #include "./lib/guiLogic/bashTerminal.h"
 #include "./lib/guiLogic/projectsInfo.h"
 #include "core/projectsWindow/chart.h"
-
 #include "./lib/guiLogic/tools/searchFolder.h"
 #include <mat.h>
 

@@ -135,7 +135,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1028</width>
+             <width>1022</width>
              <height>1368</height>
             </rect>
            </property>
@@ -1339,7 +1339,33 @@
                   </property>
                   <layout class="QVBoxLayout" name="verticalLayout_6">
                    <item>
-                    <widget class="QGraphicsView" name="graphicsView_sense_modelImg"/>
+                    <widget class="QGraphicsView" name="graphicsView_sense_modelImg">
+                     <property name="minimumSize">
+                      <size>
+                       <width>0</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>16777212</height>
+                      </size>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="label_space">
+                     <property name="minimumSize">
+                      <size>
+                       <width>0</width>
+                       <height>600</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string/>
+                     </property>
+                    </widget>
                    </item>
                   </layout>
                  </widget>
@@ -1399,8 +1425,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1045</width>
-             <height>855</height>
+             <width>681</width>
+             <height>457</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_51">
@@ -2592,8 +2618,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>490</width>
-               <height>817</height>
+               <width>360</width>
+               <height>525</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -2782,7 +2808,7 @@
                <x>0</x>
                <y>0</y>
                <width>573</width>
-               <height>800</height>
+               <height>584</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -3169,8 +3195,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1045</width>
-             <height>831</height>
+             <width>287</width>
+             <height>253</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_57">
@@ -3406,8 +3432,8 @@
                        <rect>
                         <x>0</x>
                         <y>0</y>
-                        <width>493</width>
-                        <height>647</height>
+                        <width>114</width>
+                        <height>69</height>
                        </rect>
                       </property>
                       <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -3650,7 +3676,7 @@
            <property name="geometry">
             <rect>
              <x>0</x>
-             <y>-99</y>
+             <y>0</y>
              <width>1351</width>
              <height>900</height>
             </rect>
@@ -4800,7 +4826,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1028</width>
+             <width>572</width>
              <height>921</height>
             </rect>
            </property>
@@ -5495,7 +5521,7 @@
    <property name="minimumSize">
     <size>
      <width>280</width>
-     <height>100</height>
+     <height>144</height>
     </size>
    </property>
    <property name="windowTitle">
