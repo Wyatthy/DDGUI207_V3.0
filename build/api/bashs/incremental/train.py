@@ -1,8 +1,11 @@
 # coding=utf-8
-import torch,sys
+import os
+import urllib.parse
+import torch, sys
 from torch import optim
-from torch.utils.data import DataLoader
 import torch.nn.functional as F
+from torch.utils.data import DataLoader
+from sklearn.metrics import classification_report
 # from model import IncrementalModel, vgg_16, AlexNet
 
 # 三种不同维度的数据，导入对应的模型
@@ -12,7 +15,7 @@ from model import AlexNet_39 as IncrementalModel_39
 
 from myNetwork import Network
 from signalDataset import PretrainSignalDataset, IncrementSignalDataset, EvalDataset
-from dataProcess import prepare_pretrain_data, prepare_increment_data, prepare_increment_data_reduce
+from dataProcess import prepare_pretrain_data, prepare_increment_data, prepare_increment_data_reduce, mycopyfile
 from config import device, data_path, model_path
 import numpy as np
 import copy
@@ -21,9 +24,10 @@ from sklearn.metrics import classification_report
 
 
 class Pretrain:
-    def __init__(self, oldClassNumber, memorySize, preTrainEpoch, batch_size, learningRate, dataDimension):
+    def __init__(self, oldClassNumber, allClassNumber, memorySize, preTrainEpoch, batch_size, learningRate, dataDimension):
         super().__init__()
         self.oldClassNumber = oldClassNumber
+        self.allClassNumber = allClassNumber
         self.memorySize = memorySize
         self.model = None
         self.preTrainEpoch = preTrainEpoch
@@ -69,7 +73,7 @@ class Pretrain:
             # print("old model old data test accuracy: {}%".format(test_accuracy))
             # return test_accuracy
 
-        prepare_pretrain_data(self.oldClassNumber)
+        prepare_pretrain_data(self.oldClassNumber, self.allClassNumber)
         if (self.dataDimension == 256):
             featureExtractor = IncrementalModel_256()
         elif (self.dataDimension == 128):
@@ -122,6 +126,8 @@ class Pretrain:
                     best_acc = test_accuracy
                     state = {'model': self.model.state_dict()}
                     # best_model = '{}_{}_model.pt'.format(i + 1, '%.3f' % best_acc)
+                    if not os.path.isdir(model_path):
+                        os.makedirs(model_path)
                     torch.save(state, model_path + "pretrain_" + str(self.oldClassNumber) + ".pt")
                 print('epoch: {} is finished. accuracy is: {}'.format(i + 1, test_accuracy))
                 sys.stdout.flush()
@@ -168,7 +174,7 @@ class IncrementTrain:
         self.bound = bound
         self.reduce_sample = reduce_sample
         self.work_dir = work_dir
-        self.folder_names=folder_names
+        self.folder_names = folder_names
         self.dataDimension = dataDimension
 
     def compute_loss(self, model, signals, target, classNumber):
@@ -209,6 +215,8 @@ class IncrementTrain:
         correct, total = 0, 0
         confusion_matrix = np.zeros((self.allClassNumber, self.allClassNumber))
 
+        Y_pred = []
+        Y_test = []
         for setp, (signals, labels) in enumerate(testLoader):
             signals = signals.type(torch.FloatTensor)
             signals, labels = signals.to(device), labels.to(device)
@@ -218,18 +226,22 @@ class IncrementTrain:
             predicts = torch.max(outputs, dim=1)[1]
             correct += (predicts == labels.cpu()).sum()
             total += len(labels)
+            predicts = predicts.cpu().numpy()
+            Y_pred.extend(list(predicts))
+            labels = labels.cpu().numpy()
+            Y_test.extend(list(labels))
             for i in range(0, len(predicts)):
-                confusion_matrix[labels[i], predicts[i]] += 1
+                confusion_matrix[int(labels[i]), int(predicts[i])] += 1
             # print("@@@@@@@@@@@signals.shape=",signals.shape)
             # print("labels.shape=",labels.shape)
             # print("outputs.shape=",outputs.shape)
             # print("predicts.shape=",predicts.shape)
             # print("labels=",labels)
             # print("predicts=",predicts)
-            #exit()
+            # exit()
         accuracy = 100. * correct / total
         self.model.train()
-        return accuracy, confusion_matrix
+        return accuracy, confusion_matrix, Y_pred, Y_test
 
     def increment_linearProgram(self, old_class, task, train_dataset):
         classNumber = task[-1] + 1
@@ -309,7 +321,7 @@ class IncrementTrain:
             num_class = task[-1] + 1
             old_class = num_class - len(task)
             self.old_model = copy.deepcopy(self.model)
-            prepare_increment_data_reduce(task,self.reduce_sample)
+            prepare_increment_data_reduce(task, self.reduce_sample)
             # if self.reduce_sample:
             #     # 新类样本量降低80%
             #     prepare_increment_data_reduce(task)
@@ -345,7 +357,7 @@ class IncrementTrain:
                     for p in optimizer.param_groups:
                         p['lr'] = self.learningRate / 16.
                 for step, (data, label) in enumerate(train_dataloader):
-                    #print("label==",label)
+                    # print("label==",label)
                     data = data.type(torch.FloatTensor)
                     data, label = data.to(device), label.to(device)
                     optimizer.zero_grad()
@@ -358,17 +370,18 @@ class IncrementTrain:
                 print("epoch:{}, loss_value: {}. The best accuray is {}".format(i + 1, loss, best_acc))
                 sys.stdout.flush()
 
-
-                test_accuracy, confusion_matrix = self.test(test_dataloader)
+                test_accuracy, confusion_matrix, Y_pred, Y_val = self.test(test_dataloader)
                 if test_accuracy > best_acc:
                     best_acc = test_accuracy
                     state = {'model': self.model.state_dict()}
                     # best_model = '{}_{}_model.pt'.format(i + 1, '%.3f' % best_acc)
                     # torch.save(state, model_path + "increment_" + str(num_class) + ".pt")
-                    torch.save(state, model_path + "increment_" + str(num_class) + ".pt")
-                    torch.save(state, self.work_dir + "/model/"+"incrementModel.pt")
+                    torch.save(state, model_path + 'increment_' + str(num_class) + '.pt')
+                    save_model_path = model_path + 'incrementModel.pt'
+                    torch.save(state, save_model_path)
+                    mycopyfile(save_model_path, self.work_dir)
 
-                    onnx_save_path = self.work_dir + "/model/"+"incrementModel.onnx"
+                    onnx_save_path = self.work_dir + "/incrementModel.onnx"
                     example_tensor = torch.randn(1, 1, self.dataDimension, 1).to(device)
                     torch.onnx.export(self.model,  # model being run
                         example_tensor,  # model input (or a tuple for multiple inputs)
@@ -379,13 +392,16 @@ class IncrementTrain:
                         input_names=['input'],
                         output_names=['output']
                         )
-                    show_confusion_matrix(self.folder_names,confusion_matrix,self.work_dir)
+                    classification_report_txt = open(self.work_dir + '/verification_classification_report.txt', 'w')
+                    classification_report_txt.write(classification_report(Y_val, Y_pred, digits=4))
+                    classification_report_txt.close()
+                    show_confusion_matrix(self.folder_names, confusion_matrix, self.work_dir)
                 if (i + 1) % 2 == 0:
                     print('epoch: {} is finished. accuracy is: {}'.format(i + 1, test_accuracy))
                     sys.stdout.flush()
                 acc_list.append(test_accuracy)
             # torch.save(state, model_path + "increment_" + str(num_class) + ".pt")
-            show_accplot(len(acc_list),acc_list,self.work_dir)
+            show_accplot(len(acc_list), acc_list, self.work_dir)
             # res = torch.load(model_path + "/pretrain_" + str(oldClassNumber) + ".pt")
             # model.load_state_dict(res['model'])
             self.save_memory(train_dataset, num_class, self.memorySize)
@@ -491,7 +507,7 @@ class Evaluation:
         y_true = observed_dataset.targets
         # print(y_pred.shape, y_true.shape)
 
-        metric = classification_report(y_true, y_pred)
+        metric = classification_report(y_true, y_pred, digits=4)
 
         return old_oa, new_oa, all_oa, metric
 

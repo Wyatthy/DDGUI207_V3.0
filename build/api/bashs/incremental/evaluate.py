@@ -83,7 +83,6 @@ class Evaluation:
 
         return old_oa, new_oa, all_oa
 
-    
 
 if __name__ == '__main__':
     t = Evaluation(args.all_class, args.all_class - args.old_class, args.batch_size)

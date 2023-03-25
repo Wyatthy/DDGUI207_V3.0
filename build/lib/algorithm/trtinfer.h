@@ -29,6 +29,7 @@ public:
     void setBatchSize(int batchSize);//留出来的接口
     void createEngine(std::string modelPath);
     void setParmsOfABFC(int modelIdx, std::vector<int> dataOrder);
+    void setClass2label(std::map<std::string, int> class2label_);
     MatDataProcess *matDataPrcs;
 
     void oneNormalization_(std::vector<float> &list){

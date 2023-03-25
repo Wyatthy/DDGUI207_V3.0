@@ -1,4 +1,7 @@
 #include "modelTrainPage.h"
+#include "qcheckbox.h"
+#include "qlistview.h"
+#include "qstyleditemdelegate.h"
 
 ModelTrainPage::ModelTrainPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, DatasetInfo *globalDatasetInfo,ModelInfo *globalModelInfo, ProjectsInfo *globalProjectInfo):
     ui(main_ui),
@@ -8,7 +11,6 @@ ModelTrainPage::ModelTrainPage(Ui_MainWindow *main_ui, BashTerminal *bash_termin
     projectsInfo(globalProjectInfo)
 {
     ui->widget_cilRelate->setVisible(false);
-    ui->oldClassNumEdit->setValidator(new QRegularExpressionValidator(QRegularExpression("^[1-9][0-9]{1,3}$")));
     ui->dataNumPercentEdit->setValidator(new QRegularExpressionValidator(QRegularExpression("^0\\.[0-9]{0,1}[1-9]$")));
     ui->preTrainEpochEdit->setValidator(new QRegularExpressionValidator(QRegularExpression("^[1-9][0-9]{1,3}[1-9]$")));
     ui->trainEpochEdit->setValidator(new QRegularExpressionValidator(QRegularExpression("^[1-9][0-9]{1,4}[1-9]$")));
@@ -22,21 +24,23 @@ ModelTrainPage::ModelTrainPage(Ui_MainWindow *main_ui, BashTerminal *bash_termin
     connect(ui->stopTrainButton,  &QPushButton::clicked, this, &ModelTrainPage::stopTrain);
     connect(ui->editModelButton,  &QPushButton::clicked, this, &ModelTrainPage::editModelFile);
 
+    cliListWidget = new QListWidget;
+    cliLineEdit = new QLineEdit;
 }
 
 
 void ModelTrainPage::refreshGlobalInfo(){
-    ui->cil_data_dimension_box->clear();
-    ui->cil_data_dimension_box->addItem(QString::number(256));
-    ui->cil_data_dimension_box->addItem(QString::number(128));
-    ui->cil_data_dimension_box->addItem(QString::number(39));
+    dataDimension = QString::fromStdString(projectsInfo->getAttri(projectsInfo->dataTypeOfSelectedProject, projectsInfo->nameOfSelectedProject, "Dataset_SampleLength")).toInt();
     //Common parm
     ui->trainBatchEdit->setText("16");
     ui->trainEpochEdit->setText("500");
     //below for CIL
-    ui->oldClassNumEdit->setText("4");
-    ui->dataNumPercentEdit->setText("0.8");
-    ui->preTrainEpochEdit->setText("3"); 
+    ui->cil_data_dimension_box->clear();
+    ui->cil_data_dimension_box->addItem(QString::number(128));
+    ui->cil_data_dimension_box->addItem(QString::number(256));
+    ui->cil_data_dimension_box->addItem(QString::number(39));
+    ui->dataNumPercentEdit->setText("1.0");
+    ui->preTrainEpochEdit->setText("3");
     //below for window
     ui->windowsLength->setText("32");
     ui->windowsStep->setText("10");
@@ -69,7 +73,7 @@ void ModelTrainPage::changeTrainType(){
     ui->widget_abfcRelate->setVisible(false);
     dataType = projectsInfo->dataTypeOfSelectedProject;
     modelType = projectsInfo->modelTypeOfSelectedProject;
-    
+    QString pathOfTrainDataset = QString::fromStdString(projectsInfo->pathOfSelectedProject) + "/train";
     for(int i=0;i<10;i++){
         ui->tabWidget->removeTab(0);
     }
@@ -84,8 +88,50 @@ void ModelTrainPage::changeTrainType(){
         ui->tabWidget->addTab(ui->trainpage_confusion,"混淆矩阵");
         ui->tabWidget->addTab(ui->trainpage_featrend,"特征趋势");
 
-    }else if(modelType=="CIL"){  
+    }else if(modelType=="CIL"){
         ui->widget_cilRelate->setVisible(true);
+        while (cliListWidget->count() > 0){
+            QListWidgetItem *item = cliListWidget->takeItem(0);
+            delete item;
+        }
+        QStringList categories = QDir(pathOfTrainDataset).entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+        for (int i = 0; i<categories.size(); i++) {
+            QListWidgetItem *pItem = new QListWidgetItem(cliListWidget);
+            cliListWidget->addItem(pItem);
+            pItem->setData(Qt::UserRole, i);
+            QCheckBox *pCheckBox = new QCheckBox();
+            pCheckBox->setText(categories[i]);
+            cliListWidget->addItem(pItem);
+            cliListWidget->setItemWidget(pItem, pCheckBox);
+            // QObject::connect(pCheckBox, &QCheckBox::stateChanged, [=] () {
+            //     QString selectedCategories="";
+            //     for (int i = 0; i < cliListWidget->count(); i++) {
+            //         QListWidgetItem *item = cliListWidget->item(i);
+            //         //将QWidget 转化为QCheckBox  获取第i个item 的控件
+            //         QCheckBox *checkbox = static_cast<QCheckBox *>(cliListWidget->itemWidget(item));
+            //         if(checkbox->isChecked()){
+            //             QString checkboxStr = checkbox->text();
+            //             selectedCategories = selectedCategories + checkboxStr + ";";
+            //         }
+            //     }
+            //     cliLineEdit->setText(selectedCategories);
+            //     // QMessageBox::information(nullptr, "Selection", "Selected categories: " + selectedCategories);
+            // });
+        }
+        if (ui->comboBoxasdf->model() != cliListWidget->model()){
+            ui->comboBoxasdf->setModel(cliListWidget->model());
+            ui->comboBoxasdf->setView(cliListWidget);
+            ui->comboBoxasdf->setLineEdit(cliLineEdit);
+            ui->comboBoxasdf->setMinimumWidth(100);
+            cliLineEdit->setReadOnly(true);
+        }
+        selectedCategories = "";
+        for (int i = 0; i < cliListWidget->count()-1; i++) {
+            QListWidgetItem *item = cliListWidget->item(i);
+            QCheckBox *checkbox = static_cast<QCheckBox *>(cliListWidget->itemWidget(item));
+            checkbox->setChecked(true);
+            selectedCategories = selectedCategories + checkbox->text(); + ";";
+        }
         ui->tabWidget->addTab(ui->trainpage_valAcc,"验证集准确率");
         ui->tabWidget->addTab(ui->trainpage_confusion,"混淆矩阵");
     }
@@ -115,10 +161,19 @@ void ModelTrainPage::startTrain(){
     batchSize = ui->trainBatchEdit->text();
     epoch = ui->trainEpochEdit->text();
     //below for CIL
-    old_class_num = ui->oldClassNumEdit->text();
     reduce_sample = ui->dataNumPercentEdit->text();
-    pretrain_epoch = ui->preTrainEpochEdit->text(); 
+    pretrain_epoch = ui->preTrainEpochEdit->text();
     cil_data_dimension = ui->cil_data_dimension_box->currentText();
+    selectedCategories = "";
+    for (int i = 0; i < cliListWidget->count(); i++) {
+        QListWidgetItem *item = cliListWidget->item(i);
+        //将QWidget 转化为QCheckBox  获取第i个item 的控件
+        QCheckBox *checkbox = static_cast<QCheckBox *>(cliListWidget->itemWidget(item));
+        if(checkbox->isChecked()){
+            QString checkboxStr = checkbox->text();
+            selectedCategories = selectedCategories + checkboxStr + ";";
+        }
+    }
     //below for window
     QString windowsLength = ui->windowsLength->text();
     QString windowsStep = ui->windowsStep->text();
@@ -163,14 +218,15 @@ void ModelTrainPage::startTrain(){
             epoch=epoch==""?"2":epoch;
             saveModelName=saveModelName==""?"model":saveModelName;
 
-            cmd="activate PT && python ./api/bashs/incremental/main.py --raw_data_path "+choicedDatasetPATH+ \
+            cmd="activate PT && python ./api/bashs/incremental/main.py --work_dir "+projectPath+ \
             " --time "              + time + \
             " --old_class "         + old_class_num + \
             " --reduce_sample "     + reduce_sample + \
             " --pretrain_epoch "    + pretrain_epoch + \
             " --increment_epoch "   + epoch + \
             " --model_name "        + saveModelName + \
-            " --data_dimension "    + cil_data_dimension;
+            " --data_dimension "    + cil_data_dimension + \
+            " --old_class_names " + selectedCategories;
         }
     }
     qDebug()<<"(ModelTrainPage::startTrain) cmd="<<cmd;
@@ -267,7 +323,7 @@ void ModelTrainPage::monitorTrainProcess(){
 void ModelTrainPage::showTrianResult(){
     ui->trainProgressBar->setMaximum(100);
     ui->trainProgressBar->setValue(100);
-    if(modelType=="ABFC"){    
+    if(modelType=="ABFC"){
         recvShowPicSignal(QPixmap(projectPath+"/features_Accuracy.jpg"), ui->graphicsView_train_fearel);
         recvShowPicSignal(QPixmap(projectPath+"/verification_confusion_matrix.jpg"), ui->graphicsView_train_confusion);
         recvShowPicSignal(QPixmap(projectPath+"/features_weights.jpg"), ui->graphicsView_train_feaw);
@@ -281,13 +337,12 @@ void ModelTrainPage::showTrianResult(){
         recvShowPicSignal(QPixmap(projectPath+"/verification_accuracy.jpg"), ui->graphicsView_train_valacc);
         recvShowPicSignal(QPixmap(projectPath+"/verification_confusion_matrix.jpg"), ui->graphicsView_train_confusion);
         showATECfeatrend();
-    } 
+    }
     else {
         recvShowPicSignal(QPixmap(projectPath+"/training_accuracy.jpg"), ui->graphicsView_train_trainacc);
         recvShowPicSignal(QPixmap(projectPath+"/verification_accuracy.jpg"), ui->graphicsView_train_valacc);
         recvShowPicSignal(QPixmap(projectPath+"/verification_confusion_matrix.jpg"), ui->graphicsView_train_confusion);
-    } 
-
+    }
 }
 
 void ModelTrainPage::showATECfeatrend(){
@@ -309,7 +364,7 @@ void ModelTrainPage::showATECfeatrend(){
 
         QLabel *imageLabel=new QLabel("Feature"+QString::number(i+1)+":");
         QLabel *imageLabel_sig=new QLabel();
-        imageLabel_sig->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred); 
+        imageLabel_sig->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
         imageLabel_sig->setStyleSheet("border: 3px black");
 
         Chart *previewChart = new Chart(imageLabel_sig,"","");

@@ -2176,34 +2176,12 @@
                        </sizepolicy>
                       </property>
                       <property name="text">
-                       <string> 旧类别数：</string>
+                       <string> 下拉选择旧类：</string>
                       </property>
                      </widget>
                     </item>
                     <item>
-                     <widget class="QLineEdit" name="oldClassNumEdit">
-                      <property name="sizePolicy">
-                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                       </sizepolicy>
-                      </property>
-                      <property name="minimumSize">
-                       <size>
-                        <width>50</width>
-                        <height>22</height>
-                       </size>
-                      </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>50</width>
-                        <height>22</height>
-                       </size>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QComboBox" name="comboBox"/>
+                     <widget class="QComboBox" name="comboBoxasdf"/>
                     </item>
                     <item>
                      <widget class="QLabel" name="label_93">

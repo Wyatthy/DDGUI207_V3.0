@@ -102,15 +102,7 @@ QString TrtInfer::testOneSample(
     //ready to send data to context
     float *indata=new float[inputLen]; std::fill_n(indata,inputLen,0);
     float *outdata=new float[outputLen]; std::fill_n(outdata,outputLen,0);
-    // if(flag=="FEA_RELE_abfc"){
-    //     std::string theClassPath=targetPath.substr(0,targetPath.rfind("/"));
-    //     std::string theClass=theClassPath.substr(theClassPath.rfind("/")+1,theClassPath.size());
-    //     std::string dataset_path=theClassPath.substr(0,theClassPath.rfind("/"));
 
-    //     CustomDataset test_dataset_for_abfc = CustomDataset(dataset_path,dataProcess, ".mat", class2label, inputLen ,flag, modelIdx, dataOrder);
-    //     test_dataset_for_abfc.getDataSpecifically(theClass,emIndex,indata);
-
-    // }
     QStringList flags = flag.split("_param");
     if(flags[0]=="RCS_infer"){//这样CustomDataset中单样本长度就是网络输入长度inputlen
         int windowsLength = flags[1].toInt();
@@ -204,12 +196,9 @@ bool TrtInfer::testAllSample(
     CustomDataset test_dataset = CustomDataset(dataset_path, dataProcess, ".mat", class2label, inputLen , flag, modelIdx, dataOrder);
 
     qDebug()<<"(TrtInfer::testAllSample) test_dataset.data.size()==="<<test_dataset.data.size();
-    //qDebug()<<"(TrtInfer::testAllSample) test_dataset.label.size()==="<<test_dataset.labels.size();
     end = clock();
     int correct=0;
-    //qDebug()<<"(TrtInfer::testAllSample) DataLoader Check.";
     int test_dataset_size=test_dataset.labels.size();
-    //qDebug()<<"(TrtInfer::testAllSample) DataSetsize: "<<test_dataset.data.size()<<"LabelSize: "<<test_dataset.labels.size();
     qDebug()<<"(TrtInfer::testAllSample) 数据加载用时: "<<(double)(end-start)/CLOCKS_PER_SEC;
     float test_dataset_size_float=test_dataset_size;
     for(int l=1;l<=ceil(test_dataset_size_float/INFERENCE_BATCH);l++){            //分批喂数据
@@ -231,12 +220,7 @@ bool TrtInfer::testAllSample(
         if (!thisBatchData.empty()){
             memcpy(indata, &thisBatchData[0], thisBatchData.size()*sizeof(float));
         }
-        // qDebug()<<"(TrtInfer::testAllSample) beginIdx="<<QString::number(beginIdx)<<"  label=="<<QString::number(test_dataset.labels[beginIdx]);
-        // if(beginIdx==50){
-        //     std::cout<<"(TrtInfer::testAllSample) print first col of DT:";
-        //     for(int i=0;i<128;i++) std::cout<<indata[i]<<" ";
-        //     std::cout<<std::endl;
-        // }
+
         doInference(*context, indata, outdata, thisBatchNum);
 
         std::vector<std::vector<float>> output_vec;
@@ -354,4 +338,9 @@ void TrtInfer::setBatchSize(int batchSize){
 void TrtInfer::setParmsOfABFC(int modelIdxp, std::vector<int> dataOrderp){
     modelIdx=modelIdxp;
     dataOrder=dataOrderp;
+}
+
+void TrtInfer::setClass2label(std::map<std::string, int> class2label_){
+    class2label.clear();
+    class2label = class2label_;
 }

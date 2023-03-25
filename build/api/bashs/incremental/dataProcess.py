@@ -1,8 +1,9 @@
 # coding=utf-8
-import numpy as np
-from config import data_path#, raw_data_path, class_name
 import os
+import shutil
+import numpy as np
 import scipy.io as sio
+from config import data_path  # raw_data_path, class_name
 
 
 def create_dir():
@@ -28,6 +29,100 @@ def create_dir():
         os.mkdir(os.path.join(data_path, "test", "current"))
     if not os.path.exists(os.path.join(data_path, "test", "observed")):
         os.mkdir(os.path.join(data_path, "test", "observed"))
+
+
+# 从工程文件路径中制作训练集、验证集
+def read_project(read_path, oldclass_name):
+    # 读取路径下所有文件夹的名称并保存
+    folder_path = read_path  # 所有文件夹所在路径
+    file_name = os.listdir(folder_path)  # 读取所有文件夹，将文件夹名存在列表中
+    folder_name = []
+    for i in range(0, len(file_name)):
+        # 判断文件夹与文件
+        if os.path.isdir(folder_path + '/' + file_name[i]):
+            folder_name.append(file_name[i])
+    folder_name.sort()  # 按文件夹名进行排序
+    for i in range(0, len(folder_name)):
+        if folder_name[i].casefold() == 'train':
+            train_path = read_path + '/train/'
+            train_data, train_label, train_classname = read_mat(train_path, oldclass_name)
+            np.save(data_path + "train/data.npy", train_data)
+            np.save(data_path + "train/label.npy", train_label)
+        if folder_name[i].casefold() == 'val':
+            val_path = read_path + '/val/'
+            val_data, val_label, val_classname = read_mat(val_path, oldclass_name)
+            np.save(data_path + "test/data.npy", val_data)
+            np.save(data_path + "test/label.npy", val_label)
+    if len(train_classname) != len(val_classname):
+        print('训练集类别数与验证集类别数不一致！！！')
+
+    return train_classname
+
+
+# 从.mat文件读取数据并预处理
+def read_mat(read_path, oldclass_name):
+    # 读取路径下所有文件夹的名称并保存
+    folder_path = read_path  # 所有文件夹所在路径
+    file_name = os.listdir(folder_path)  # 读取所有文件夹，将文件夹名存在列表中
+    folder_name = []
+    for i in range(0, len(file_name)):
+        # 判断文件夹与文件
+        if os.path.isdir(folder_path + '/' + file_name[i]):
+            folder_name.append(file_name[i])
+    folder_name.sort()  # 按文件夹名进行排序
+
+    # 将旧类放在前面
+    newclass_name = []
+    for i in range(0, len(folder_name)):
+        if folder_name[i] not in oldclass_name:
+            newclass_name.append(folder_name[i])
+    old_new_name = oldclass_name
+    old_new_name.extend(newclass_name)
+    folder_name = old_new_name
+
+    # 读取单个文件夹下的内容
+    for i in range(0, len(folder_name)):
+        class_mat_name = os.listdir(folder_path + '/' + folder_name[i])  # 获取类别文件夹下的所有.mat文件名称
+        for j in range(0, len(class_mat_name)):
+            one_mat_path = folder_path + '/' + folder_name[i] + '/' + class_mat_name[j]
+            one_mat_data = sio.loadmat(one_mat_path)
+            one_mat_data = one_mat_data[list(one_mat_data.keys())[-1]].T
+            if j == 0:
+                all_mat_data = one_mat_data
+            else:
+                all_mat_data = np.concatenate((all_mat_data, one_mat_data))
+
+        class_data_norm = data_normalization(all_mat_data)  # 归一化处理
+
+        # 设置标签
+        label = np.zeros(len(class_data_norm))
+        label[:] = i
+
+        if i == 0:
+            all_class_data = class_data_norm
+            all_label = label
+        else:
+            all_class_data = np.concatenate((all_class_data, class_data_norm))
+            all_label = np.concatenate((all_label, label))
+    all_class_data = all_class_data[:, np.newaxis, :, np.newaxis]
+    print(all_class_data.shape, all_label.shape)
+    return all_class_data, all_label, folder_name
+
+
+# 数据归一化
+def data_normalization(data):
+    DATA = []
+    for i in range(0, len(data)):
+        data_max = max(data[i])
+        data_min = min(data[i])
+        data_norm = []
+        for j in range(0, len(data[i])):
+            data_one = (data[i][j] - data_min) / (data_max - data_min)
+            data_norm.append(data_one)
+        DATA.append(data_norm)
+    DATA = np.array(DATA)
+    return DATA
+
 
 # "/media/hp/新加卷/data/DD_data/fea/fea_data/"   # (39, 1)
 def read_mat_39(raw_data_path):
@@ -68,6 +163,7 @@ def read_mat_39(raw_data_path):
     np.save(data_path + "train/label.npy", train_label)
     np.save(data_path + "test/data.npy", test_data)
     np.save(data_path + "test/label.npy", test_label)
+
 
 # "/media/hp/新加卷/data/DD_data/tohrrp/hrrp_22june/"下的 hrrp1 - hrrp6.mat
 def read_mat_256(raw_data_path):
@@ -110,26 +206,26 @@ def read_mat_256(raw_data_path):
     np.save(data_path + "test/label.npy", test_label)
 
 
-def read_mat_new(raw_data_path,folder_names):
+def read_mat_new(raw_data_path, folder_names):
     g = os.walk(raw_data_path)
     data_list = []
     label_list = []
-    label=0
+    label = 0
     for className in folder_names:
-        tempn=os.path.join(raw_data_path, className)
+        tempn = os.path.join(raw_data_path, className)
         wk = os.walk(tempn)
-        for path,dir_list,file_list in wk:
+        for path, dir_list, file_list in wk:
             for file_name in file_list:
-                if file_name[-4:]==".mat":
+                if file_name[-4:] == ".mat":
                     try:
                         temp = sio.loadmat(os.path.join(path, file_name))[file_name[0:-4]]
                         data_list.append(temp)
                         label_list.append(label)
-                        #print(os.path.join(path, file_name))
-                        #print("label:"+str(label))
+                        # print(os.path.join(path, file_name))
+                        # print("label:"+str(label))
                     except KeyError:
                         print("Warn: read_mat_128_new试图读入"+os.path.join(path, file_name)+",但是其不包含同名变量")
-        label+=1
+        label += 1
 
     # for path,dir_list,file_list in g:
     #     for dir_name in dir_list:
@@ -152,7 +248,6 @@ def read_mat_new(raw_data_path,folder_names):
     #         label+=1
 
     # print(bigball_hrrp.shape, DT_hrrp.shape, Moxiu_hrrp.shape, smallball_hrrp.shape, taper_hrrp.shape, WD_19_hrrp.shape)
-    
 
     train_data_list = []
     train_label_list = []
@@ -244,7 +339,6 @@ def read_mat_new(raw_data_path,folder_names):
 #     np.save(data_path + "test/label.npy", test_label)
 
 
-
 def read_txt(raw_data_path, class_name, snr=2):
     print("read_txt...")
     data_dir = os.path.join(raw_data_path, str(snr))
@@ -322,7 +416,7 @@ def split_test_and_train(test_ratio=0.5, random_seed=1):
     np.save(data_path + "test/label.npy", test_label)
 
 
-def prepare_pretrain_data(old_class=5):
+def prepare_pretrain_data(old_class, all_class):
     print("prepare_pretrain_data...")
     train_data = np.load(data_path + "train/data.npy", allow_pickle=True)
     train_label = np.load(data_path + "train/label.npy", allow_pickle=True)
@@ -341,7 +435,7 @@ def prepare_pretrain_data(old_class=5):
         old_train_label.append(train_label[train_label == i])
         old_test_data.append(test_data[test_label == i])
         old_test_label.append(test_label[test_label == i])
-    for i in range(old_class, 11):
+    for i in range(old_class, all_class):
         new_train_data.append(train_data[train_label == i])
         new_train_label.append(train_label[train_label == i])
         new_test_data.append(test_data[test_label == i])
@@ -461,6 +555,13 @@ def get_number_of_each_class():
     print("each_class_of_train_data:", train_num_list, sum_train)
     print("each_class_of_test_data:", test_num_list, sum_test)
     print("each_class_of_all_data:", num_list)
+
+
+def mycopyfile(srcfile, dstpath):  # 复制函数
+    fpath, fname = os.path.split(srcfile)  # 分离文件名和路径
+    if not os.path.exists(dstpath):
+        os.makedirs(dstpath)  # 创建路径
+    shutil.copy(srcfile, dstpath + fname)  # 复制文件
 
 
 # if __name__ == '__main__':

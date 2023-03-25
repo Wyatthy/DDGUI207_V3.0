@@ -192,6 +192,8 @@ void  ModelEvalPage::testOneSample(){
     QString projectPath = QString::fromStdString(projectsInfo->pathOfSelectedProject);
     QString windowsLength = "";
     QString windowsStep = "";
+    std::map<int, std::string> label2class_cil;
+    std::map<std::string, int> class2label_cil;
     QString flag="";
     QString modelFormat = QString::fromStdString(choicedModelPATH).split('.').last();
 
@@ -298,9 +300,15 @@ void  ModelEvalPage::testOneSample(){
     else if(dataType == "IMAGE") {
         flag = "IMAGE_infer_param"+windowsLength+"_param"+windowsStep;
     }
-    else if(dataType == "CIL") {
+    else if(modelType == "CIL") {
         dataProcess=false; //目前增量模型接受的数据是不做预处理的
         //TODO 这里可能要重新set trtInfer的classs2label
+        QStringList CILclass = QString::fromStdString(projectsInfo->getAllAttri(dataType,projectsInfo->nameOfSelectedProject)["Model_ClassNames"]).split(";");
+
+        for(int i=0;i<CILclass.size()-1;i++)   label2class_cil[i]=CILclass[i].toStdString();
+        for(auto &item: label2class_cil)   class2label_cil[item.second] = item.first;
+        trtInfer->setClass2label(class2label_cil);
+        
     }
 
     if(modelFormat!="trt"){
@@ -310,7 +318,9 @@ void  ModelEvalPage::testOneSample(){
     QString inferTime=trtInfer->testOneSample(choicedSamplePATH, this->emIndex, choicedModelPATH, dataProcess , &predIdx, degrees, flag);
     ui->label_predTime->setText(inferTime);
     /*************************把下面都当做对UI的操作***************************/
-    QString predClass = QString::fromStdString(label2class[predIdx]);   // 预测类别
+    QString predClass;
+    if(modelType == "CIL") predClass = QString::fromStdString(label2class_cil[predIdx]);
+    else predClass = QString::fromStdString(label2class[predIdx]);
 
     // 可视化结果
     ui->label_predClass->setText(predClass);
@@ -323,7 +333,9 @@ void  ModelEvalPage::testOneSample(){
         degrees[i]=round(degrees[i] * 100) / 100;
     }
     // 绘制隶属度柱状图
-    disDegreeChart(predClass, degrees, label2class);
+    if(modelType == "CIL"){
+        disDegreeChart(predClass, degrees, label2class_cil);
+    }else disDegreeChart(predClass, degrees, label2class);
 
 }
 
@@ -338,6 +350,8 @@ void ModelEvalPage::testAllSample(){
     QString projectPath = QString::fromStdString(projectsInfo->pathOfSelectedProject);
     QString windowsLength = "";
     QString windowsStep = "";
+    std::map<int, std::string> label2class_cil;
+    std::map<std::string, int> class2label_cil;
 
     int inferBatch = ui->comboBox_inferBatchsize->currentText().toInt();
     QString modelFormat = QString::fromStdString(choicedModelPATH).split('.').last();
@@ -442,9 +456,15 @@ void ModelEvalPage::testAllSample(){
     else if(dataType == "IMAGE") {
         flag = "IMAGE_infer_param"+windowsLength+"_param"+windowsStep;
     }
-    else if(dataType == "CIL") {
+    else if(modelType == "CIL") {
         dataProcess=false; //目前增量模型接受的数据是不做预处理的
         //TODO 这里可能要重新set trtInfer的classs2label
+        QStringList CILclass = QString::fromStdString(projectsInfo->getAllAttri(dataType,projectsInfo->nameOfSelectedProject)["Model_ClassNames"]).split(";");
+
+        for(int i=0;i<CILclass.size()-1;i++)   label2class_cil[i]=CILclass[i].toStdString();
+        for(auto &item: label2class_cil)   class2label_cil[item.second] = item.first;
+        trtInfer->setClass2label(class2label_cil);
+        
     }
     if(!trtInfer->testAllSample(choicedDatasetPATH,choicedModelPATH,inferBatch,dataProcess,acc,confusion_matrix,flag,degrees_matrix)){
         qDebug()<<"(modelEvalPage::testAllSample) trtInfer-testAll failed~";
@@ -464,7 +484,8 @@ void ModelEvalPage::testAllSample(){
     //用tuple装起来传入python
     args_draw = PyTuple_New(2);
     std::string stringparm="";
-    for(int i=0;i<classNum;i++) stringparm=stringparm+label2class[i]+"#";
+    if(modelType != "CIL") for(int i=0;i<classNum;i++) stringparm=stringparm+label2class[i]+"#";
+    else for(int i=0;i<classNum;i++) stringparm=stringparm+label2class_cil[i]+"#";
     PyTuple_SetItem(args_draw, 0, Py_BuildValue("s", stringparm.c_str()));
     PyTuple_SetItem(args_draw, 1, PyArray);
     //函数调用
@@ -493,18 +514,34 @@ void ModelEvalPage::testAllSample(){
             ui->verticalLayout_22->removeItem(spaerItem);
         delete item;
     }
-    for(int i=0;i<label2class.size();i++){
-        QLabel *imageLabel=new QLabel("数据集样本在"+QString::fromStdString(label2class[i])+"类上的隶属度曲线");
-        QLabel *imageLabel_sig=new QLabel();
-        imageLabel_sig->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred); 
-        imageLabel_sig->setStyleSheet("border: 3px black");
-        QVector<float> meaninglessCiQ = QVector<float>(degrees_matrix[i].begin(), degrees_matrix[i].end());
-        Chart *previewChart = new Chart(imageLabel_sig,"usualData","");
-        previewChart->drawImageWithSingleSignal(imageLabel_sig,meaninglessCiQ);
-        imageLabel_sig->setMinimumHeight(120);
-        ui->verticalLayout_22->addWidget(imageLabel);
-        ui->verticalLayout_22->addWidget(imageLabel_sig);
+    if(modelType != "CIL"){
+        for(int i=0;i<label2class.size();i++){
+            QLabel *imageLabel=new QLabel("数据集样本在"+QString::fromStdString(label2class[i])+"类上的隶属度曲线");
+            QLabel *imageLabel_sig=new QLabel();
+            imageLabel_sig->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred); 
+            imageLabel_sig->setStyleSheet("border: 3px black");
+            QVector<float> meaninglessCiQ = QVector<float>(degrees_matrix[i].begin(), degrees_matrix[i].end());
+            Chart *previewChart = new Chart(imageLabel_sig,"usualData","");
+            previewChart->drawImageWithSingleSignal(imageLabel_sig,meaninglessCiQ);
+            imageLabel_sig->setMinimumHeight(120);
+            ui->verticalLayout_22->addWidget(imageLabel);
+            ui->verticalLayout_22->addWidget(imageLabel_sig);
+        }
+    }else{
+        for(int i=0;i<label2class_cil.size();i++){
+            QLabel *imageLabel=new QLabel("数据集样本在"+QString::fromStdString(label2class_cil[i])+"类上的隶属度曲线");
+            QLabel *imageLabel_sig=new QLabel();
+            imageLabel_sig->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred); 
+            imageLabel_sig->setStyleSheet("border: 3px black");
+            QVector<float> meaninglessCiQ = QVector<float>(degrees_matrix[i].begin(), degrees_matrix[i].end());
+            Chart *previewChart = new Chart(imageLabel_sig,"usualData","");
+            previewChart->drawImageWithSingleSignal(imageLabel_sig,meaninglessCiQ);
+            imageLabel_sig->setMinimumHeight(120);
+            ui->verticalLayout_22->addWidget(imageLabel);
+            ui->verticalLayout_22->addWidget(imageLabel_sig);
+        }
     }
+
     
     // qDebug()<<"ModelEvalPage::testall degrees_matrix.size()"<<degrees_matrix.size()<<" degrees_matrix[0].size()=="<<degrees_matrix[0].size();
 

@@ -142,7 +142,7 @@ int ProjectsInfo::addProjectFromXML(string xmlpath){
                     pAttr=pAttr->Next();
                 }
             }
-            this->infoMap[currTypeEle->Value()][currNameEle->Value()] = datasetAttrMap;
+            this->infoMap[currTypeEle->Value()][currNameEle->Value()].insert(datasetAttrMap.begin(),datasetAttrMap.end());
         }
     }
     return 1;

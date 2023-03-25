@@ -10,6 +10,7 @@
 #include "./lib/guiLogic/customWidget/imagewidget.h"
 #include <windows.h>
 #include <mat.h>
+#include "qlistwidget.h"
 #include "ui_MainWindow.h"
 #include "./lib/guiLogic/bashTerminal.h"
 #include "./lib/guiLogic/modelInfo.h"
@@ -32,6 +33,9 @@ public:
     ProjectsInfo *projectsInfo;
     BashTerminal *train_terminal;
 
+    QListWidget *cliListWidget;
+    QLineEdit *cliLineEdit;
+
     QString choicedDatasetPATH;
     QString projectPath;
     QProcess *processTrain;
@@ -49,7 +53,7 @@ public:
     QString reduce_sample = "";
     QString pretrain_epoch = "";
     QString cil_data_dimension = "";
-    
+    QString selectedCategories = "";
     ModelTrainPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, DatasetInfo *globalDatasetInfo,
                    ModelInfo *globalModelInfo,ProjectsInfo *globalProjectInfo);
     void refreshGlobalInfo();
@@ -84,6 +88,8 @@ private:
 
     void showATECfeatrend();
     std::string trainingProjectName,trainingProjectPath,trainingDataType;
+
+    int dataDimension;
 };
 
 

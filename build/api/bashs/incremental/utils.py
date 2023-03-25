@@ -1,22 +1,22 @@
 from scipy import optimize as op
+from scipy.optimize import linprog
 import numpy as np
 from sklearn import metrics
 from sklearn.manifold import TSNE
 from sklearn.metrics import confusion_matrix
 import torch
-import shutil,os
+import shutil, os
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 import pandas as pd
 from config import *
+plt.rcParams['font.sans-serif'] = ['SimHei']
 
 
 def getOneHot(target, num_class):
     one_hot = torch.zeros(target.shape[0], num_class).to(device)
     one_hot = one_hot.scatter(dim=1, index=target.long().view(-1, 1), value=1.)
     return one_hot
-
-
 
 
 def plot_tsne(features, label, title):
@@ -121,10 +121,10 @@ def mutualInfo_ori(model, exampler_data, exampler_label, memorylimit):
             else:
                 error_index.append(k)
         if len(correct_index) < data_len:
-            #print(data_len - len(correct_index))
+            # print(data_len - len(correct_index))
             correct_index = np.concatenate([correct_index, error_index[:(data_len - len(correct_index))]], axis=0)
-            #print(np.array(correct_index).shape)
-        #print(exampler_data[i].shape)
+            # print(np.array(correct_index).shape)
+        # print(exampler_data[i].shape)
         correct_index = np.array(correct_index).astype('int')
         correct_data = exampler_data[i][correct_index]
         correct_label = torch.Tensor(exampler_label[i][correct_index]).to(device)
@@ -299,7 +299,8 @@ def get_eachClass_acc(y_pred, y_true, num_class):
 
 def ConfusionMatrix(true, pred_label):
     matrix = confusion_matrix(true, pred_label)
-    print("matrix@@@@@@@@",matrix)
+    print("matrix@@@@@@@@", matrix)
+
 
 # 绘制混淆矩阵
 def show_confusion_matrix(classes, confusion_matrix, work_dir):
@@ -311,19 +312,19 @@ def show_confusion_matrix(classes, confusion_matrix, work_dir):
             temp = j / (np.sum(i))
             proportion.append(temp)
 
-    pshow = [] #百分比(行遍历)
+    pshow = []  # 百分比(行遍历)
     for i in proportion:
         pt = "%.2f%%" % (i * 100)
         pshow.append(pt)
     proportion = np.array(proportion).reshape(length, length)   # reshape(列的长度，行的长度)
     pshow = np.array(pshow).reshape(length, length)
-    config = {"font.family": 'Times New Roman'} 
-    rcParams.update(config)
-    plt.imshow(proportion, interpolation='nearest', cmap=plt.cm.Blues) 
-    plt.colorbar()
     tick_marks = np.arange(len(classes))
     plt.xticks(tick_marks, classes, fontsize=12, rotation=20)
     plt.yticks(tick_marks, classes, fontsize=12)
+    # config = {"font.family": 'Times New Roman'}
+    # rcParams.update(config)
+    plt.imshow(proportion, interpolation='nearest', cmap=plt.cm.Blues)
+    plt.colorbar()
 
     thresh = confusion_matrix.max() / 2.
 
@@ -340,8 +341,9 @@ def show_confusion_matrix(classes, confusion_matrix, work_dir):
     plt.ylabel('True label', fontsize=16)
     plt.xlabel('Predict label', fontsize=16)
     plt.tight_layout()
-    plt.savefig(work_dir+'/confusion_matrix.jpg', dpi=300)
+    plt.savefig(work_dir+'/verification_confusion_matrix.jpg', dpi=1000)
     # plt.show()
+
 
 def show_accplot(epoch, acc, work_dir):
     x = np.arange(epoch+1)[1:]
@@ -353,49 +355,55 @@ def show_accplot(epoch, acc, work_dir):
     plt.ylabel('Accuracy', fontsize=16)
     plt.xlabel('Epoch', fontsize=16)
     plt.tight_layout()
-    plt.savefig(work_dir+'/verification_accuracy.jpg', dpi=300)
+    plt.savefig(work_dir+'/verification_accuracy.jpg', dpi=1000)
+
 
 def generator_model_documents(args):
     from xml.dom.minidom import Document
-    doc = Document()  #创建DOM文档对象
-    root = doc.createElement('ModelInfo') #创建根元素
+    doc = Document()  # 创建DOM文档对象
+    root = doc.createElement('ModelInfo') # 创建根元素
     doc.appendChild(root)
-    
-    model_type = doc.createElement('INCRE')
-    #model_type.setAttribute('typeID','1')
+    print("args.work_dir = ",args.work_dir)
+
+    projectName = args.work_dir.split('/')[-1];
+    print("projectName = ",projectName)
+    model_type = doc.createElement('HRRP')
+    # model_type.setAttribute('typeID','1')
     root.appendChild(model_type)
 
-    model_item = doc.createElement(args.model_name+'.trt')
-    #model_item.setAttribute('nameID','1')
+    model_item = doc.createElement(projectName)
+    # model_item.setAttribute('nameID','1')
     model_type.appendChild(model_item)
 
     model_infos = {
-        'name':str(args.model_name),
-        'type':'INCRE',
-        'algorithm':'AlexNet',
-        'framework':'Pytorch',
-        'accuracy':str(args.accuracy),
-        'trainDataset':args.raw_data_path.split("/")[-1],
-        'inDataDimension':str(args.data_dimension),
-        'preTrainEpoch':str(args.pretrain_epoch),
-        'incrementEpoch':str(args.increment_epoch),
-        'oldClassNum':str(args.old_class),
-        'classNum':str(args.classNum),
-        'PATH':os.path.abspath(os.path.join(args.modeldir,args.model_name+'.trt')),
-        'batch':'32',
-        'note':'-'
+        'Model_Name':projectName,
+        'Model_Algorithm':'CIL',
+        'Model_AccuracyOnTrain':'-',
+        'Model_AccuracyOnVal':'-',
+        'Model_Framework':'Pytorch',
+        'Model_TrainDataset':args.work_dir.split("/")[-1],
+        'Model_PretrainEpoch':str(args.pretrain_epoch),
+        'Model_IncrementEpoch':str(args.increment_epoch),
+        'Model_TrainLR':'1e-4',
+        'Model_NumClassCategories':str(args.all_class), 
+        'Model_Path':os.path.abspath(os.path.join(args.work_dir,projectName+'.trt')),
+        'Model_TrainBatchSize':str(args.batch_size),
+        'Model_NamesOfOldClass':args.old_class_names,
+        'Model_ClassNames':args.train_classname,
+        'Model_Note':'-'
+
     } 
 
     for key in model_infos.keys():
         info_item = doc.createElement(key)
-        info_text = doc.createTextNode(model_infos[key]) #元素内容写入
+        info_text = doc.createTextNode(model_infos[key])  # 元素内容写入
         info_item.appendChild(info_text)
         model_item.appendChild(info_item)
 
-    with open(os.path.join(args.modeldir,args.model_name+'.xml'),'w') as f:
-        doc.writexml(f,indent = '\t',newl = '\n', addindent = '\t',encoding='utf-8')
+    with open(os.path.join(args.work_dir, 'model.xml'), 'w', encoding='utf-8') as f:
+        doc.writexml(f, indent='\t', newl='\n', addindent='\t', encoding='utf-8')
 
-    shutil.copy(args.work_dir+"/"+args.model_name+".trt",os.path.join(args.modeldir,args.model_name+'.trt'))
-    shutil.copy(args.work_dir+"/model/incrementModel.pt",os.path.join(args.modeldir,args.model_name+'.pt'))
-    shutil.copy(args.work_dir+"/"+"confusion_matrix.jpg",os.path.join(args.modeldir,'confusion_matrix.jpg'))
-    shutil.copy(args.work_dir+"/"+"verification_accuracy.jpg",os.path.join(args.modeldir,'verification_accuracy.jpg'))
+    # shutil.copy(args.work_dir+"/"+args.model_name+".trt", os.path.join(args.modeldir, args.model_name+'.trt'))
+    # shutil.copy(args.work_dir+"/model/incrementModel.pt", os.path.join(args.modeldir, args.model_name+'.pt'))
+    # shutil.copy(args.work_dir+"/"+"confusion_matrix.jpg", os.path.join(args.modeldir, 'confusion_matrix.jpg'))
+    # shutil.copy(args.work_dir+"/"+"verification_accuracy.jpg", os.path.join(args.modeldir, 'verification_accuracy.jpg'))

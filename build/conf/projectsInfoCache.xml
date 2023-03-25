@@ -69,12 +69,30 @@
         <基于HRRP数据的Resnet50网络 nameID="6">
             <Project_Path>N:/207/GUI207_V3.0/work_dirs/基于HRRP数据的Resnet50网络</Project_Path>
         </基于HRRP数据的Resnet50网络>
-        <基于HRRP数据的特征迭代反馈优化模型 nameID="7">
+        <基于HRRP数据的增量模型 nameID="7">
+            <Model_AccuracyOnTrain>-</Model_AccuracyOnTrain>
+            <Model_AccuracyOnVal>-</Model_AccuracyOnVal>
+            <Model_Algorithm>CIL</Model_Algorithm>
+            <Model_ClassNames>Big_ball;Cone;Cone_cylinder;DT;Small_ball;Spherical_cone;</Model_ClassNames>
+            <Model_Framework>Pytorch</Model_Framework>
+            <Model_IncrementEpoch>1</Model_IncrementEpoch>
+            <Model_Name>基于HRRP数据的增量模型</Model_Name>
+            <Model_NamesOfOldClass>Big_ball;Cone;Cone_cylinder;DT;Small_ball;</Model_NamesOfOldClass>
+            <Model_Note>-</Model_Note>
+            <Model_NumClassCategories>6</Model_NumClassCategories>
+            <Model_Path>N:\207\GUI207_V3.0\work_dirs\基于HRRP数据的增量模型\基于HRRP数据的增量模型.trt</Model_Path>
+            <Model_PretrainEpoch>3</Model_PretrainEpoch>
+            <Model_TrainBatchSize>32</Model_TrainBatchSize>
+            <Model_TrainDataset>基于HRRP数据的增量模型</Model_TrainDataset>
+            <Model_TrainLR>1e-4</Model_TrainLR>
+            <Project_Path>N:/207/GUI207_V3.0/work_dirs/基于HRRP数据的增量模型</Project_Path>
+        </基于HRRP数据的增量模型>
+        <基于HRRP数据的特征迭代反馈优化模型 nameID="8">
             <Project_Path>N:/207/GUI207_V3.0/work_dirs/基于HRRP数据的特征迭代反馈优化模型</Project_Path>
         </基于HRRP数据的特征迭代反馈优化模型>
     </HRRP>
     <IMAGE typeID="3">
-        <基于历程图数据的Resnet101网络 nameID="8">
+        <基于历程图数据的Resnet101网络 nameID="9">
             <Model_AccuracyOnTrain>-</Model_AccuracyOnTrain>
             <Model_AccuracyOnVal>100.0</Model_AccuracyOnVal>
             <Model_Algorithm>TRAD_ResNet101</Model_Algorithm>
@@ -93,7 +111,8 @@
         </基于历程图数据的Resnet101网络>
     </IMAGE>
     <RCS typeID="4">
-        <基于RCS数据的Efficientnet网络 nameID="9">
+        <基于RCS数据的Efficientnet网络 nameID="10">
+            <Dataset_Name>QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ</Dataset_Name>
             <Model_AccuracyOnTrain>-</Model_AccuracyOnTrain>
             <Model_AccuracyOnVal>100.0</Model_AccuracyOnVal>
             <Model_Algorithm>TRAD_EfficientNetB0</Model_Algorithm>
@@ -110,5 +129,8 @@
             <Model_WindowsStep>10</Model_WindowsStep>
             <Project_Path>N:/207/GUI207_V3.0/work_dirs/基于RCS数据的Efficientnet网络</Project_Path>
         </基于RCS数据的Efficientnet网络>
+        <基于RCS数据的Mobilenet网络 nameID="11">
+            <Project_Path>N:/207/GUI207_V3.0/work_dirs/基于RCS数据的Mobilenet网络</Project_Path>
+        </基于RCS数据的Mobilenet网络>
     </RCS>
 </globalProjectInfo>

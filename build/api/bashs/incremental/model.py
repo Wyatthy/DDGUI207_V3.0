@@ -297,6 +297,7 @@ class AlexNet_256(nn.Module):
         x = self.fc(x)
         return x
 
+
 class AlexNet_128(nn.Module):
     configs = [1, 96, 256, 384, 384, 256]
 
@@ -343,6 +344,7 @@ class AlexNet_128(nn.Module):
         x = x.view(-1, 256 * 6)
         x = self.fc(x)
         return x
+
 
 class AlexNet_39(nn.Module):
     configs = [1, 96, 256, 384, 384, 256]
@@ -407,8 +409,6 @@ if __name__ == '__main__':
     # out = vgg16(x)
     # print(out.shape)
 
-
-    
     # alexNet = AlexNet_256()
     # x = torch.Tensor(np.random.randn(2, 1, 256, 1))
     # out = alexNet(x)
@@ -423,7 +423,6 @@ if __name__ == '__main__':
     x = torch.Tensor(np.random.randn(2, 1, 39, 1))
     out = alexNet(x)
     print(out.shape)
-
 
     # torchsummary.summary(model.cuda(), (1, 128, 2))
 
