@@ -252,10 +252,10 @@ void ProjectDock::onAction_NewProject(){
         // qDebug()<< "testPathOut:" << projectPath["test_path"];
         // qDebug()<< "validPathOut:" << projectPath["val_path"];
         // qDebug()<< "labelPathOut:" << projectPath["unknown_test"];
-        if (confirmProjectType(projectNaming)){
-            newProjectPath = makeNewProject(projectNaming, projectInputPath);
-            makeProjectDock(projectNaming, newProjectPath);
-        }
+        // if (confirmProjectType(projectNaming)){
+        newProjectPath = makeNewProject(projectNaming, projectInputPath);
+        makeProjectDock(projectNaming, newProjectPath);
+        // }
     }
 }
 
@@ -487,13 +487,10 @@ void ProjectDock::onAction_AddProject(){
         return;
     }
     //根据工程名字确定projectsInfo->modelTypeOfSelectedProject
-    if (confirmProjectType(projectName)){
+    if (confirmProjectType(projectPath)){
         QString currentProjPath = workDir + "/" + projectName;
         // qDebug() << "添加工程的源路径：" << projectPath;
         // qDebug() << "添加的工程路径：" << currentProjPath;
-        // if (QDir(currentProjPath).exists()){
-        //     QMessageBox::warning(NULL,"提示","工程已覆盖！");
-        // }
         // 如果工程文件不存在，就复制过去
         if (!QDir(currentProjPath).exists()){
             copyDir(projectPath,currentProjPath);
@@ -503,30 +500,33 @@ void ProjectDock::onAction_AddProject(){
         }
         
     }
-
 }
 
 /*
-确认新建或者打开的工程文件夹是否和dock栏一致
+现在的工作是读取模型的xml然后判断类型是否与dock栏一致
 */
-
-bool ProjectDock::confirmProjectType(QString projectName){
-    std::string tempProjectName = projectName.toStdString();
-    std::string tempProjectDataType = "";
-    std::transform(tempProjectName.begin(), tempProjectName.end(), tempProjectName.begin(),
-        [](unsigned char c){ return std::tolower(c); });
-
-    if(tempProjectName.find("hrrp") != std::string::npos) tempProjectDataType = "HRRP";
-    else if(tempProjectName.find("rcs") != std::string::npos) tempProjectDataType = "RCS";
-    else if(tempProjectName.find("特征") != std::string::npos) tempProjectDataType = "FEATURE";
-    else if(tempProjectName.find("历程图") != std::string::npos) tempProjectDataType = "IMAGE";
-    if(rightSelType!=tempProjectDataType){
-        QMessageBox::warning(NULL, "添加工程", "工程添加失败，当前数据类型与欲添加的项目数据类型不符");
-        return false;
-    }else{
-        return true;
+bool ProjectDock::confirmProjectType(QString projectPath)
+{
+    QString projectName = projectPath.split('/').last();
+    // 如果该工程文件夹路径下有xml文件，则读取
+    QString modelXmlPath = projectPath + "/" + projectName + ".xml";
+    if (QFile::exists(modelXmlPath))
+    {
+        std::string modelType = projectsInfo->showXmlAttri(modelXmlPath.toStdString());
+        // qDebug() << "XmlmodelType:" << QString::fromStdString(modelType);
+        // qDebug() << "projectType:" << QString::fromStdString(rightSelType);
+        if (modelType != rightSelType){
+            QMessageBox::warning(NULL, "添加工程", "工程添加失败，当前数据类型与欲添加的项目数据类型不符");
+            return false;
+        }
+        else{
+            return true;
+        }
     }
+    // 读取xml文件内容，如果属性中的type和dock栏一致，则返回true
+    
 }
+
 
 void ProjectDock::makeProjectDock(QString projectName,QString projectPath){
     vector<string> allXmlNames;
@@ -560,7 +560,7 @@ void ProjectDock::makeProjectDock(QString projectName,QString projectPath){
     this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"ProjectType", rightSelType);
     this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"datasetClassNum", std::to_string(classNum));
     this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"datasetClassName", classNames.toStdString());
-    this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"datasetNote", "空");
+    this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"datasetNote", "-");
     this->reloadTreeView();
     qDebug()<<"import and writeToXML";
     this->projectsInfo->writeToXML(projectsInfo->defaultXmlPath);

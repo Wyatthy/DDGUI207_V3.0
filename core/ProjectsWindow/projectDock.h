@@ -91,7 +91,7 @@ private:
     QString makeNewProject(QString name, QMap<QString, QString> path);
     void makeProjectDock(QString projectName,QString projectPath);
     bool deleteDir(const QString& path);
-    bool confirmProjectType(QString projectName);
+    bool confirmProjectType(QString projectPath);
 
 };
 

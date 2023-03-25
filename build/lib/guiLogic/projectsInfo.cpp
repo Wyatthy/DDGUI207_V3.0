@@ -142,6 +142,65 @@ int ProjectsInfo::addProjectFromXML(string xmlPath){
     return 1;
 }
 
+// 给出模型的类别
+string ProjectsInfo::showXmlAttri(std::string xmlpath){   
+    std::wstring wpath = QString::fromStdString(xmlpath).toStdWString();
+    FILE* xmlFile = _wfopen(wpath.c_str(), L"rb");
+    if(!xmlFile){
+         qDebug()<<"Could not load the projectInfo FILE*";
+         return 0;
+    }
+    TiXmlDocument projectInfoDoc("");
+    bool loadOk=projectInfoDoc.LoadFile(xmlFile);                  //加载文档
+    if(!loadOk){
+        cout<<"Could not load the projectInfo file.Error:"<<projectInfoDoc.ErrorDesc()<<endl;
+        return 0;
+    }
+
+    TiXmlElement *RootElement = projectInfoDoc.RootElement();	//根元素, Info
+
+    //遍历dataType结点
+    for(TiXmlElement *currTypeEle = RootElement->FirstChildElement(); currTypeEle != NULL; currTypeEle = currTypeEle->NextSiblingElement()){
+        auto asdf=currTypeEle->Value();
+        qDebug()<<"(ProjectsInfo::addProjectFromXML) currTypeEle->value()="<<asdf;
+        // 遍历节点属性
+        TiXmlAttribute *pAttr=currTypeEle->FirstAttribute();
+        while( NULL != pAttr){
+            pAttr=pAttr->Next();
+        }
+        //遍历projectName节点
+        for(TiXmlElement *currNameEle=currTypeEle->FirstChildElement(); currNameEle != NULL; currNameEle=currNameEle->NextSiblingElement()){
+            auto asdf2=currNameEle->Value();
+            qDebug()<<"(ProjectsInfo::addProjectFromXML) currTypeEle->value()="<<asdf2;
+            map<string,string> datasetAttrMap;
+            // 遍历节点属性
+            TiXmlAttribute *pAttr=currNameEle->FirstAttribute();
+            while( NULL != pAttr){
+                pAttr=pAttr->Next();
+            }
+            //遍历子子节点
+            for(TiXmlElement *currAttrEle=currNameEle->FirstChildElement(); currAttrEle != NULL; currAttrEle=currAttrEle->NextSiblingElement()){
+                datasetAttrMap[currAttrEle->Value()] = currAttrEle->FirstChild()->Value();
+                // 遍历节点属性
+                TiXmlAttribute *pAttr=currAttrEle->FirstAttribute();
+                while( NULL != pAttr){
+                    pAttr=pAttr->Next();
+                }
+            }
+            // 打印属性信息
+            for(auto &attr: datasetAttrMap){
+                // qDebug()<<"(attr.first="<<attr.first.c_str()<<", attr.second="<<attr.second.c_str();
+                // 如果属性是“ModelType”，返回值
+                if(attr.first == "ModelType"){
+                    return attr.second;
+                }
+            }
+        }
+    }
+}
+
+
+
 void ProjectsInfo::modifyAttri(string Type, string projectName, string Attri, string AttriValue){
     this->infoMap[Type][projectName][Attri] = AttriValue;
 }
@@ -194,6 +253,7 @@ int ProjectsInfo::loadFromXML(string xmlPath){
     }
     return 1;
 }
+
 
 //判断Map状态
 bool ProjectsInfo::checkMap(string type, string projectName, string attri){
