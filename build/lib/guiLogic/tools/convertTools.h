@@ -157,6 +157,15 @@ inline cv::Mat QPixmapToCvMat( const QPixmap &inPixmap, bool inCloneImageData = 
 }
 
 
+inline QStringList fromStdVector(const std::vector<std::string>& vec) {
+    QStringList result;
+    for (const auto& str : vec) {
+        result << QString::fromStdString(str);
+    }
+    return result;
+}
+
+
 }
 
 #endif // CONVERTTOOLS_H

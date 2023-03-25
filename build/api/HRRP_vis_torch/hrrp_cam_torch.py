@@ -59,7 +59,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--project_path',
-        default="../../../work_dirs/基于-14db仿真HRRP的DropBlock模型",
+        default="../../../work_dirs/【优化】基于HRRP数据的DropBlock模型（-14dB）",
         type=str,
         help='工程文件路径, 包含数据集的工程文件夹路径'
     )
@@ -71,15 +71,22 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--mat_path',
-        default="../../../work_dirs/基于-14db仿真HRRP的DropBlock模型/train/DT/DT.mat",
+        default="../../../work_dirs/【优化】基于HRRP数据的DropBlock模型（-14dB）/train/DT/DT.mat",
         type=str,
         help='指定要可视化的.mat文件名'
     )
     parser.add_argument(
         '--mat_idx',
-        default=[1, 3],
-        type=list,
+        nargs='+',
+        type=int,
+        default=[5,6],
         help='指定.mat文件的索引,指定起始和终止位置,支持单个或多个索引'
+    )
+    parser.add_argument(
+        '--visualize_layer',
+        default="Block_1[1]",
+        type=str,
+        help='可视化的隐层名'
     )
     parser.add_argument(
         '--cam_method',
@@ -87,12 +94,6 @@ if __name__ == '__main__':
         type=str,
         help='CAM决策可视化算法指定, \
             可选: GradCAM, GradCAMpp, XGradCAM, EigenGradCAM, LayerCAM'
-    )
-    parser.add_argument(
-        '--visualize_layer',
-        default="Block_1[1]",
-        type=str,
-        help='可视化的隐层名'
     )
     args = parser.parse_args()
 

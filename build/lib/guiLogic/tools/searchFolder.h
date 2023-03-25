@@ -21,8 +21,10 @@ class SearchFolder{
         bool getDirsplus(std::vector<std::string> &dirs, std::string folderPath);
         bool getFilesplus(std::vector<std::string> &files, std::string filesType, std::string folderPath);
         // 判断文件是否存在
+        bool isExist(std::string rpath);
         bool exist(const std::string& name);
-        bool ifPathExists(std::string rpath);
+        // 判断是否是文件夹
+        bool isDir(std::string rpath);
     private:
 
 };

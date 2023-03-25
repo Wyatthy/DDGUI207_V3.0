@@ -95,7 +95,7 @@ bool SearchFolder::getFiles(vector<string> &files, string filesType, string fold
     return true;
 }
 
-bool SearchFolder::ifPathExists(std::string rpath){
+// bool SearchFolder::ifPathExists(std::string rpath){
 //    std::wstringstream wss;
 //    wss.imbue(std::locale("chs")); // 设置宽字符流为中文环境
 //    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
@@ -103,8 +103,23 @@ bool SearchFolder::ifPathExists(std::string rpath){
 //    wss << wpath_str;
 //    std::wstring path_wstr = wss.str();
 //    bool exists = std::filesystem::exists(path_wstr);
-    return 0;
+    // return 0;
+// }
+
+bool SearchFolder::isExist(std::string rpath){
+    if (rpath=="" || !std::filesystem::exists(std::filesystem::u8path(rpath))){
+        return false;
+    }
+    return true;
 }
+
+bool SearchFolder::isDir(std::string rpath){
+    if (rpath=="" || !std::filesystem::exists(std::filesystem::u8path(rpath))){
+        return false;
+    }
+    return std::filesystem::is_directory(std::filesystem::u8path(rpath));
+}
+
 
 #else
 #include <dirent.h>

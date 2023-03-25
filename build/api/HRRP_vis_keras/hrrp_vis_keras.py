@@ -173,8 +173,9 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--mat_idx',
-        default=[5, 6],
-        type=list,
+        nargs='+',
+        type=int,
+        default=[5,6],
         help='指定.mat文件的索引,指定起始和终止位置,支持单个或多个索引'
     )
     parser.add_argument(
@@ -239,7 +240,7 @@ if __name__ == '__main__':
     elif args.feature_type == "gradient":
         visFeatures = np.mean(gradients[0], axis=2)
     else:
-        raise RuntimeError('args.act_or_grad must be "feature" or "gradient"')
+        raise RuntimeError('args.feature_type must be "feature" or "gradient"')
 
 
     # 对batch中的每个样本进行保存

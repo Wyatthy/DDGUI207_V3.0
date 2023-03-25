@@ -165,8 +165,9 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--mat_idx',
-        default=[1, 3],
-        type=list,
+        nargs='+',
+        type=int,
+        default=[5,6],
         help='指定.mat文件的索引,指定起始和终止位置,支持单个或多个索引'
     )
     parser.add_argument(

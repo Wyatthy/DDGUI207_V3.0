@@ -24,14 +24,14 @@ ModelChoicePage::ModelChoicePage(Ui_MainWindow *main_ui, BashTerminal *bash_term
     // connect(ui->pushButton_saveModelAttri, &QPushButton::clicked, this, &ModelChoicePage::saveModelAttri);
 
     // 模型属性显示框
-    attriLabelGroup["Model_Name"] = ui->label_modelChoice_name;
-    attriLabelGroup["Model_Algorithm"] = ui->label_modelChoice_algorithm;
-    attriLabelGroup["Model_Accuracy"] = ui->label_modelChoice_accuracy;
-    attriLabelGroup["Model_TrainDataset"] = ui->label_modelChoice_trainDataset;
-    attriLabelGroup["Model_TrainEpoch"] = ui->label_modelChoice_trainEpoch;
-    attriLabelGroup["Model_TrainLR"] = ui->label_modelChoice_trainLR;
-    attriLabelGroup["Model_Framework"] = ui->label_modelChoice_framework;
-    attriLabelGroup["Model_Path"] = ui->label_modelChoice_PATH;
+//    attriLabelGroup["Model_Name"] = ui->label_modelChoice_name;
+//    attriLabelGroup["Model_Algorithm"] = ui->label_modelChoice_algorithm;
+//    attriLabelGroup["Model_Accuracy"] = ui->label_modelChoice_accuracy;
+//    attriLabelGroup["Model_TrainDataset"] = ui->label_modelChoice_trainDataset;
+//    attriLabelGroup["Model_TrainEpoch"] = ui->label_modelChoice_trainEpoch;
+//    attriLabelGroup["Model_TrainLR"] = ui->label_modelChoice_trainLR;
+//    attriLabelGroup["Model_Framework"] = ui->label_modelChoice_framework;
+//    attriLabelGroup["Model_Path"] = ui->label_modelChoice_PATH;
 
 
     qgraphicsScene = new QGraphicsScene; //要用QGraphicsView就必须要有QGraphicsScene搭配着用
@@ -64,12 +64,12 @@ void ModelChoicePage::refreshGlobalInfo(){
     std::string pathOfSelectedModel = projectsInfo->pathOfSelectedModel_forInfer;
     std::string modelTypeOfSelectedProject = projectsInfo->modelTypeOfSelectedProject;
     if(std::filesystem::exists(std::filesystem::u8path(pathOfSelectedModel))){
-        if(all_Images[ui->graphicsView_2_modelImg]){ //delete 原来的图
-            qgraphicsScene->removeItem(all_Images[ui->graphicsView_2_modelImg]);
-            delete all_Images[ui->graphicsView_2_modelImg]; //空悬指针
-            all_Images[ui->graphicsView_2_modelImg]=NULL;
+//        if(all_Images[ui->graphicsView_2_modelImg]){ //delete 原来的图
+//            qgraphicsScene->removeItem(all_Images[ui->graphicsView_2_modelImg]);
+//            delete all_Images[ui->graphicsView_2_modelImg]; //空悬指针
+//            all_Images[ui->graphicsView_2_modelImg]=NULL;
             
-        }
+//        }
         // 更新属性显示标签
         updateAttriLabel();
         // 网络图像展示
@@ -78,7 +78,7 @@ void ModelChoicePage::refreshGlobalInfo(){
         //ui->label_modelImg->setPixmap(QPixmap(imgPath).scaled(QSize(400,400), Qt::KeepAspectRatio));
         if(std::filesystem::exists(std::filesystem::u8path(imgPath.toStdString()))){
             // qDebug()<<"add....";
-            recvShowPicSignal(QPixmap(imgPath), ui->graphicsView_2_modelImg);
+//            recvShowPicSignal(QPixmap(imgPath), ui->graphicsView_2_modelImg);
         }else{
             terminal->print("模型图像地址:"+imgPath+"不存在！");
         }
@@ -97,7 +97,7 @@ void ModelChoicePage::updateAttriLabel(){
     for(auto &currAttriWidget: this->attriLabelGroup){
         currAttriWidget.second->setText(QString::fromStdString(attriContents[currAttriWidget.first]));
     }
-    ui->plainTextEdit_modelChoice_note->setPlainText(QString::fromStdString(attriContents["note"]));
+//    ui->plainTextEdit_modelChoice_note->setPlainText(QString::fromStdString(attriContents["note"]));
 }
 
 
@@ -116,7 +116,7 @@ void ModelChoicePage::saveModelAttri(){
             this->projectsInfo->modifyAttri(type, name, currAttriWidget.first, customAttriValue);
         }
         // 对plainTextEdit组件
-        customAttriValue = ui->plainTextEdit_modelChoice_note->toPlainText().toStdString();
+//        customAttriValue = ui->plainTextEdit_modelChoice_note->toPlainText().toStdString();
         if(customAttriValue.empty()){
             customAttriValue = "未定义";
         }
