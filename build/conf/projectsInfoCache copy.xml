@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<globalProjectInfo datasetTypeNum="4">
+    <FEATURE typeID="1" />
+    <HRRP typeID="2">
+        <sdlkjfkdsjflkds nameID="1">
+            <ProjectType>HRRP</ProjectType>
+            <Project_Path>D:/lyh/DDGUI207_V3.0/work_dirs/sdlkjfkdsjflkds</Project_Path>
+            <datasetClassName>Big_ball,Cone,Cone_cylinder,DT,Small_ball,Spherical_cone</datasetClassName>
+            <datasetClassNum>6</datasetClassNum>
+            <datasetNote>-</datasetNote>
+        </sdlkjfkdsjflkds>
+        <基于HRRP数据的Resnet网络 nameID="2">
+            <ModelType>HRRP</ModelType>
+            <ProjectType>HRRP</ProjectType>
+            <Project_Path>D:/lyh/DDGUI207_V3.0/work_dirs/基于HRRP数据的Resnet网络</Project_Path>
+            <accuracy>93.33</accuracy>
+            <algorithm>DenseNet121</algorithm>
+            <datasetClassName>Big_ball,Cone,Cone_cylinder,DT,Small_ball,Spherical_cone</datasetClassName>
+            <datasetClassNum>6</datasetClassNum>
+            <datasetNote>-14DB</datasetNote>
+            <framework>keras</framework>
+            <modelNote>-</modelNote>
+            <trainDataset>HRRP_simulate_128xN_c6</trainDataset>
+            <trainEpoch>150</trainEpoch>
+            <trainLR>0.001</trainLR>
+            <type>TRA_DL</type>
+        </基于HRRP数据的Resnet网络>
+    </HRRP>
+    <IMAGE typeID="3" />
+    <RCS typeID="4" />
+</globalProjectInfo>
