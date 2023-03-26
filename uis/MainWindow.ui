@@ -135,7 +135,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>641</width>
+             <width>1022</width>
              <height>1368</height>
             </rect>
            </property>
@@ -1339,7 +1339,33 @@
                   </property>
                   <layout class="QVBoxLayout" name="verticalLayout_6">
                    <item>
-                    <widget class="QGraphicsView" name="graphicsView_sense_modelImg"/>
+                    <widget class="QGraphicsView" name="graphicsView_sense_modelImg">
+                     <property name="minimumSize">
+                      <size>
+                       <width>0</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>16777212</height>
+                      </size>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="label_space">
+                     <property name="minimumSize">
+                      <size>
+                       <width>0</width>
+                       <height>600</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string/>
+                     </property>
+                    </widget>
                    </item>
                   </layout>
                  </widget>
@@ -3649,10 +3675,10 @@
           <widget class="QWidget" name="scrollAreaWidgetContents_7">
            <property name="geometry">
             <rect>
-             <x>-224</x>
-             <y>-131</y>
-             <width>1341</width>
-             <height>932</height>
+             <x>0</x>
+             <y>0</y>
+             <width>1351</width>
+             <height>900</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_61">
@@ -5041,8 +5067,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1397</width>
-             <height>881</height>
+             <width>572</width>
+             <height>921</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_87">
