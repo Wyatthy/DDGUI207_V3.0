@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<<<<<<< Updated upstream
 <globalProjectInfo dataTypeNum="4">
     <FEATURE typeID="1">
         <基于特征数据的ABFC网络 nameID="1">
@@ -133,4 +134,26 @@
             <Project_Path>N:/207/GUI207_V3.0/work_dirs/基于RCS数据的Mobilenet网络</Project_Path>
         </基于RCS数据的Mobilenet网络>
     </RCS>
+=======
+<globalProjectInfo datasetTypeNum="4">
+    <FEATURE typeID="1" />
+    <HRRP typeID="2">
+        <【优化】基于HRRP数据的DropBlock模型（-14dB） nameID="1">
+            <ProjectType>HRRP</ProjectType>
+            <Project_Path>H:/Linux_DATA/jjren/DDGUI207_V3.0/work_dirs/【优化】基于HRRP数据的DropBlock模型（-14dB）</Project_Path>
+            <datasetClassName>Big_ball,Cone,Cone_cylinder,DT,Small_ball,Spherical_cone</datasetClassName>
+            <datasetClassNum>6</datasetClassNum>
+            <datasetNote>-</datasetNote>
+        </【优化】基于HRRP数据的DropBlock模型（-14dB）>
+        <基于HRRP数据的Resnet网络 nameID="2">
+            <ProjectType>HRRP</ProjectType>
+            <Project_Path>H:/Linux_DATA/jjren/DDGUI207_V3.0/work_dirs/基于HRRP数据的Resnet网络</Project_Path>
+            <datasetClassName>Big_ball,Cone,Cone_cylinder,DT,Small_ball,Spherical_cone</datasetClassName>
+            <datasetClassNum>6</datasetClassNum>
+            <datasetNote>-</datasetNote>
+        </基于HRRP数据的Resnet网络>
+    </HRRP>
+    <IMAGE typeID="3" />
+    <RCS typeID="4" />
+>>>>>>> Stashed changes
 </globalProjectInfo>
