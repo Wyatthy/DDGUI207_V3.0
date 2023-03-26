@@ -289,7 +289,9 @@ void ModelTrainPage::monitorTrainProcess(){
                 showLog=false;
                 ui->startTrainButton->setEnabled(true);
                 //导入训练好的模型至系统
-                QString xmlPath = projectPath + "/model.xml";
+                
+                QString xmlPath = projectPath +"/"+ QString::fromStdString(projectsInfo->nameOfSelectedProject) + ".xml";
+                qDebug()<<"xmlPath="<<xmlPath;
                 projectsInfo->addProjectFromXML(xmlPath.toStdString());
                 projectsInfo->modifyAttri(trainingDataType, trainingProjectName, "Project_Path", trainingProjectPath);
                 projectsInfo->writeToXML(projectsInfo->defaultXmlPath);

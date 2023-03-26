@@ -45,11 +45,11 @@ SenseSetPage::SenseSetPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, 
 
     // 模型属性显示
     this->attriLabelGroup["ModelType"] = ui->label_sense_modelType;
-    this->attriLabelGroup["algorithm"] = ui->label_sense_modelAlgorithm;
-    this->attriLabelGroup["type"] = ui->label_sense_algorithmType;
-    this->attriLabelGroup["framework"] = ui->label_sense_framework;
-    this->attriLabelGroup["trainEpoch"] = ui->label_sense_trainEpoch;
-    this->attriLabelGroup["accuracy"] = ui->label_sense_valAcc;
+    this->attriLabelGroup["Model_Algorithm"] = ui->label_sense_modelAlgorithm;
+    this->attriLabelGroup["Model_AlgorithmType"] = ui->label_sense_algorithmType;
+    this->attriLabelGroup["Model_Framework"] = ui->label_sense_framework;
+    this->attriLabelGroup["Model_TrainEpoch"] = ui->label_sense_trainEpoch;
+    this->attriLabelGroup["Model_AccuracyOnVal"] = ui->label_sense_valAcc;
 
     // this->attriLabelGroup["datasetNote"] = ui->lineEdit_datasetNote;
 
@@ -105,7 +105,7 @@ void SenseSetPage::saveDatasetNote()
         if(customAttriValue.empty()){
             customAttriValue = "未定义";
         }
-        this->projectsInfo->modifyAttri(type, name, "datasetNote", customAttriValue);
+        this->projectsInfo->modifyAttri(type, name, "Dataset_Note", customAttriValue);
         // 保存至.xml,并更新
         this->projectsInfo->writeToXML(projectsInfo->defaultXmlPath);
 
@@ -131,7 +131,7 @@ void SenseSetPage::saveModelNote()
         if(customAttriValue.empty()){
             customAttriValue = "未定义";
         }
-        this->projectsInfo->modifyAttri(type, name, "modelNote", customAttriValue);
+        this->projectsInfo->modifyAttri(type, name, "Model_Note", customAttriValue);
         // 保存至.xml,并更新
         this->projectsInfo->writeToXML(projectsInfo->defaultXmlPath);
 

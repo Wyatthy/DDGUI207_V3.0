@@ -271,7 +271,7 @@ QString ProjectDock::makeNewProject(QString name, QMap<QString, QString> path){
     QString projectDir = workDir + "/" + name;
     // 如果路径不存在，则创建文件夹
     // projectDir路径下新建四个文件夹,train,test,valid,unknown_test
-    QStringList dirList = {"train","test","valid","unknown_test"};
+    QStringList dirList = {"train","test","val","unknown_test"};
     // 新建工程文件夹下的四个数据集文件夹路径
     QStringList dirPathList;
     for(auto &dirName: dirList){
@@ -500,15 +500,15 @@ void ProjectDock::onAction_AddProject(){
     }
     //根据工程名字确定projectsInfo->modelTypeOfSelectedProject
     if (confirmProjectType(projectPath)){
-        QString currentProjPath = workDir + "/" + projectName;
+        QString currentProjPath = workDir + "/" + projectNameQ;
         // qDebug() << "添加工程的源路径：" << projectPath;
         // qDebug() << "添加的工程路径：" << currentProjPath;
         // 如果工程文件不存在，就复制过去
         if (!QDir(currentProjPath).exists()){
             copyDir(projectPath,currentProjPath);
-            makeProjectDock(projectName,currentProjPath);
+            makeProjectDock(projectNameQ,currentProjPath);
         }else{
-            makeProjectDock(projectName,currentProjPath);
+            makeProjectDock(projectNameQ,currentProjPath);
         }
         
     }
@@ -543,7 +543,7 @@ bool ProjectDock::confirmProjectType(QString projectPath)
 void ProjectDock::makeProjectDock(QString projectName,QString projectPath){
     vector<string> allXmlNames;
     dirTools->getFilesplus(allXmlNames, ".xml",projectPath.toStdString());
-    auto xmlIdx = std::find(allXmlNames.begin(), allXmlNames.end(), projectNameQ.toStdString()+".xml");
+    auto xmlIdx = std::find(allXmlNames.begin(), allXmlNames.end(), projectName.toStdString()+".xml");
     if (xmlIdx == allXmlNames.end()){
         terminal->print("工程添加成功，但该工程没有说明文件.xml!");
         QMessageBox::warning(NULL, "添加工程", "工程添加成功，但该工程没有说明文件.xml!");
@@ -554,7 +554,7 @@ void ProjectDock::makeProjectDock(QString projectName,QString projectPath){
         }
     }
     else{
-        QString xmlPath = projectPath + "/" + projectNameQ + ".xml";
+        QString xmlPath = projectPath + "/" + projectName + ".xml";
         projectsInfo->addProjectFromXML(xmlPath.toStdString());
         terminal->print("工程添加成功:"+xmlPath);
         QMessageBox::information(NULL, "添加工程", "工程添加成功!");

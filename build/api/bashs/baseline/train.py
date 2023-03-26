@@ -401,8 +401,11 @@ def generator_model_documents(args):
     model_type.appendChild(model_item)
 
     model_infos = {
+        'ProjectType':"HRRP",
+        'ModelType':"HRRP",
         'Model_Name':str(model_naming),
         'Model_Algorithm':"Baseline_"+str(model_name),
+        'Model_AlgorithmType':"传统深度学习模型",
         'Model_AccuracyOnTrain':'-',
         'Model_AccuracyOnVal':str(args.valAcc),
         'Model_Framework':'Keras',
@@ -457,5 +460,5 @@ if __name__ == '__main__':
 
     save_params()
     generator_model_documents(args)
-    convert_hdf5_to_trt(project_path, model_naming)
+    # convert_hdf5_to_trt(project_path, model_naming)
     print("Train Ended:")
