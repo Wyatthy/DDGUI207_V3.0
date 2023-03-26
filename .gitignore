@@ -30,9 +30,10 @@
 /build/lib/TRANSFER/ToHrrp_mcr/*
 /build/lib/guiLogic/tools/__pycache__/*
 /work_dirs/*
+!/work_dirs/project_here
 /.qt_for_python/*
 /temp
-
+/build/conf/libtorch.pri
 
 /api/HRRP_vis
 api/HRRP_vis

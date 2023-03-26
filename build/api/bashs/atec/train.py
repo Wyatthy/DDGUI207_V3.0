@@ -11,6 +11,8 @@ from data_process import trans_norm
 from expert_knowledge import run_mechanism
 from sklearn.metrics import classification_report, confusion_matrix
 from data_process import norm_one, show_confusion_matrix
+from tensorflow.keras.utils import plot_model  
+from contextlib import redirect_stdout
 import tensorflow as tf
 from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
 import shutil
@@ -19,7 +21,7 @@ import argparse
 parser = argparse.ArgumentParser(description='Train a detector')
 parser.add_argument('--data_dir', help='the directory of the training data',default="N:/207/GUI207_V3.0/db/projects/基于HRRP数据的ATEC网络")
 parser.add_argument('--batch_size', type=int, help='the number of batch size',default=32)
-parser.add_argument('--max_epochs', type=int, help='the number of epochs',default=1)
+parser.add_argument('--max_epochs', type=int, help='the number of epochs',default=5)
 parser.add_argument('--class_number', type=int, help="class_number", default="6")
 args = parser.parse_args()
 
@@ -170,7 +172,7 @@ def rcn_model(train_x, train_y, val_x, val_y, epoch, batch_size, work_dir):
         keras.layers.Dense(len(train_y[0]), activation='softmax')
     ])
     rcn_model.compile(loss='categorical_crossentropy', optimizer='RMSprop', metrics=['accuracy'])
-    save_model_path = work_dir +'/fea_ada_trans.hdf5'
+    save_model_path = work_dir +'/HRRP_ATEC_fea_ada_trans.hdf5'
     learn_rate_reduction = keras.callbacks.ReduceLROnPlateau(monitor='lr', factor=0.99, patience=3,
                                                              verbose=0, min_lr=0.0001)
     checkpoint = keras.callbacks.ModelCheckpoint(save_model_path, monitor='val_accuracy', verbose=0,
@@ -182,6 +184,7 @@ def rcn_model(train_x, train_y, val_x, val_y, epoch, batch_size, work_dir):
     train_acc(epoch, h_parameter['accuracy'], work_dir)
     val_acc(h_parameter['val_accuracy'], work_dir)
     val_model = keras.models.load_model(save_model_path)
+    saveModelInfo(val_model, save_model_path)
     Y_val = np.argmax(val_y, axis=1)
     Y_pred = np.argmax(val_model.predict(val_x), axis=1)
     args.valAcc=round(max(h_parameter['val_accuracy'])*100,2)
@@ -197,11 +200,11 @@ def run_mapping(train_x, train_y, val_x, val_y, epoch, batch_size, work_dir):
     val_x = np.expand_dims(val_x, axis=-1)
 
     # 神经网络特征提取
-    path_one = work_dir +'/net_fea.hdf5'
+    path_one = work_dir +'/HRRP_ATEC_net_fea.hdf5'
     train_fea, val_fea = net_fea_extract(path_one, train_x, train_y, val_x, val_y, epoch, batch_size)
 
     # 特征适应变换
-    path_two = work_dir +'/fit_model.hdf5'
+    path_two = work_dir +'/HRRP_ATEC_fit_model.hdf5'
     train_mapping, val_mapping = fea_mapping(path_two, train_x, train_Y, val_x, val_Y, epoch, batch_size)
     data_save(train_mapping, folder_file_name, file_class_num, work_dir, 'mapping_feature')
 
@@ -276,7 +279,7 @@ def convert_hdf5_to_trt(model_type, work_dir, model_naming, abfcmode_Idx, worksp
     elif model_type == 'FewShot':
         hdfPath = work_dir+"/"+model_naming+".hdf5"
     elif model_type == 'ATEC':
-        hdfPath = work_dir+"/fea_ada_trans.hdf5"
+        hdfPath = work_dir+"/HRRP_ATEC_fea_ada_trans.hdf5"
         trtPath = work_dir+"/"+model_naming+".trt"
     pbPath = work_dir+"/temp.pb"
     oxPath = work_dir+"/temp.onnx"
@@ -340,6 +343,65 @@ def save_params():
     params_txt.write('max_epochs: ' + str(max_epochs) + '\n')
     params_txt.write('batch_size: ' + str(batch_size) + '\n')
     params_txt.close()
+
+
+# 保存模型结构信息
+def saveModelInfo(model, modelPath):
+    rootPath = os.path.dirname(modelPath)
+    modelName = os.path.basename(modelPath).split('.')[0]
+
+    # 保存模型所有基本信息
+    with open(rootPath + '/'+ modelName + "_modelInfo.txt", 'w') as f:
+        with redirect_stdout(f):
+            model.summary(line_length=200, positions=[0.30,0.60,0.7,1.0])
+        
+    # 保存模型所有层的名称至xml文件
+    from xml.dom.minidom import Document
+    xmlDoc = Document()
+    child_1 = xmlDoc.createElement(modelName)
+    xmlDoc.appendChild(child_1)
+    child_2 = xmlDoc.createElement(modelName)
+    child_1.appendChild(child_2)
+    for layer in model.layers:  
+        layer = layer.name.replace("/", "_")
+        nodeList = layer.split("_")
+        for i in range(len(nodeList)):
+            modeName = nodeList[i].strip()
+            if modeName.isdigit():
+                modeName = "_" + modeName
+            if i == 0:
+                # 如果以modeName为名的节点已经存在，就不再创建，直接挂
+                if len(child_2.getElementsByTagName(modeName)) == 0:
+                    node1 = xmlDoc.createElement(modeName)
+                    child_2.appendChild(node1)
+                else:
+                    node1 = child_2.getElementsByTagName(modeName)[0]
+            elif i == 1:
+                if len(node1.getElementsByTagName(modeName)) == 0:
+                    node2 = xmlDoc.createElement(modeName)
+                    node1.appendChild(node2)
+                else:
+                    node2 = node1.getElementsByTagName(modeName)[0]
+            elif i == 2:
+                if len(node2.getElementsByTagName(modeName)) == 0:
+                    node3 = xmlDoc.createElement(modeName)
+                    node2.appendChild(node3)
+                else:
+                    node3 = node2.getElementsByTagName(modeName)[0]
+            elif i == 3:
+                if len(node3.getElementsByTagName(modeName)) == 0:
+                    node4 = xmlDoc.createElement(modeName)
+                    node3.appendChild(node4)
+                else:
+                    node4 = node3.getElementsByTagName(modeName)[0]
+    f = open(rootPath + '/'+ modelName + "_struct.xml", "w")
+    xmlDoc.writexml(f, addindent='\t', newl='\n', encoding="utf-8")
+    f.close()
+
+    # 保存模型结构图
+    if not os.path.exists(rootPath + '/'+ modelName + "_structImage"):
+        os.makedirs(rootPath + '/'+ modelName + "_structImage")
+    plot_model(model, to_file = rootPath + '/'+ modelName + "_structImage/framework.png", show_shapes=True, show_layer_names=True, dpi=800)
 
 
 if __name__ == '__main__':

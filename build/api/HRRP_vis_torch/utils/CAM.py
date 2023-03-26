@@ -8,6 +8,28 @@ import gc
 from typing import Any, List
 
 
+class HookValues():
+    """
+        注册钩子，记录中间反传梯度
+    """
+    def __init__(self, layer) -> None:
+        # register a hook to save values of activations and gradients
+        self.activations = None
+        self.gradients = None
+        self.forward_hook = layer.register_forward_hook(self.hook_fn_act)
+        self.backward_hook = layer.register_backward_hook(self.hook_fn_grad)
+
+    def hook_fn_act(self, module, input, output):
+        self.activations = output
+
+    def hook_fn_grad(self, module, grad_input, grad_output):
+        self.gradients = grad_output[0]
+
+    def remove(self):
+        self.forward_hook.remove()
+        self.backward_hook.remove()
+
+
 class BaseCAM():
     def __init__(self, imgs:np.ndarray, CLASSES: List[str]) -> None:
         for i in range(len(imgs)):
@@ -60,7 +82,7 @@ class BaseCAM():
                  labelList: List[List[np.ndarray]],
                  imgList: List[np.ndarray] = None,
                  camList: List[np.ndarray] = None,
-                 with_norm_in_bboxes=False) -> List[np.ndarray]:
+                 with_norm_in_bboxes=False):
         """Normalize the CAM to be in the range [0, 1] inside every bounding
         boxes, and zero outside of the bounding boxes."""
         if imgList is None:
@@ -75,6 +97,7 @@ class BaseCAM():
         result = []
         for image, grayscale_cam, labels in \
                                 zip(imgList, camList, labelList):
+            labels = t2n(labels)
             renormalized_cam = grayscale_cam
 
             cam_image_renormalized = self._overlay_cam_on_image(
@@ -84,7 +107,7 @@ class BaseCAM():
         return result
 
 
-    def _overlay_cam_on_signal(self, imgs: List[np.ndarray]=None,
+    def _overlay_cam_on_image(self, imgs: List[np.ndarray]=None,
                         cams: List[np.ndarray]=None,
                         layerName: str = ""):
         """ This function overlays the cam mask on the image as an heatmap.
@@ -103,10 +126,10 @@ class BaseCAM():
             sig_len, channel, _ = sig.shape
             cam = cam.T                      # (512, 1) -> (1, 512)
             cam = cam - np.min(cam)
-            cam = cam / np.max(cam)     
+            cam = cam / np.max(cam)
             sig_min, sig_max = np.min(sig), np.max(sig)    
 
-            plt.figure(figsize=(18, 4),dpi=400)
+            plt.figure(figsize=(18, 4), dpi=400)
             plt.title("Signal Type: "+CLASS+"    Model Layer: "+str(layerName))
             plt.xlabel('N')
             plt.ylabel("Value")
@@ -122,45 +145,6 @@ class BaseCAM():
             plt.clf()
             plt.close()
             gc.collect()
-        return result
-
-
-    def _overlay_cam_on_image(self, imgs: List[np.ndarray]=None,
-                            cams: List[np.ndarray]=None,
-                            use_rgb: bool = False,
-                            colormap: int = cv2.COLORMAP_JET,
-                            image_weight: float = 0.5) -> List[np.ndarray]:
-        """ This function overlays the cam mask on the image as an heatmap.
-        By default the heatmap is in BGR format.
-        :param img: The base image in RGB or BGR format.
-        :param cam: The cam mask.
-        :param use_rgb: Whether to use an RGB or BGR heatmap, this should be set to True if 'img' is in RGB format.
-        :param colormap: The OpenCV colormap to be used.
-        :param image_weight: The final result is image_weight * img + (1-image_weight) * mask.
-        :returns: The default image with the cam overlay.
-        """
-        if imgs is None or cams is None:
-            imgs = self.imgs
-            cams = self.scaledCAMs
-        result = []
-        for img, cam in zip(imgs, cams):
-            heatmap = cv2.applyColorMap(np.uint8(255 * cam), colormap)
-            if use_rgb:
-                heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
-            heatmap = np.float32(heatmap) / 255
-
-            if np.max(img) > 1:
-                raise Exception(
-                    "The input image should np.float32 in the range [0, 1]")
-
-            if image_weight < 0 or image_weight > 1:
-                raise Exception(
-                    f"image_weight should be in the range [0, 1].\
-                        Got: {image_weight}")
-
-            cam = (1 - image_weight) * heatmap + image_weight * img
-            cam = cam / np.max(cam)
-            result.append(np.uint8(255 * cam).transpose(1, 0, 2))
         return result
 
 
@@ -311,6 +295,10 @@ class LayerCAM(EigenGradCAM):
         else:
             cam = spatial_weighted_activations.sum(axis=1)
         return cam
+        
+
+def t2n(t):
+    return t.detach().cpu().numpy().astype(np.float)
 
 
 def plt2cvMat(fig):

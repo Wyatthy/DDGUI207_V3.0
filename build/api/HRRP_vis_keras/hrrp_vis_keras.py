@@ -15,16 +15,6 @@ from contextlib import redirect_stdout
 from tensorflow.keras.utils import plot_model  
 
 
-name2label = {
-    "Big_ball": 0,
-    "Cone": 1,
-    "Cone_cylinder": 2,
-    "DT": 3,
-    "Small_ball": 4,
-    "Spherical_cone": 5,
-}
-
-
 def saveModelInfo(model, modelPath):
     rootPath = os.path.dirname(modelPath)
     modelName = os.path.basename(modelPath).split('.')[0]
@@ -83,30 +73,6 @@ def saveModelInfo(model, modelPath):
     plot_model(model, to_file = rootPath + '/'+ modelName + "_structImage/framework.png", show_shapes=True, show_layer_names=True)
 
 
-def read_mat(matPath, repeat=True):
-    ''' 读取.mat文件 '''
-    mat = scio.loadmat(matPath)
-    matrix_base = os.path.basename(matPath)
-    labelName = os.path.splitext(matrix_base)[0]  # 获取去除扩展名的.mat文件名称
-    signals = scio.loadmat(matPath)[labelName].T  # 读入.mat文件,并转置
-    signals = data_normalization(signals)  # 归一化处理
-    labels = [name2label[labelName]] * len(signals)  # 标签   
-
-    if repeat:
-        # 数据复制64次
-        class_data_picture = []
-        for j in range(0, len(signals)):
-            class_data_one = signals[j]
-            empty = np.zeros((len(class_data_one), 64))
-            for k in range(0, len(class_data_one)):
-                empty[k, :] = class_data_one[k]
-            class_data_picture.append(empty)
-        class_data_picture = np.array(class_data_picture)
-
-        return class_data_picture, labels, labelName
-    else:
-        return signals, labels, labelName
-
 def data_normalization(data):
     """
         Func:
@@ -122,57 +88,57 @@ def data_normalization(data):
     return data
 
 
-def capActAndGrad(signal, label, checkpoint_path, targetLayerName='conv5_block16_2_conv', top1 = False, saveInfo = False):
-
-    
-    # 模型构建
-    # model = tf.keras.models.Sequential()
-    # model.add(tf.keras.applications.densenet.DenseNet121(include_top=True, weights=None,
-    #                                                    input_tensor=None, input_shape=(128, 64, 1), pooling=None, classes=6))
-    # model.compile(loss='categorical_crossentropy', optimizer='RMSprop', metrics=['accuracy'])
-    # learning_rate_reduction = tf.keras.callbacks.ReduceLROnPlateau(monitor='lr', patience=3, verbose=1, factor=0.99, min_lr=0.00001)
-    # checkpoint = tf.keras.callbacks.ModelCheckpoint('./densenet121_hrrp_128.hdf5', monitor='val_accuracy', verbose=1, save_best_only=True, mode='max')
-    # callbacks_list = [checkpoint, learning_rate_reduction]
-    # model.summary()
+def capActAndGrad(signals, labels, checkpoint_path, \
+                    targetLayerName='conv5_block16_2_conv', \
+                    top1 = False, saveInfo = False):
 
     # Load model
     model = tf.keras.models.load_model(checkpoint_path)
-    prediction = model.predict(signal[None, ..., None])
-    prediction_idx = np.argmax(prediction)
+    prediction = model.predict(signals)
+    prediction_idx = np.argmax(prediction, axis=1)
 
     # Target hidden layer
-    if ("baseline" in checkpoint_path) or ("ATEC" in checkpoint_path):   # baseline模型是在一级层下
+    if ("CNN" in checkpoint_path) or ("DNN" in checkpoint_path) or ("ATEC" in checkpoint_path):   # baseline模型是在一级层下
         modelInner = model
-    else:                               # 其他模型是经过了sequential,在二级层下
+    else:       # 其他模型是经过了sequential,在二级层下
         modelInner = model.get_layer(model.layers[0].name)
     if saveInfo:
         saveModelInfo(modelInner, checkpoint_path)
+        exit()
+
     target_layer = modelInner.get_layer(targetLayerName)
     gradient_model = Model([modelInner.inputs], [target_layer.output, modelInner.output])
 
     # Compute Gradient of Top Predicted Class
     with tf.GradientTape() as tape:
-        activations, prediction = gradient_model(signal[None, ...])
+        activations, prediction = gradient_model(signals)
         if top1:
-            score = prediction[:, prediction_idx]
+            scores = tf.gather_nd(prediction, tf.stack([tf.range(prediction.shape[0]), prediction_idx], axis=1))
         else:
-            score = prediction[:, label]
+            scores = tf.gather_nd(prediction, tf.stack([tf.range(prediction.shape[0]), labels], axis=1))
 
-    # Gradient() computes the gradient using operations recorded in context of this tape
-    gradients = tape.gradient(score, activations)
+        # Gradient() computes the gradient using operations recorded in context of this tape
+        gradients = tape.gradient(scores, activations)
 
     # Change the position of channel axes, for visualization
     if activations.ndim == 2:
-        activations = activations[:, :, None, None]
-        gradients = gradients[:, :, None, None]
-    elif "baseline" in checkpoint_path or activations.ndim == 3:
-        activations = tf.transpose(activations, perm=[0, 2, 1])[:, :, :, None]
-        gradients = tf.transpose(gradients, perm=[0, 2, 1])[:, :, :, None]
+        activations = activations[:, :, None, None].numpy()
+        gradients = gradients[:, :, None, None].numpy()
+    elif activations.ndim == 3:
+        activations = tf.transpose(activations, perm=[0, 2, 1])[:, :, :, None].numpy()
+        gradients = tf.transpose(gradients, perm=[0, 2, 1])[:, :, :, None].numpy()
     elif activations.ndim == 4:
-        activations = tf.transpose(activations, perm=[0, 3, 1, 2])
-        gradients = tf.transpose(gradients, perm=[0, 3, 1, 2])
+        activations = tf.transpose(activations, perm=[0, 3, 1, 2]).numpy()
+        gradients = tf.transpose(gradients, perm=[0, 3, 1, 2]).numpy()
 
-    return activations.numpy(), gradients.numpy(), prediction_idx
+    for i in range(len(activations)):
+        # 规整到一个合适的范围
+        if np.max(np.abs(activations[i])) != 0:    
+            activations[i] *= 1/np.max(np.abs(activations[i]))
+        if np.max(np.abs(gradients[i])) != 0:
+            gradients[i] *= 1/np.max(np.abs(gradients[i]))
+
+    return activations, gradients, prediction_idx
 
 
 def shuffle(data, label):
@@ -185,121 +151,138 @@ def shuffle(data, label):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Visualize a keras model'
+        description='DD数据的TensroFlow模型特征可视化'
     )
     parser.add_argument(
-        '--checkpoint', 
-        default="../../db/models/HRRP_128_baselineCNN_c6_keras/HRRP_128_baselineCNN_c6_keras.hdf5",
-        #default="C:/Users/dell/Desktop/K/db/models/FEATURE_36_atec_c6_keras/model_exa/fea_ada_trans.hdf5",
+        '--project_path',
+        default="../../../work_dirs/基于-14db仿真HRRP的DropBlock模型",
         type=str,
-        help='checkpoint file'
+        help='工程文件路径, 包含数据集的工程文件夹路径'
     )
     parser.add_argument(
-        '--visualize_layer',
-        # default="conv5_block16_2_conv",
-        default="conv1d_6",
+        '--model_name', 
+        default="CNN_HRRP128.pth",
         type=str,
-        help='Name of the hidden layer of the model to visualize'
+        help='工程路径下模型名指定'
     )
     parser.add_argument(
         '--mat_path',
-        default="../../db/datasets/HRRP_simulate_128xN_c6/Cone/Cone.mat",
-        #default="C:/Users/dell/Desktop/K/db/datasets/FEATURE_-HRRP_simulate_128xN_c6-_36xN_c6/Cone/Cone.mat",
+        default="../../../work_dirs/基于-14db仿真HRRP的DropBlock模型/train/DT/DT.mat",
         type=str,
-        help='The .mat path of signal to visualize'
+        help='指定要可视化的.mat文件名'
     )
     parser.add_argument(
         '--mat_idx',
-        default=0,
+        nargs='+',
         type=int,
-        help='The .mat index of visual signal'
+        default=[5,6],
+        help='指定.mat文件的索引,指定起始和终止位置,支持单个或多个索引'
     )
     parser.add_argument(
-        '--act_or_grad',
-        default=1,
-        type=int,
-        help='Visual features or gradients'
-    )
-    parser.add_argument(
-        '--save_path',
-        default="./figs/fea_output",
+        '--visualize_layer',
+        default="Block_1[1]",
         type=str,
-        help='The path of feature map to save'
+        help='可视化的隐层名'
+    )    
+    parser.add_argument(
+        '--feature_type',
+        default="gradient",
+        type=str,
+        help='Visual feature or gradient'
     )
     parser.add_argument(
         '--save_model_info',
-        default=0,
-        type=bool,
+        default=False,
+        type=str,
+        help='是否保存模型信息至xml文件'
     )
     args = parser.parse_args()
 
+    ############################# 读取数据 #############################
+    # 获取dataset的类别名, 并进行排序，保证与模型对应
+    dataset_path, class_name, mat_name = args.mat_path.rsplit('/', 2)
+    folder_names = [folder for folder in os.listdir(dataset_path) \
+                    if os.path.isdir(dataset_path+'/'+folder)]
+    folder_names.sort()                         # 按文件夹名进行排序
+    for i in range(0, len(folder_names)):
+        if folder_names[i].casefold() == 'dt':  # 将指定类别放到首位
+            folder_names.insert(0, folder_names.pop(i))
     # 读取数据
-    repeatData = False if ("baseline" in args.checkpoint or "ATEC" in args.checkpoint) else True
-    signals, labels, labelName = read_mat(args.mat_path, repeatData)
-    # (275, 128, 64), (275, 6), (275, 128, 64), (275, 6)
-    # 0:'Cone', 1:'Cone_cylinder', 2:'DT', 3:'WD', 4:'bigball', 5:'smallball'
-    signal = signals[args.mat_idx]
-    label = labels[args.mat_idx]    # one-hot -> index; (275, 6) -> (275,)
-    
+    ori_data = scio.loadmat(args.mat_path)
+    signals = data_normalization(ori_data[list(ori_data.keys())[-1]].T)
+    signals = signals[args.mat_idx[0]-1:args.mat_idx[1]]
+    # 堆叠数据, 或根据输入调整信号维度
+    if "CNN" in args.model_name or "DNN" in args.model_name or "ATEC" in args.model_name:
+        repeatData = 0 
+    else:
+        repeatData = 64
+    if repeatData > 1:
+        signals = signals[:,:,None].repeat(repeatData, 2)
+    signals = signals[..., None]    # 补上通道数
+    # 分配标签
+    labels = np.full((signals.shape[0],), folder_names.index(class_name))
+    label_names = [class_name for i in range(signals.shape[0])]
+
+    ############################# 可视化 #############################
     # 捕获激活和梯度
-    activations, gradients, prediction_idx = capActAndGrad(
-        signal, label, 
-        args.checkpoint, 
-        args.visualize_layer,
-        top1=True,          # True: top1, False: Ground Truth
+    activations, gradients, prediction_idx = capActAndGrad(     # bz, c, h, w 
+        signals, labels, 
+        checkpoint_path=f'{args.project_path}/{args.model_name}',
+        targetLayerName=args.visualize_layer,
+        top1=False,                 # True: top1, False: Ground Truth
         saveInfo=args.save_model_info
     )
 
-    # 检查保存路径
-    if os.path.exists(args.save_path):
-        shutil.rmtree(args.save_path)
-    if not os.path.exists(args.save_path):
-        os.makedirs(args.save_path)
-
+    ############################# 保存 #############################
     # 保存激活图/梯度图
-    if args.act_or_grad == 0:
+    if args.feature_type == "feature":
         visFeatures = np.mean(activations[0], axis=2)
-    elif args.act_or_grad == 1:
+    elif args.feature_type == "gradient":
         visFeatures = np.mean(gradients[0], axis=2)
-        # for i in range(len(visFeatures)):
-        #     visFeatures[i] -= np.min(visFeatures[i])
-        #     visFeatures[i] /= np.max(visFeatures[i])
-        if np.max(np.abs(visFeatures)) != 0:    # 规整到一个合适的范围
-            visFeatures *= 1/np.max(np.abs(visFeatures))
     else:
-        raise RuntimeError('args.act_or_grad must be 0 or 1')
+        raise RuntimeError('args.feature_type must be "feature" or "gradient"')
 
-    if visFeatures.shape[1] == 1:
-        plt.figure(figsize=(18, 4), dpi=100)
-        plt.grid(axis="y")
-        plt.bar(range(len(visFeatures[:, 0])), visFeatures[:, 0])
-        plt.title("Signal Type: "+labelName+"    Model Layer: "+"model."+args.visualize_layer)
-        plt.xlabel("Number of units")
-        plt.ylabel("Activation value")
-        plt.savefig(args.save_path + "/FC_vis.png")
 
-        plt.clf()
-        plt.close()
-        gc.collect()
-    else:
-        for idx, featureMap in enumerate(visFeatures):   # for every channels
-            plt.figure(figsize=(18, 4))
-            plt.title("Signal Type: "+labelName+"    Model Layer: "+"model."+args.visualize_layer)
-            plt.xlabel('N')
+    # 对batch中的每个样本进行保存
+    for sampleIdx, visFeature in enumerate(visFeatures):
+        # 检查保存路径
+        saveImgPath = args.project_path + "/Features_Output/" + \
+            dataset_path.rsplit('/', 1)[-1] +"/"+ class_name +"/"+ mat_name + \
+            "/"+ str(sampleIdx+args.mat_idx[0]) + "/"+ args.feature_type + \
+            "/"+ args.visualize_layer
+        if os.path.exists(saveImgPath):
+            shutil.rmtree(saveImgPath)
+        os.makedirs(saveImgPath)
+
+        if visFeature.ndim == 1:
+            plt.figure(figsize=(18, 4), dpi=400)
             plt.grid(axis="y")
-            plt.ylabel("Value")
-            plt.plot(featureMap, linewidth=2, label = 'Hidden layer features')
-            plt.legend(loc="upper right")
-            plt.savefig(args.save_path + "/" + str(idx+1) + ".png")
-            # plt.show()
+            plt.bar(range(len(visFeature)), visFeature)
+            plt.title("Signal Type: "+label_names[sampleIdx]+"    Model Layer: "+"model."+args.visualize_layer)
+            plt.xlabel("Number of units")
+            plt.ylabel("Activation value")
+            plt.savefig(saveImgPath + "/FC_vis.png")
+
             plt.clf()
             plt.close()
             gc.collect()
+            # 保存特征矩阵数据
+            scio.savemat(saveImgPath +"/FC_vis.mat", {'feature': visFeature})
+        else:
+            # 对每个通道进行保存
+            for chIdx, featureMap in enumerate(visFeature):   # for every channels
+                plt.figure(figsize=(18, 4), dpi=400)
+                plt.title("Signal Type: "+label_names[sampleIdx]+"    Model Layer: "+"model."+args.visualize_layer)
+                plt.xlabel('N')
+                plt.ylabel("Value")
+                plt.plot(featureMap[:, 0], linewidth=2, label = 'Hidden layer features')
+                plt.legend(loc="upper right")
+                plt.savefig(saveImgPath + "/" + str(chIdx+1) + ".png")
+
+                plt.clf()
+                plt.close()
+                gc.collect()
+                # 保存特征矩阵数据
+                scio.savemat(saveImgPath +"/"+ str(chIdx+1) + ".mat", {'feature': featureMap[:, 0]})
 
     print("finished")
-
-
-
-
-
-

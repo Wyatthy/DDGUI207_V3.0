@@ -1,4 +1,4 @@
-QT       += core gui charts
+QT       += core gui charts xml
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -24,7 +24,6 @@ HEADERS += \
     core/projectsWindow/projectDock.h \
     #core/datasetsWindow/datasetDock.h \
     core/modelCAMPage.h \
-    core/modelChoicePage.h \
     core/modelEvalPage.h \
     core/modelTrainPage.h \
     core/modelVisPage.h \
@@ -51,7 +50,8 @@ HEADERS += \
     build/lib/guiLogic/tools/searchFolder.h \
     build/lib/TRANSFER/ToHrrp.h \
     build/lib/guiLogic/tools/socketclient.h \
-    build/lib/guiLogic/tools/socketserver.h
+    build/lib/guiLogic/tools/socketserver.h \
+    uis/DialogNewProject.h
 
 SOURCES += \
     build/lib/dataprocess/matdataprocess_atecfea.cpp \
@@ -68,7 +68,6 @@ SOURCES += \
     core/projectsWindow/chart.cpp \
     core/projectsWindow/projectDock.cpp \
     #core/datasetsWindow/datasetDock.cpp \
-    core/modelChoicePage.cpp \
     core/modelEvalPage.cpp \
     core/modelTrainPage.cpp \
     core/monitorPage.cpp \
@@ -87,11 +86,13 @@ SOURCES += \
     build/lib/guiLogic/tinyXml/tinyxml.cpp \
     build/lib/guiLogic/tinyXml/tinyxmlerror.cpp \
     build/lib/guiLogic/tinyXml/tinyxmlparser.cpp \
-    build/lib/guiLogic/tools/searchFolder.cpp
+    build/lib/guiLogic/tools/searchFolder.cpp \
+    uis/DialogNewProject.cpp
 
 FORMS += \
     ./build/conf/QRibbon/qribbon.ui \
-    ./uis/MainWindow.ui
+    ./uis/MainWindow.ui \
+    ./uis/DialogNewProject.ui
 
 TRANSLATIONS += \
     ./build/conf/QRibbon_yue_CN.ts
