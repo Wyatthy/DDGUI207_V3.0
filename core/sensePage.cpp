@@ -207,7 +207,7 @@ void SenseSetPage::confirmDataset(bool notDialog = false){
     int maxIndex = 1000000;
     minMatNum(maxIndex);
     ui->label_sense_allIndex->setText(QString::fromStdString(to_string(maxIndex)));
-    qDebug() << "maxIndex: " << maxIndex;
+    qDebug() << "SenseSetPage::confirmDataset maxIndex: " << maxIndex;
 
     // 绘制类别图
     for(int i = 0; i<folders.size(); i++){
@@ -215,9 +215,23 @@ void SenseSetPage::confirmDataset(bool notDialog = false){
         imgInfoGroup[i]->clear();
     }
     drawClassImage();
+
     // 绘制曲线
     for(int i=0;i<folders.size();i++){
-        if(chartGroup[i]->layout()) delete chartGroup[i]->layout();
+        if (chartGroup[i]->layout()) {
+            QLayoutItem* item;
+            while ((item = chartGroup[i]->layout()->takeAt(0))) {
+                QWidget* widget = item->widget();
+                if (widget) {
+                    widget->setParent(nullptr);
+                    delete widget;
+                }
+                delete item;
+            }
+        }
+    //    if (chartGroup[i]->pixmap() != nullptr) {
+    //        delete chartGroup[i]->pixmap();
+    //    }
         chartGroup[i]->clear();
     }
     nextBatchChart();
@@ -245,9 +259,9 @@ void SenseSetPage::drawClassImage(){
     string rootPath = projectsInfo->pathOfSelectedDataset;
     vector<string> subDirNames = projectsInfo->classNamesOfSelectedDataset;
     // 打印类别名称
-    for(int i=0; i<subDirNames.size(); i++){
-        qDebug() << "subDirNames[" << i << "]: " << QString::fromStdString(subDirNames[i]);
-    }
+    // for(int i=0; i<subDirNames.size(); i++){
+    //     qDebug() << "subDirNames[" << i << "]: " << QString::fromStdString(subDirNames[i]);
+    // }
     // 显示图片大小设置成一样
     int imgWidth = 100;
     int imgHeight = 100;
@@ -326,15 +340,19 @@ void SenseSetPage::minMatNum(int &minNum)
             MATFile* pMatFile = NULL;
             mxArray* pMxArray = NULL;
             pMatFile = matOpen(matFilePath.toStdString().c_str(), "r");
-            if(!pMatFile){qDebug()<<"(ModelEvalPage::randSample)文件指针空！！！！！！";return;}
+            if(!pMatFile){qDebug()<<"(ModelEvalPage::randSample)文件指针空!!!!";return;}
             pMxArray = matGetNextVariable(pMatFile, NULL);
             if(!pMxArray){
-                qDebug()<<"(Chart::readHRRPmat)pMxArray变量没找到！！！！！！";
+                qDebug()<<"(Chart::readHRRPmat)pMxArray变量没找到!!!!";
                 return;
             }
+            int windowlen = 16;
+            int windowstep = 1;
             int N = mxGetN(pMxArray);  //N 列数
+            if(projectsInfo->dataTypeOfSelectedProject == "RCS" || projectsInfo->dataTypeOfSelectedProject == "IMAGE"){
+                N = (N-windowlen)/windowstep+1;
+            }
             if(N<minNum) minNum = N;
-            qDebug()<<"(SenseSetPage::minMatNum) N="<<N;
         }
     }
 }

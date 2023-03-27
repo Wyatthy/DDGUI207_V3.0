@@ -32,11 +32,11 @@
             <datasetNote>-</datasetNote>
         </【优化】基于HRRP数据的DropBlock模型（-14dB）>
         <基于HRRP数据的ABFC网络 nameID="3">
-            <ModelType>FEATURE</ModelType>
             <Model_AccuracyOnTrain>-</Model_AccuracyOnTrain>
             <Model_AccuracyOnVal>100.0</Model_AccuracyOnVal>
             <Model_Algorithm>ABFC</Model_Algorithm>
             <Model_AlgorithmType>特征权重模型</Model_AlgorithmType>
+            <Model_DataType>HRRP</Model_DataType>
             <Model_Framework>Keras</Model_Framework>
             <Model_Name>基于HRRP数据的ABFC网络</Model_Name>
             <Model_Note>-</Model_Note>
@@ -46,6 +46,7 @@
             <Model_TrainDataset>基于HRRP数据的ABFC网络</Model_TrainDataset>
             <Model_TrainEpoch>30</Model_TrainEpoch>
             <Model_TrainLR>0.001</Model_TrainLR>
+            <Model_Type>ABFC</Model_Type>
             <ProjectType>HRRP</ProjectType>
             <Project_Path>N:/207/GUI207_V3.0/work_dirs/基于HRRP数据的ABFC网络</Project_Path>
             <datasetClassName>Big_ball,Cone,Cone_cylinder,DT,Small_ball,Spherical_cone</datasetClassName>
@@ -53,11 +54,11 @@
             <datasetNote>-</datasetNote>
         </基于HRRP数据的ABFC网络>
         <基于HRRP数据的ATEC网络 nameID="4">
-            <ModelType>HRRP</ModelType>
             <Model_AccuracyOnTrain>-</Model_AccuracyOnTrain>
             <Model_AccuracyOnVal>99.0</Model_AccuracyOnVal>
             <Model_Algorithm>ATEC</Model_Algorithm>
             <Model_AlgorithmType>特征关联模型</Model_AlgorithmType>
+            <Model_DataType>HRRP</Model_DataType>
             <Model_Framework>Keras</Model_Framework>
             <Model_Name>基于HRRP数据的ATEC网络</Model_Name>
             <Model_Note>-</Model_Note>
@@ -67,6 +68,7 @@
             <Model_TrainDataset>基于HRRP数据的ATEC网络</Model_TrainDataset>
             <Model_TrainEpoch>256</Model_TrainEpoch>
             <Model_TrainLR>0.001</Model_TrainLR>
+            <Model_Type>ATEC</Model_Type>
             <ProjectType>HRRP</ProjectType>
             <Project_Path>N:/207/GUI207_V3.0/work_dirs/基于HRRP数据的ATEC网络</Project_Path>
             <datasetClassName>Big_ball,Cone,Cone_cylinder,DT,Small_ball,Spherical_cone</datasetClassName>
@@ -74,11 +76,11 @@
             <datasetNote>-</datasetNote>
         </基于HRRP数据的ATEC网络>
         <基于HRRP数据的Baseline_DNN网络 nameID="5">
-            <ModelType>HRRP</ModelType>
             <Model_AccuracyOnTrain>-</Model_AccuracyOnTrain>
             <Model_AccuracyOnVal>100.0</Model_AccuracyOnVal>
             <Model_Algorithm>Baseline_DNN</Model_Algorithm>
             <Model_AlgorithmType>传统深度学习模型</Model_AlgorithmType>
+            <Model_DataType>HRRP</Model_DataType>
             <Model_Framework>Keras</Model_Framework>
             <Model_Name>基于HRRP数据的Baseline_DNN网络</Model_Name>
             <Model_Note>-</Model_Note>
@@ -88,6 +90,7 @@
             <Model_TrainDataset>基于HRRP数据的Baseline_DNN网络</Model_TrainDataset>
             <Model_TrainEpoch>500</Model_TrainEpoch>
             <Model_TrainLR>0.001</Model_TrainLR>
+            <Model_Type>BASE</Model_Type>
             <ProjectType>HRRP</ProjectType>
             <Project_Path>N:/207/GUI207_V3.0/work_dirs/基于HRRP数据的Baseline_DNN网络</Project_Path>
             <datasetClassName>Big_ball,Cone,Cone_cylinder,DT,Small_ball,Spherical_cone</datasetClassName>
@@ -95,6 +98,21 @@
             <datasetNote>-</datasetNote>
         </基于HRRP数据的Baseline_DNN网络>
         <基于HRRP数据的DenseNet网络 nameID="6">
+            <Model_AccuracyOnTrain>-</Model_AccuracyOnTrain>
+            <Model_AccuracyOnVal>100.0</Model_AccuracyOnVal>
+            <Model_Algorithm>TRAD_DenseNet121</Model_Algorithm>
+            <Model_AlgorithmType>传统深度学习模型</Model_AlgorithmType>
+            <Model_DataType>HRRP</Model_DataType>
+            <Model_Framework>Keras</Model_Framework>
+            <Model_Name>基于HRRP数据的DenseNet网络</Model_Name>
+            <Model_Note>-</Model_Note>
+            <Model_NumClassCategories>6</Model_NumClassCategories>
+            <Model_Path>N:\207\GUI207_V3.0\work_dirs\基于HRRP数据的DenseNet网络\基于HRRP数据的DenseNet网络.trt</Model_Path>
+            <Model_TrainBatchSize>16</Model_TrainBatchSize>
+            <Model_TrainDataset>基于HRRP数据的DenseNet网络</Model_TrainDataset>
+            <Model_TrainEpoch>250</Model_TrainEpoch>
+            <Model_TrainLR>0.001</Model_TrainLR>
+            <Model_Type>TRAD</Model_Type>
             <ProjectType>HRRP</ProjectType>
             <Project_Path>N:/207/GUI207_V3.0/work_dirs/基于HRRP数据的DenseNet网络</Project_Path>
             <datasetClassName>Big_ball,Cone,Cone_cylinder,DT,Small_ball,Spherical_cone</datasetClassName>
@@ -151,11 +169,11 @@
     </IMAGE>
     <RCS typeID="4">
         <基于RCS数据的Efficientnet网络 nameID="10">
-            <ModelType>RCS</ModelType>
             <Model_AccuracyOnTrain>-</Model_AccuracyOnTrain>
             <Model_AccuracyOnVal>100.0</Model_AccuracyOnVal>
             <Model_Algorithm>TRAD_EfficientNetB0</Model_Algorithm>
             <Model_AlgorithmType>传统深度学习模型</Model_AlgorithmType>
+            <Model_DataType>RCS</Model_DataType>
             <Model_Framework>Keras</Model_Framework>
             <Model_Name>基于RCS数据的Efficientnet网络</Model_Name>
             <Model_Note>-</Model_Note>
@@ -165,6 +183,7 @@
             <Model_TrainDataset>基于RCS数据的Efficientnet网络</Model_TrainDataset>
             <Model_TrainEpoch>500</Model_TrainEpoch>
             <Model_TrainLR>0.001</Model_TrainLR>
+            <Model_Type>TRAD</Model_Type>
             <Model_WindowsLength>32</Model_WindowsLength>
             <Model_WindowsStep>10</Model_WindowsStep>
             <ProjectType>RCS</ProjectType>

@@ -48,8 +48,7 @@ Chart::~Chart(){
 }
 
 // 将OpenCV的cv::Mat转换为Qt的QImage
-QImage matToQImage(const cv::Mat& mat)
-{
+QImage matToQImage(const cv::Mat& mat){
     if (mat.type() == CV_8UC1) {
         // 灰度图像
         // return QImage(mat.data, mat.cols, mat.rows, static_cast<int>(mat.step), QImage::Format_Grayscale8);
@@ -89,13 +88,13 @@ void Chart::drawHRRPimage(QLabel* chartLabel, int emIdx){
     int M = mxGetM(pMxArray);  //行数
     int N = mxGetN(pMxArray);  //列数
     int allDataNum=(N-windowlen)/windowstep+1;
-    emIdx = emIdx>allDataNum?allDataNum-1:emIdx;//说明是随机数
+    emIdx = emIdx>allDataNum?allDataNum:emIdx;//说明是随机数
 
     cv::Mat mat(windowlen, M, CV_64FC1);
 
     for(int i=0;i<windowlen;i++){
         for(int j=0;j<M;j++){
-            mat.at<double>(i, j) = matdata[(emIdx*windowstep+i)*M+j];
+            mat.at<double>(i, j) = matdata[((emIdx-1)*windowstep+i)*M+j];
         }
     }
     cv::Mat mat8bit;
@@ -107,24 +106,24 @@ void Chart::drawHRRPimage(QLabel* chartLabel, int emIdx){
     // 将图像缩放以适合QLabel大小
     QPixmap pixmap = QPixmap::fromImage(qImage).scaled(chartLabel->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation);
     // 在QLabel中显示QPixmap
-    chartLabel->setPixmap(pixmap);
-    // QLabel *label = new QLabel(chartLabel);
-    // label->setPixmap(pixmap);
+    // chartLabel->setPixmap(pixmap);
+    QLabel *label = new QLabel(chartLabel);
+    label->setPixmap(pixmap);
     
-    // QHBoxLayout *pHLayout = (QHBoxLayout *)chartLabel->layout();
-    // if(!chartLabel->layout()){
-    //     pHLayout = new QHBoxLayout(chartLabel);
-    // }
-    // else{
-    //     QLayoutItem *child;
-    //     while ((child = pHLayout->takeAt(0)) != 0){
-    //         if(child->widget()){
-    //             child->widget()->setParent(NULL);
-    //         }
-    //         delete child;
-    //      }
-    // }
-    // pHLayout->addWidget(label);
+    QHBoxLayout *pHLayout = (QHBoxLayout *)chartLabel->layout();
+    if(!chartLabel->layout()){
+        pHLayout = new QHBoxLayout(chartLabel);
+    }
+    else{
+        QLayoutItem *child;
+        while ((child = pHLayout->takeAt(0)) != 0){
+            if(child->widget()){
+                child->widget()->setParent(NULL);
+            }
+            delete child;
+         }
+    }
+    pHLayout->addWidget(label);
 }
 
 void Chart::drawImage(QLabel* chartLabel, int examIdx){
@@ -288,9 +287,9 @@ void Chart::readHRRPmat(int emIdx){
     matdata = (double*)mxGetData(pMxArray);
     int M = mxGetM(pMxArray);  //M=128 行数
     int N = mxGetN(pMxArray);  //N=1000 列数
-    if(emIdx>N) emIdx=N-1; //说明是随机数
+    if(emIdx>N) emIdx=N; //说明是随机数
     for(int i=0;i<M;i++){
-        float y=matdata[M*emIdx+i];
+        float y=matdata[M*(emIdx-1)+i];
         y_min = fmin(y_min,y);
         y_max = fmax(y_max,y);
         points.append(QPointF(i,y));
@@ -319,9 +318,9 @@ void Chart::readFeaturemat(int emIdx){
     matdata = (double*)mxGetData(pMxArray);
     int M = mxGetM(pMxArray);  //M 行数
     int N = mxGetN(pMxArray);  //N= 列数
-    if(emIdx>N) emIdx=N-1; //说明是随机数
+    if(emIdx>N) emIdx=N; //说明是随机数
     for(int i=0;i<M;i++){
-        float y=matdata[M*emIdx+i];
+        float y=matdata[M*(emIdx-1)+i];
         y_min = fmin(y_min,y);
         y_max = fmax(y_max,y);
         points.append(QPointF(i,y));
@@ -333,7 +332,7 @@ void Chart::readFeaturemat(int emIdx){
 }
 
 void Chart::readRCSmat(int emIdx){
-    int windowlen=128;  //窗口长度传过来太麻烦了 默认128
+    int windowlen=16;  //窗口长度传过来太麻烦了 默认128
     int windowstep = 1;
     points.clear();
     float y_min = 200000,y_max = -200000;
@@ -354,9 +353,9 @@ void Chart::readRCSmat(int emIdx){
     matdata = (int*)mxGetData(pMxArray);
     int M = mxGetM(pMxArray);  // 行数
     int N = mxGetN(pMxArray);  // 列数
-    if(emIdx>(N-windowlen)/windowstep+1) emIdx=(N-windowlen)/windowstep;  
+    if(emIdx>(N-windowlen)/windowstep+1) emIdx=(N-windowlen)/windowstep+1;  
     for(int i=0;i<windowlen;i++){
-        float y = matdata[emIdx*windowstep+i];
+        float y = matdata[(emIdx-1)*windowstep+i];
         y_min = fmin(y_min,y);
         y_max = fmax(y_max,y);
         points.append(QPointF(i,y));

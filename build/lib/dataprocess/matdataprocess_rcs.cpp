@@ -101,10 +101,10 @@ void MatDataProcess_rcs::getDataFromMat(std::string targetMatFile,int emIdx,bool
     matdata = (int*)mxGetData(pMxArray);
     int M = mxGetM(pMxArray);  //行数
     int N = mxGetN(pMxArray);  //列数
-    if(emIdx>(N-windowlen)/windowstep+1) emIdx=(N-windowlen)/windowstep;  
+    if(emIdx>(N-windowlen)/windowstep+1) emIdx=(N-windowlen)/windowstep+1;  
     std::vector<float> onesmp;//存当前样本
     for(int i=0;i<windowlen;i++){
-        onesmp.push_back(matdata[emIdx*windowstep+i]);
+        onesmp.push_back(matdata[(emIdx-1)*windowstep+i]);
     }
     if(dataProcess) oneNormalization(onesmp);
     int numberOfcopies=inputLen/windowlen; //复制次数=网络的输入长度/一个样本数据的长度

@@ -112,13 +112,13 @@ void MatDataProcess_image::getDataFromMat(std::string targetMatFile,int emIdx,bo
     int M = mxGetM(pMxArray);  //行数
     int N = mxGetN(pMxArray);  //列数
     int allDataNum=(N-windowlen)/windowstep+1;
-    emIdx = emIdx>allDataNum?allDataNum-1:emIdx;//说明是随机数
+    emIdx = emIdx>allDataNum?allDataNum:emIdx;//说明是随机数
 
     std::vector<float> onesmp;//存当前遍历的一个样本
     for(int i=0;i<windowlen;i++){
         std::vector<float> onecol;//存当前窗口的一列
         for(int j=0;j<M;j++){
-            onecol.push_back(matdata[(emIdx*windowlen+i)*M+j]);
+            onecol.push_back(matdata[((emIdx-1)*windowlen+i)*M+j]);
         }
         if(dataProcess) oneNormalization(onecol);
         onesmp.insert(onesmp.end(), onecol.begin(), onecol.end());
