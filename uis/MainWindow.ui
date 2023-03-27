@@ -33,7 +33,7 @@
        </sizepolicy>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="page_senseSet">
        <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -134,7 +134,7 @@
            <property name="geometry">
             <rect>
              <x>0</x>
-             <y>0</y>
+             <y>-78</y>
              <width>930</width>
              <height>1414</height>
             </rect>
@@ -1425,8 +1425,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>859</width>
-             <height>479</height>
+             <width>951</width>
+             <height>830</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_51">
@@ -1558,7 +1558,7 @@
                     </sizepolicy>
                    </property>
                    <property name="text">
-                    <string>模型类别：</string>
+                    <string>模型类别选择 ：</string>
                    </property>
                    <property name="alignment">
                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1566,24 +1566,7 @@
                   </widget>
                  </item>
                  <item>
-                  <widget class="QLabel" name="trainPage_modelTypeOfSelectedProject">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                   <property name="text">
-                    <string>活动工程未指定</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QLabel" name="label_152">
-                   <property name="text">
-                    <string/>
-                   </property>
-                  </widget>
+                  <widget class="QComboBox" name="trainpage_modelTypeBox"/>
                  </item>
                  <item>
                   <widget class="QLabel" name="label_153">
@@ -2440,8 +2423,8 @@
                            <rect>
                             <x>0</x>
                             <y>0</y>
-                            <width>55</width>
-                            <height>24</height>
+                            <width>406</width>
+                            <height>437</height>
                            </rect>
                           </property>
                           <layout class="QVBoxLayout" name="verticalLayout_72">
@@ -2604,7 +2587,7 @@
                <x>0</x>
                <y>0</y>
                <width>368</width>
-               <height>563</height>
+               <height>770</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -2793,7 +2776,7 @@
                <x>0</x>
                <y>0</y>
                <width>699</width>
-               <height>620</height>
+               <height>770</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -3180,8 +3163,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>353</width>
-             <height>307</height>
+             <width>951</width>
+             <height>801</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_57">
@@ -3417,8 +3400,8 @@
                        <rect>
                         <x>0</x>
                         <y>0</y>
-                        <width>143</width>
-                        <height>85</height>
+                        <width>442</width>
+                        <height>579</height>
                        </rect>
                       </property>
                       <layout class="QVBoxLayout" name="verticalLayout_2">

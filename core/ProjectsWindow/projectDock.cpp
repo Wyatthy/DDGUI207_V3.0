@@ -425,7 +425,7 @@ void ProjectDock::onAction_ShotProject(){
 
     //根据工程xml中的ProjectType键值更新projectsInfo->modelTypeOfSelectedProject
     std::string tempProjectTye = projectsInfo->getAttri(rightSelType,rightSelName,"Model_Type");
-    // if(tempProjectTye!="") projectsInfo->modelTypeOfSelectedProject = tempProjectTye;
+    if(tempProjectTye!="") projectsInfo->modelTypeOfSelectedProject = tempProjectTye;
 
 
     //根据project类型设置projectsInfo中的pathOfSelectedModel_forInfer和pathOfSelectedModel_forVis

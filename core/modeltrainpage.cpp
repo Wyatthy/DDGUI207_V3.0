@@ -23,6 +23,8 @@ ModelTrainPage::ModelTrainPage(Ui_MainWindow *main_ui, BashTerminal *bash_termin
     connect(ui->startTrainButton, &QPushButton::clicked, this, &ModelTrainPage::startTrain);
     connect(ui->stopTrainButton,  &QPushButton::clicked, this, &ModelTrainPage::stopTrain);
     connect(ui->editModelButton,  &QPushButton::clicked, this, &ModelTrainPage::editModelFile);
+    connect(ui->trainpage_modelTypeBox, &QComboBox::currentIndexChanged, this, &ModelTrainPage::changeTrainType);
+
 
     cliListWidget = new QListWidget;
     cliLineEdit = new QLineEdit;
@@ -30,6 +32,11 @@ ModelTrainPage::ModelTrainPage(Ui_MainWindow *main_ui, BashTerminal *bash_termin
 
 
 void ModelTrainPage::refreshGlobalInfo(){
+    ui->widget_cilRelate->setVisible(false);
+    ui->widget_windowRelate->setVisible(false);
+    ui->widget_abfcRelate->setVisible(false);
+    dataType = projectsInfo->dataTypeOfSelectedProject;
+    modelType = projectsInfo->modelTypeOfSelectedProject;
     dataDimension = QString::fromStdString(projectsInfo->getAttri(projectsInfo->dataTypeOfSelectedProject, projectsInfo->nameOfSelectedProject, "Dataset_SampleLength")).toInt();
     //Common parm
     ui->trainBatchEdit->setText("16");
@@ -54,25 +61,40 @@ void ModelTrainPage::refreshGlobalInfo(){
     if(projectPath != ""){
         this->choicedDatasetPATH = projectPath+"/train";
         ui->trainPage_dataPathOfSelectedProject->setText(projectPath.split('/').last()+"/train & val");
-        ui->trainPage_modelTypeOfSelectedProject->setText(QString::fromStdString(projectsInfo->modelTypeOfSelectedProject));
-
+        // ui->trainPage_modelTypeOfSelectedProject->setText(QString::fromStdString(projectsInfo->modelTypeOfSelectedProject));
     }
     else{
         ui->trainPage_dataPathOfSelectedProject->setText("活动工程未指定");
-        ui->trainPage_modelTypeOfSelectedProject->setText("活动工程未指定");
+        // ui->trainPage_modelTypeOfSelectedProject->setText("活动工程未指定");
         this->choicedDatasetPATH = "";
     }
-
-    changeTrainType();
+    
+    //根据工程的数据类型更新ModelTypeCombobox
+    ui->trainpage_modelTypeBox->clear();
+    if(projectsInfo->dataTypeOfSelectedProject == "HRRP"){
+        ui->trainpage_modelTypeBox->addItem("ATEC");
+        ui->trainpage_modelTypeBox->addItem("ABFC");
+        ui->trainpage_modelTypeBox->addItem("Baseline_CNN");
+        ui->trainpage_modelTypeBox->addItem("Baseline_DNN");
+        ui->trainpage_modelTypeBox->addItem("TRAD_Densenet");
+        ui->trainpage_modelTypeBox->addItem("TRAD_Resnet50");
+        ui->trainpage_modelTypeBox->addItem("TRAD_Resnet101");
+        ui->trainpage_modelTypeBox->addItem("TRAD_Mobilenet");
+        ui->trainpage_modelTypeBox->addItem("TRAD_Efficientnet");
+        ui->trainpage_modelTypeBox->addItem("CIL");
+    }else if(projectsInfo->dataTypeOfSelectedProject == "RCS" || projectsInfo->dataTypeOfSelectedProject == "IMAGE"){
+        ui->trainpage_modelTypeBox->addItem("TRAD_Densenet");
+        ui->trainpage_modelTypeBox->addItem("TRAD_Resnet50");
+        ui->trainpage_modelTypeBox->addItem("TRAD_Resnet101");
+        ui->trainpage_modelTypeBox->addItem("TRAD_Mobilenet");
+        ui->trainpage_modelTypeBox->addItem("TRAD_Efficientnet");
+    }else if(projectsInfo->dataTypeOfSelectedProject == "FEATURE"){
+        ui->trainpage_modelTypeBox->addItem("ABFC");
+    }
 }
 
 
 void ModelTrainPage::changeTrainType(){
-    ui->widget_cilRelate->setVisible(false);
-    ui->widget_windowRelate->setVisible(false);
-    ui->widget_abfcRelate->setVisible(false);
-    dataType = projectsInfo->dataTypeOfSelectedProject;
-    modelType = projectsInfo->modelTypeOfSelectedProject;
     QString pathOfTrainDataset = QString::fromStdString(projectsInfo->pathOfSelectedProject) + "/train";
     for(int i=0;i<10;i++){
         ui->tabWidget->removeTab(0);
@@ -103,20 +125,6 @@ void ModelTrainPage::changeTrainType(){
             pCheckBox->setText(categories[i]);
             cliListWidget->addItem(pItem);
             cliListWidget->setItemWidget(pItem, pCheckBox);
-            // QObject::connect(pCheckBox, &QCheckBox::stateChanged, [=] () {
-            //     QString selectedCategories="";
-            //     for (int i = 0; i < cliListWidget->count(); i++) {
-            //         QListWidgetItem *item = cliListWidget->item(i);
-            //         //将QWidget 转化为QCheckBox  获取第i个item 的控件
-            //         QCheckBox *checkbox = static_cast<QCheckBox *>(cliListWidget->itemWidget(item));
-            //         if(checkbox->isChecked()){
-            //             QString checkboxStr = checkbox->text();
-            //             selectedCategories = selectedCategories + checkboxStr + ";";
-            //         }
-            //     }
-            //     cliLineEdit->setText(selectedCategories);
-            //     // QMessageBox::information(nullptr, "Selection", "Selected categories: " + selectedCategories);
-            // });
         }
         if (ui->comboBoxasdf->model() != cliListWidget->model()){
             ui->comboBoxasdf->setModel(cliListWidget->model());

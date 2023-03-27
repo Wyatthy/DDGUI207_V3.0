@@ -361,8 +361,8 @@ void SenseSetPage::minMatNum(int &minNum)
 void SenseSetPage::recvShowPicSignal(QPixmap image, QGraphicsView *graphicsView){
     QGraphicsScene *qgraphicsScene = new QGraphicsScene; //要用QGraphicsView就必须要有QGraphicsScene搭配着用
     all_Images[graphicsView] = new ImageWidget(&image);  //实例化类ImageWidget的对象m_Image，该类继承自QGraphicsItem，是自定义类
-    int nwith = graphicsView->width()*1.2;              //获取界面控件Graphics View的宽度
-    int nheight = graphicsView->height()*1.2;           //获取界面控件Graphics View的高度
+    int nwith = graphicsView->width()*0.9;              //获取界面控件Graphics View的宽度
+    int nheight = graphicsView->height()*0.9;           //获取界面控件Graphics View的高度
     all_Images[graphicsView]->setQGraphicsViewWH(nwith, nheight);//将界面控件Graphics View的width和height传进类m_Image中
     qgraphicsScene->addItem(all_Images[graphicsView]);           //将QGraphicsItem类对象放进QGraphicsScene中
     graphicsView->setSceneRect(QRectF(-(nwith/2), -(nheight/2),nwith,nheight));//使视窗的大小固定在原始大小，不会随图片的放大而放大（默认状态下图片放大的时候视窗两边会自动出现滚动条，并且视窗内的视野会变大），防止图片放大后重新缩小的时候视窗太大而不方便观察图片
