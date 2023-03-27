@@ -1,4 +1,4 @@
-import os
+import os,sys
 import re
 import numpy as np
 import scipy.io as sio
@@ -242,6 +242,7 @@ def inference(train_x, train_y, val_x, val_y, batch_size, max_epochs, folder_nam
     classification_report_txt.write(classification_report(Y_test, Y_pred, digits=4))
     classification_report_txt.close()
     print(classification_report(Y_test, Y_pred, digits=4))
+    sys.stdout.flush()
 
 def convert_h5to_pb(h5Path, pbPath):
     model = tf.keras.models.load_model(h5Path, compile=False)
@@ -311,8 +312,10 @@ def generator_model_documents(args):
     model_type.appendChild(model_item)
 
     model_infos = {
+        'Model_DataType':"HRRP",
         'Model_Name':str(model_naming),
         'Model_Algorithm':'ATEC',
+        'Model_AlgorithmType':'特征关联模型',   
         'Model_AccuracyOnTrain':'-',
         'Model_AccuracyOnVal':str(args.valAcc),
         'Model_Framework':'Keras',
@@ -322,7 +325,8 @@ def generator_model_documents(args):
         'Model_NumClassCategories':str(args.class_number), 
         'Model_Path':os.path.abspath(os.path.join(project_path,model_naming+'.trt')),
         'Model_TrainBatchSize':str(args.batch_size),
-        'Model_Note':'-'
+        'Model_Note':'-',
+        'Model_Type':"ATEC"
     } 
 
     for key in model_infos.keys():
@@ -331,7 +335,7 @@ def generator_model_documents(args):
         info_item.appendChild(info_text)
         model_item.appendChild(info_item)
 
-    with open(os.path.join(project_path,'model.xml'),'w',encoding='utf-8') as f:
+    with open(os.path.join(project_path,model_naming+'.xml'),'w',encoding='utf-8') as f:
         doc.writexml(f,indent = '\t',newl = '\n', addindent = '\t',encoding='utf-8')
 
 
@@ -429,3 +433,4 @@ if __name__ == '__main__':
     generator_model_documents(args)
     # convert_hdf5_to_trt(model_name, project_path, model_naming, '1')
     print("Train Ended:")
+    sys.stdout.flush()

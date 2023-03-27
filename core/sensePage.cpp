@@ -20,7 +20,7 @@ SenseSetPage::SenseSetPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, 
     BtnGroup_typeChoice->addButton(ui->radioButton_train_choice, 0);
     BtnGroup_typeChoice->addButton(ui->radioButton_test_choice, 1);
     BtnGroup_typeChoice->addButton(ui->radioButton_val_choice, 2);
-    BtnGroup_typeChoice->addButton(ui->radioButton_unknow_choice, 3);
+    BtnGroup_typeChoice->addButton(ui->radioButton_unknown_choice, 3);
 
     // connect(this->BtnGroup_typeChoice, &QButtonGroup::buttonClicked, this, &SenseSetPage::changeType);
 
@@ -44,7 +44,7 @@ SenseSetPage::SenseSetPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, 
     this->attriLabelGroup["datasetClassName"] = ui->label_sense_classNames;
 
     // 模型属性显示
-    this->attriLabelGroup["ModelType"] = ui->label_sense_modelType;
+    this->attriLabelGroup["Model_DataType"] = ui->label_sense_modelType;
     this->attriLabelGroup["Model_Algorithm"] = ui->label_sense_modelAlgorithm;
     this->attriLabelGroup["Model_AlgorithmType"] = ui->label_sense_algorithmType;
     this->attriLabelGroup["Model_Framework"] = ui->label_sense_framework;
@@ -154,7 +154,9 @@ void SenseSetPage::confirmDataset(bool notDialog = false){
         QMessageBox::warning(NULL, "数据集切换提醒", "数据集切换失败，活动工程或数据集未指定");
         return;
     }
-    QString dataset_path = project_path + "/" + selectedType;
+    QString dataset_path;
+    if(selectedType == "unknown") dataset_path = project_path + "/" + selectedType + "_test";
+    else dataset_path = project_path + "/" + selectedType;
     qDebug() << "dataset_path: " << dataset_path;
     bool ifDbExists = std::filesystem::exists(std::filesystem::u8path(dataset_path.toStdString()));
     if(!ifDbExists){
@@ -164,7 +166,7 @@ void SenseSetPage::confirmDataset(bool notDialog = false){
     terminal->print("Selected Type: " + selectedType);
 
     projectsInfo->typeOfSelectedDataset = selectedType;
-    projectsInfo->pathOfSelectedDataset = project_path.toStdString() + "/" + selectedType.toStdString();
+    projectsInfo->pathOfSelectedDataset = dataset_path.toStdString();
     projectsInfo->nameOfSelectedDataset = project_path.split('/').last().toStdString() + "/" + selectedType.toStdString();
 
 
@@ -215,7 +217,7 @@ void SenseSetPage::confirmDataset(bool notDialog = false){
     drawClassImage();
     // 绘制曲线
     for(int i=0;i<folders.size();i++){
-        if(!chartGroup[i]->layout()) delete chartGroup[i]->layout();
+        if(chartGroup[i]->layout()) delete chartGroup[i]->layout();
         chartGroup[i]->clear();
     }
     nextBatchChart();
@@ -285,10 +287,10 @@ void SenseSetPage::nextBatchChart(){
             MATFile* pMatFile = NULL;
             mxArray* pMxArray = NULL;
             pMatFile = matOpen(matFilePath.toStdString().c_str(), "r");
-            if(!pMatFile){qDebug()<<"(ModelEvalPage::randSample)文件指针空！！！！！！";return;}
+            if(!pMatFile){qDebug()<<"(ModelEvalPage::randSample)文件指针空!!!!";return;}
             pMxArray = matGetNextVariable(pMatFile, NULL);
             if(!pMxArray){
-                qDebug()<<"(Chart::readHRRPmat)pMxArray变量没找到！！！！！！";
+                qDebug()<<"(Chart::readHRRPmat)pMxArray变量没找到!!!!";
                 return;
             }
             int N = mxGetN(pMxArray);  //N 列数
@@ -304,7 +306,6 @@ void SenseSetPage::nextBatchChart(){
                 QMessageBox::information(NULL, "错误", "索引超出范围");
                 return;
             }
-
         }
     }
 }

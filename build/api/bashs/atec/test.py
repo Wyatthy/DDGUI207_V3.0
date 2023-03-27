@@ -190,9 +190,9 @@ def show_confusion_matrix(work_dir, classes, confusion_matrix):
 # 数据集测试
 def test_trained_model(x_test, y_test, folder_name, work_dir):
     x_test = np.expand_dims(x_test, axis=-1)
-    net_fea_save_model = tf.keras.models.load_model(work_dir + '/net_fea.hdf5')
-    fit_save_model = tf.keras.models.load_model(work_dir + '/fit_model.hdf5')
-    classification_model = tf.keras.models.load_model(work_dir + '/fea_ada_trans.hdf5')
+    net_fea_save_model = tf.keras.models.load_model(work_dir + '/HRRP_ATEC_net_fea.hdf5')
+    fit_save_model = tf.keras.models.load_model(work_dir + '/HRRP_ATEC_fit_model.hdf5')
+    classification_model = tf.keras.models.load_model(work_dir + '/HRRP_ATEC_fea_ada_trans.hdf5')
 
     functor = keras.models.Model(inputs=net_fea_save_model.input, outputs=net_fea_save_model.layers[-2].output)
     test_net_fea = functor(x_test)
@@ -216,9 +216,9 @@ def test_trained_model(x_test, y_test, folder_name, work_dir):
 # 单样本测试
 def one_test_trained_model(one_test_data, folder_name, work_dir):
     one_test_data = one_test_data[np.newaxis, :, np.newaxis]
-    net_fea_save_model = tf.keras.models.load_model(work_dir + '/net_fea.hdf5')
-    fit_save_model = tf.keras.models.load_model(work_dir + '/fit_model.hdf5')
-    classification_model = tf.keras.models.load_model(work_dir + '/fea_ada_trans.hdf5')
+    net_fea_save_model = tf.keras.models.load_model(work_dir + '/HRRP_ATEC_net_fea.hdf5')
+    fit_save_model = tf.keras.models.load_model(work_dir + '/HRRP_ATEC_fit_model.hdf5')
+    classification_model = tf.keras.models.load_model(work_dir + '/HRRP_ATEC_fea_ada_trans.hdf5')
 
     functor = keras.models.Model(inputs=net_fea_save_model.input, outputs=net_fea_save_model.layers[-2].output)
     test_net_fea = functor(one_test_data)

@@ -150,6 +150,7 @@ void ModelEvalPage::takeSample(){
         // ui->label_mE_choicedSample->setText("Index:"+QString::number(randomIdx));
         ui->label_mE_imgGT->setPixmap(QPixmap(imgPath).scaled(QSize(100,100), Qt::KeepAspectRatio));
         //绘图
+        ui->label_mE_chartGT->clear();
         previewChart = new Chart(ui->label_mE_chartGT,QString::fromStdString(projectsInfo->dataTypeOfSelectedProject),matFilePath);
         previewChart->drawImage(ui->label_mE_chartGT,examIdx);
     }
@@ -183,12 +184,19 @@ void removeLayout(QLayout *layout){
 
 void  ModelEvalPage::testOneSample(){
     struct stat buffer; 
-    bool modelfileExist = std::filesystem::exists(std::filesystem::u8path(this->choicedModelPATH));
-    if(choicedModelPATH=="" || choicedSamplePATH=="" || !modelfileExist){
-        QMessageBox::warning(NULL, "单样本测试", "数据或模型未指定！(检查模型路径是否存在)");
-    }
     std::string modelType = projectsInfo->modelTypeOfSelectedProject;
     std::string dataType = projectsInfo->dataTypeOfSelectedProject;
+    bool modelfileExist = std::filesystem::exists(std::filesystem::u8path(this->choicedModelPATH));
+    if(modelType == "ATEC"){
+        if(choicedSamplePATH==""){
+            QMessageBox::warning(NULL, "单样本测试", "数据未指定！");
+            return;
+        }
+    }else if(choicedModelPATH=="" || choicedSamplePATH=="" || !modelfileExist){
+        QMessageBox::warning(NULL, "单样本测试", "数据或模型未指定！(检查模型路径是否存在)");  
+        return; 
+    }
+
     QString projectPath = QString::fromStdString(projectsInfo->pathOfSelectedProject);
     QString windowsLength = "";
     QString windowsStep = "";
@@ -340,13 +348,13 @@ void  ModelEvalPage::testOneSample(){
 }
 
 void ModelEvalPage::testAllSample(){
-    if(choicedDatasetPATH.empty() || choicedModelPATH.empty() ){
+    std::string modelType = projectsInfo->modelTypeOfSelectedProject;
+    std::string dataType = projectsInfo->dataTypeOfSelectedProject;
+    if(choicedDatasetPATH.empty() || (choicedModelPATH.empty() && modelType != "ATEC")){
         QMessageBox::warning(NULL, "所有样本测试", "数据集或模型未指定！");
         return;
     }
 
-    std::string modelType = projectsInfo->modelTypeOfSelectedProject;
-    std::string dataType = projectsInfo->dataTypeOfSelectedProject;
     QString projectPath = QString::fromStdString(projectsInfo->pathOfSelectedProject);
     QString windowsLength = "";
     QString windowsStep = "";
@@ -630,9 +638,9 @@ void ModelEvalPage::processDatasetInferFinished(){
             QMessageBox::information(NULL, "所有样本测试", "识别成果，结果已输出！");
 
             // 加载图像
-            QString cMatrixPath = QString::fromStdString(choicedModelPATH);
-            cMatrixPath = cMatrixPath.left(cMatrixPath.lastIndexOf('/'));
-            QString imgPath = cMatrixPath + QString::fromStdString("/confusion_matrix_datasetinfer.jpg");
+            // QString cMatrixPath = QString::fromStdString(choicedModelPATH);
+            // cMatrixPath = cMatrixPath.left(cMatrixPath.lastIndexOf('/'));
+            QString imgPath = QString::fromStdString(projectsInfo->pathOfSelectedProject + "/confusion_matrix_datasetinfer.jpg");
             if(all_Images[ui->graphicsView_3_evalpageMatrix]){ //delete 原来的图
                 qgraphicsScene->removeItem(all_Images[ui->graphicsView_3_evalpageMatrix]);
                 delete all_Images[ui->graphicsView_3_evalpageMatrix]; //空悬指针
@@ -644,7 +652,13 @@ void ModelEvalPage::processDatasetInferFinished(){
 
             qDebug()<<"(ModelEvalPage::processDatasetInferFinished) Logs:"<<logs;
         }
-        if(logs.contains("Error") || logs.contains("Errno")){
+        if(logs.contains("SavedModel file does not exist")){
+            qDebug()<<"(ModelEvalPage::processDatasetInferFinished) ATEC相关模型缺失";
+            terminal->print("ATEC相关模型缺失");
+            QMessageBox::warning(NULL,"错误","ATEC相关模型缺失!");
+            qDebug()<<"(ModelEvalPage::processDatasetInferFinished) Logs:"<<logs; 
+        }
+        else if(logs.contains("Error") || logs.contains("Errno")){
             qDebug()<<"(ModelEvalPage::processDatasetInferFinished) 模型推理失败";
             terminal->print("模型推理失败");
             QMessageBox::warning(NULL,"错误","something wrong!");

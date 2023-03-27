@@ -228,7 +228,7 @@ def one_test_trained_model(one_test_data, folder_name, work_dir, one_test_num):
         feature_rank.append(int(attention_weights_rank[i]))
     if data_type == 'HRRP':
         one_test_norm = data_norm_hrrp(one_test_data)
-    if data_type == 'feature':
+    if data_type == 'FEATURE':
         one_test_norm = data_normalization(one_test_data)
     one_test_rank = one_test_norm[:, feature_rank]
     model_num = int(attention_params[1]) + (int(attention_params[0]) - 1) * int(attention_params[2])

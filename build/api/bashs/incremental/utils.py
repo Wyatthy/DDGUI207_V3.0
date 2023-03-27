@@ -376,8 +376,10 @@ def generator_model_documents(args):
     model_type.appendChild(model_item)
 
     model_infos = {
+        'Model_DataType':"HRRP",
         'Model_Name':projectName,
         'Model_Algorithm':'CIL',
+        'Model_AlgorithmType':'小样本增量学习模型',   
         'Model_AccuracyOnTrain':'-',
         'Model_AccuracyOnVal':'-',
         'Model_Framework':'Pytorch',
@@ -390,8 +392,8 @@ def generator_model_documents(args):
         'Model_TrainBatchSize':str(args.batch_size),
         'Model_NamesOfOldClass':args.old_class_names,
         'Model_ClassNames':args.train_classname,
-        'Model_Note':'-'
-
+        'Model_Note':'-',
+        'Model_Type':"CIL"
     } 
 
     for key in model_infos.keys():
@@ -400,7 +402,7 @@ def generator_model_documents(args):
         info_item.appendChild(info_text)
         model_item.appendChild(info_item)
 
-    with open(os.path.join(args.work_dir, 'model.xml'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(args.work_dir, projectName + '.xml'), 'w', encoding='utf-8') as f:
         doc.writexml(f, indent='\t', newl='\n', addindent='\t', encoding='utf-8')
 
     # shutil.copy(args.work_dir+"/"+args.model_name+".trt", os.path.join(args.modeldir, args.model_name+'.trt'))

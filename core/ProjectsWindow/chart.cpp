@@ -8,13 +8,15 @@
 #include <QBarSet>
 #include <QBarCategoryAxis>
 #include <mat.h>
+#include <opencv2/opencv.hpp>
+
 
 Chart::Chart(QWidget* parent, QString dataSetType_, QString _filefullpath){
     setParent(parent);
     dataSetType = dataSetType_;
     if(dataSetType=="HRRP") {chartTitle="HRRP(Ephi),Polarization HP(1)[Magnitude in dB]";}
-    else if (dataSetType=="RADIO") {chartTitle="RADIO Temporary Title";}
-    else if (dataSetType=="RCS") {chartTitle="RCS Temporary Title";}
+    else if (dataSetType=="FEATURE") {chartTitle="FEATURE";}
+    else if (dataSetType=="RCS") {chartTitle="RCS";}
     else {chartTitle="Temporary Title";}
     filefullpath = _filefullpath;
     series = new QSplineSeries(this);
@@ -45,41 +47,118 @@ Chart::~Chart(){
 //    download_btn=NULL;
 }
 
-void Chart::drawHRRPimage(QLabel* chartLabel){
-    readHRRPtxt();
-    setAxis("Range/cm",xmin,xmax,10, "dB(V/m)",ymin,ymax,10);
-    buildChart(points);
-    showChart(chartLabel);
+// 将OpenCV的cv::Mat转换为Qt的QImage
+QImage matToQImage(const cv::Mat& mat)
+{
+    if (mat.type() == CV_8UC1) {
+        // 灰度图像
+        // return QImage(mat.data, mat.cols, mat.rows, static_cast<int>(mat.step), QImage::Format_Grayscale8);
+        cv::Mat mat8bit;
+        cv::normalize(mat, mat8bit, 0, 255, cv::NORM_MINMAX, CV_8UC1);
+        return QImage(mat8bit.data, mat8bit.cols, mat8bit.rows, static_cast<int>(mat8bit.step), QImage::Format_Grayscale8);
+    } else if (mat.type() == CV_8UC3) {
+        // RGB彩色图像
+        cv::Mat rgbMat;
+        cv::cvtColor(mat, rgbMat, cv::COLOR_BGR2RGB);
+        return QImage(rgbMat.data, rgbMat.cols, rgbMat.rows, static_cast<int>(rgbMat.step), QImage::Format_RGB888);
+
+    } else {
+        qWarning() << "Unsupported mat type: " << mat.type();
+        return QImage();
+    }
 }
 
+void Chart::drawHRRPimage(QLabel* chartLabel, int emIdx){    
+    int windowlen = 16;
+    int windowstep = 1;
+    MATFile* pMatFile = NULL;
+    mxArray* pMxArray = NULL;
+    // 读取.mat文件（例：mat文件名为"initUrban.mat"，其中包含"initA"）
+    double* matdata;
+    pMatFile = matOpen(filefullpath.toStdString().c_str(), "r");
+    if(!pMatFile){
+        qDebug()<<"(MatDataProcess_image:getDataFromMat)文件指针空！！！！！！";
+        return;
+    }
+    pMxArray = matGetNextVariable(pMatFile, NULL);
+    if(!pMxArray){
+        qDebug()<<"(MatDataProcess:getAllDataFromMat).mat文件变量没找到!!!("<<filefullpath;
+        return;
+    }
+    matdata = (double*)mxGetData(pMxArray);
+    int M = mxGetM(pMxArray);  //行数
+    int N = mxGetN(pMxArray);  //列数
+    int allDataNum=(N-windowlen)/windowstep+1;
+    emIdx = emIdx>allDataNum?allDataNum-1:emIdx;//说明是随机数
+
+    cv::Mat mat(windowlen, M, CV_64FC1);
+
+    for(int i=0;i<windowlen;i++){
+        for(int j=0;j<M;j++){
+            mat.at<double>(i, j) = matdata[(emIdx*windowstep+i)*M+j];
+        }
+    }
+    cv::Mat mat8bit;
+    cv::normalize(mat, mat8bit, 0, 255, cv::NORM_MINMAX, CV_8UC1);
+    // 调用applyColorMap函数将灰度图转换为热图
+    cv::Mat heatmap;
+    cv::applyColorMap(mat8bit, heatmap, cv::COLORMAP_JET);
+    QImage qImage = matToQImage(heatmap);
+    // 将图像缩放以适合QLabel大小
+    QPixmap pixmap = QPixmap::fromImage(qImage).scaled(chartLabel->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation);
+    // 在QLabel中显示QPixmap
+    chartLabel->setPixmap(pixmap);
+    // QLabel *label = new QLabel(chartLabel);
+    // label->setPixmap(pixmap);
+    
+    // QHBoxLayout *pHLayout = (QHBoxLayout *)chartLabel->layout();
+    // if(!chartLabel->layout()){
+    //     pHLayout = new QHBoxLayout(chartLabel);
+    // }
+    // else{
+    //     QLayoutItem *child;
+    //     while ((child = pHLayout->takeAt(0)) != 0){
+    //         if(child->widget()){
+    //             child->widget()->setParent(NULL);
+    //         }
+    //         delete child;
+    //      }
+    // }
+    // pHLayout->addWidget(label);
+}
 
 void Chart::drawImage(QLabel* chartLabel, int examIdx){
-
-    QString dataFileFormat=filefullpath.split(".").last();
-
-    if(dataFileFormat==QString::fromStdString("txt")&&dataSetType=="HRRP"){
-        readHRRPtxt();
-        setAxis("Range/cm",xmin,xmax,10, "dB(V/m)",ymin,ymax,10);  
-    }else if (dataFileFormat==QString::fromStdString("mat")&&dataSetType=="HRRP"){
-        //qDebug()<<"(Chart::drawHRRPimage)"<<filefullpath;
+    std::string dataFileFormat=filefullpath.split(".").last().toStdString();
+    if(dataSetType=="IMAGE"){
+        drawHRRPimage(chartLabel,examIdx);
+        return;
+    }
+    //把目标样本点添加到points中
+    if (dataFileFormat=="mat"&& dataSetType=="HRRP"){
         readHRRPmat(examIdx);
         setAxis("Time/mm",xmin,xmax,10, "dB(V/m)",ymin,ymax,10);
-    }else if(dataFileFormat==QString::fromStdString("mat")&&dataSetType=="RADIO"){
-        readRadiomat(examIdx);
-        setAxis("Time/mm",xmin,xmax,10, "dB(V/m)",ymin,ymax,10);
-    }else if(dataFileFormat==QString::fromStdString("mat")&&dataSetType=="FEATURE"){
+    }else if(dataFileFormat=="mat"&& dataSetType=="FEATURE"){
         readFeaturemat(examIdx);
-        setAxis("Time/mm",xmin,xmax,10, "dB(V/m)",ymin,ymax,10);
-    }else if(dataFileFormat==QString::fromStdString("mat")&&dataSetType=="RCS"){
+        setAxis("特征索引",xmin,xmax,10, "特征值",ymin,ymax,10);
+        qDebug()<<"read feature matle";
+    }else if(dataFileFormat=="mat"&& dataSetType=="RCS"){
         readRCSmat(examIdx);
         setAxis("Time/mm",xmin,xmax,10, "dB(V/m)",ymin,ymax,10);
+    }else return;
+    
+    //根据数据类型绘制points
+    if(dataSetType=="FEATURE"){
+        buildChartAsScatter(points);
+        showChart(chartLabel);
+    }
+    else{
+        buildChart(points);
+        showChart(chartLabel);
     }
 
-
-    buildChart(points);
-    showChart(chartLabel);
 }
 
+//绘制已有的数组，在monitorPage回显数据时被调用
 void Chart::drawImageWithSingleSignal(QLabel* chartLabel, QVector<float>& dataFrameQ){
     if(dataSetType=="HRRP"){
         points.clear();
@@ -88,36 +167,21 @@ void Chart::drawImageWithSingleSignal(QLabel* chartLabel, QVector<float>& dataFr
             float y=dataFrameQ[i];
             y_min = fmin(y_min,y);
             y_max = fmax(y_max,y);
-            points.append(QPointF(2*i,y));
+            points.append(QPointF(i,y));
         }
-        xmin = 0; xmax = dataFrameQ.size()*2+4;
+        xmin = 0; xmax = dataFrameQ.size()+4;
         ymin = y_min-3; ymax = y_max+3;
         setAxis("Range/cm",xmin,xmax,10, "dB(V/m)",ymin,ymax,10);  
-    }
-    else if(dataSetType=="RCS" || dataSetType=="IMAGE"){
-        int windowLen=128;  //窗口长度传过来太麻烦了 默认128
-        points.clear();
-        float y_min = 200000,y_max = -200000;
-        for(int i=0;i<windowLen;i++){
-            float y=dataFrameQ[i];
-            y_min = fmin(y_min,y);
-            y_max = fmax(y_max,y);
-            points.append(QPointF(2*i,y));
-        }
-        xmin = 0; xmax = windowLen*2+4;
-        ymin = y_min-3; ymax = y_max+3;
-        setAxis("Time/mm",xmin,xmax,10, "dB(V/m)",ymin,ymax,10);
-    }
-    else if(dataSetType=="FEATURE"){
+    }else if(dataSetType=="FEATURE"){
         points.clear();
         float y_min = 200000,y_max = -200000;
         for(int i=0;i<dataFrameQ.size();i++){
             float y=dataFrameQ[i];
             y_min = fmin(y_min,y);
             y_max = fmax(y_max,y);
-            points.append(QPointF(2*i,y));
+            points.append(QPointF(i,y));
         }
-        xmin = 0; xmax = dataFrameQ.size()*2+4;
+        xmin = 0; xmax = dataFrameQ.size()+4;
         ymin = y_min-3; ymax = y_max+3;
         setAxis("Time/mm",xmin,xmax,10, "dB(V/m)",ymin,ymax,10);
     }
@@ -130,10 +194,10 @@ void Chart::drawImageWithSingleSignal(QLabel* chartLabel, QVector<float>& dataFr
             y_max = fmax(y_max, y);
             points.append(QPointF(i, y));
         }
-        xmin = 0;
-        xmax = dataFrameQ.size() + 4;
-        ymin = y_min - 0.2;
-        ymax = y_max + 0.2;
+        xmin = -1;
+        xmax = dataFrameQ.size() + 1;
+        ymin = y_min - 1;
+        ymax = y_max + 1;
         setAxis("Sample Index", xmin, xmax, 10, "Degree of sample", ymin, ymax, (ymax - ymin) / 10);
     }
     buildChart(points);
@@ -167,7 +231,6 @@ void Chart::drawImageWithMultipleVector(QLabel* chartLabel, QVector<QVector<floa
     showChart(chartLabel);
 }
 
-
 void Chart::readRadiomat(int emIdx){
     points.clear();
     float y_min = 200000,y_max = -200000;
@@ -196,10 +259,10 @@ void Chart::readRadiomat(int emIdx){
         float y=matdata[M*emIdx+i];
         y_min = fmin(y_min,y);
         y_max = fmax(y_max,y);
-        points.append(QPointF(2*i,y));
+        points.append(QPointF(i,y));
     }
     //qDebug()<<"(Chart::readHRRPmat)M:"<<M<<"      N:"<<N;
-    xmin = 0; xmax = M*2+4;
+    xmin = 0; xmax = M+4;
     ymin = y_min-3; ymax = y_max+3;
     //qDebug()<<"(Chart::readHRRPmat)ymin:"<<ymin<<"      ymax:"<<ymax;
 //    mxFree(pMxArray);
@@ -211,7 +274,6 @@ void Chart::readHRRPmat(int emIdx){
     float y_min = 200000,y_max = -200000;
     MATFile* pMatFile = NULL;
     mxArray* pMxArray = NULL;
-
     double* matdata;
     pMatFile = matOpen(filefullpath.toStdString().c_str(), "r");
     if(!pMatFile){
@@ -220,7 +282,7 @@ void Chart::readHRRPmat(int emIdx){
     }
     pMxArray = matGetNextVariable(pMatFile, NULL);
     if(!pMxArray){
-        qDebug()<<"(Chart::readHRRPmat)pMxArray变量没找到！！！！！！";
+        qDebug()<<"(Chart::readHRRPmat)pMxArray变量没找到!!!!!";
         return;
     }
     matdata = (double*)mxGetData(pMxArray);
@@ -231,14 +293,10 @@ void Chart::readHRRPmat(int emIdx){
         float y=matdata[M*emIdx+i];
         y_min = fmin(y_min,y);
         y_max = fmax(y_max,y);
-        points.append(QPointF(2*i,y));
+        points.append(QPointF(i,y));
     }
-    //qDebug()<<"(Chart::readHRRPmat)M:"<<M<<"      N:"<<N;
-    xmin = 0; xmax = M*2+4;
+    xmin = -1; xmax = M+1;
     ymin = y_min-3; ymax = y_max+3;
-    //qDebug()<<"(Chart::readHRRPmat)ymin:"<<ymin<<"      ymax:"<<ymax;
-//    mxFree(pMxArray);
-//    matClose(pMatFile);
 }
 
 void Chart::readFeaturemat(int emIdx){
@@ -250,12 +308,12 @@ void Chart::readFeaturemat(int emIdx){
     double* matdata;
     pMatFile = matOpen(filefullpath.toStdString().c_str(), "r");
     if(!pMatFile){
-        qDebug()<<"(Chart::readFeaturemat)文件指针空！！！！！！";
+        qDebug()<<"(Chart::readFeaturemat)文件指针空!!!";
         return;
     }
     pMxArray = matGetNextVariable(pMatFile, NULL);
     if(!pMxArray){
-        qDebug()<<"(Chart::readFeaturemat)pMxArray变量没找到！！！！！！";
+        qDebug()<<"(Chart::readFeaturemat)pMxArray变量没找到!!!";
         return;
     }
     matdata = (double*)mxGetData(pMxArray);
@@ -266,16 +324,17 @@ void Chart::readFeaturemat(int emIdx){
         float y=matdata[M*emIdx+i];
         y_min = fmin(y_min,y);
         y_max = fmax(y_max,y);
-        points.append(QPointF(2*i,y));
+        points.append(QPointF(i,y));
     }
 
-    xmin = 0; xmax = M*1+4;
+    xmin = -1; xmax = M+1;
     ymin = y_min-3; ymax = y_max+3;
 
 }
 
 void Chart::readRCSmat(int emIdx){
-    int windowLen=128;  //窗口长度传过来太麻烦了 默认128
+    int windowlen=128;  //窗口长度传过来太麻烦了 默认128
+    int windowstep = 1;
     points.clear();
     float y_min = 200000,y_max = -200000;
     MATFile* pMatFile = NULL;
@@ -289,25 +348,22 @@ void Chart::readRCSmat(int emIdx){
     }
     pMxArray = matGetNextVariable(pMatFile, NULL);
     if(!pMxArray){
-        qDebug()<<"(Chart::readHRRPmat)pMxArray变量没找到！！！！！！";
+        qDebug()<<"(Chart::readHRRPmat)pMxArray变量没找到!!!";
         return;
     }
     matdata = (int*)mxGetData(pMxArray);
-    int M = mxGetM(pMxArray);  //M=128 行数
-    int N = mxGetN(pMxArray);  //N=1000 列数
-    if(emIdx>N-windowLen) emIdx=N-1;  
-    for(int i=0;i<windowLen;i++){
-        float y=matdata[emIdx+i];
+    int M = mxGetM(pMxArray);  // 行数
+    int N = mxGetN(pMxArray);  // 列数
+    if(emIdx>(N-windowlen)/windowstep+1) emIdx=(N-windowlen)/windowstep;  
+    for(int i=0;i<windowlen;i++){
+        float y = matdata[emIdx*windowstep+i];
         y_min = fmin(y_min,y);
         y_max = fmax(y_max,y);
-        points.append(QPointF(2*i,y));
+        points.append(QPointF(i,y));
     }
-    //qDebug()<<"(Chart::readHRRPmat)M:"<<M<<"      N:"<<N;
-    xmin = 0; xmax = windowLen*2+4;
+    xmin = -1; xmax = windowlen + 1;
     ymin = y_min-3; ymax = y_max+3;
-    //qDebug()<<"(Chart::readHRRPmat)ymin:"<<ymin<<"      ymax:"<<ymax;
-//    mxFree(pMxArray);
-//    matClose(pMatFile);//不注释这两个善后代码就会crashed，可能是冲突了
+
 }
 
 void Chart::readHRRPtxt(){
@@ -320,10 +376,6 @@ void Chart::readHRRPtxt(){
     if(file.open(QIODevice::ReadOnly)){
         QByteArray line = file.readLine();
         QString str(line);
-//        QStringList strList = str.split(" ");
-//        if(!(strList.filter("Range").length()&&strList.filter("HRRP").length()))
-//            return;
-        // file.readLine();
         points.clear();
         while(!file.atEnd()){
             QByteArray line = file.readLine();
@@ -347,7 +399,8 @@ void Chart::readHRRPtxt(){
         qDebug() << "txt files open filed! ";
     }
 }
-//下面这个函数本来想调用于trtInfer::realTimeInfer里，画图用，但是没成功，画不出来
+
+//调用于trtInfer::realTimeInfer
 QWidget* Chart::drawDisDegreeChart(QString &classGT, std::vector<float> &degrees, std::map<int, std::string> &classNames){
     QChart *chart = new QChart;
     //qDebug() << "(ModelEvalPage::disDegreeChart)子线程id：" << QThread::currentThreadId();
@@ -355,7 +408,6 @@ QWidget* Chart::drawDisDegreeChart(QString &classGT, std::vector<float> &degrees
     mapnum.insert(std::pair<QString, std::vector<float>>(classGT, degrees));  //后续可拓展
     QBarSeries *series = new QBarSeries();
     std::map<QString, std::vector<float>>::iterator it = mapnum.begin();
-    //std::cout<<"(ModelEvalPage::disDegreeChart): H22222222222"<<std::endl;
     //将数据读入
     while (it != mapnum.end()){
         QString tit = it->first;
@@ -415,8 +467,7 @@ void Chart::setAxis(QString _xname, qreal _xmin, qreal _xmax, int _xtickc, \
 }
 
 
-void Chart::buildChart(QList<QPointF> pointlist)
-{
+void Chart::buildChart(QList<QPointF> pointlist){
     //创建数据源
     series->setPen(QPen(Qt::blue,0.5,Qt::SolidLine));
     series->clear();
@@ -433,8 +484,26 @@ void Chart::buildChart(QList<QPointF> pointlist)
     qchart->setAxisY(axisY, series);
 }
 
-void Chart::buildChartWithNiceColor(QList<QPointF> pointlistF1, QList<QPointF> pointlistF2)
-{
+void Chart::buildChartAsScatter(QList<QPointF> pointlist){
+    //创建数据源
+    scatterSeries = new QScatterSeries(this);
+    scatterSeries->setPen(QPen(Qt::blue,0.1));
+
+    scatterSeries->clear();
+    points.clear();
+    for(int i=0; i<pointlist.size();i++){
+        scatterSeries->append(pointlist.at(i).x(), pointlist.at(i).y());
+        points.append(QPointF(pointlist.at(i).x(), pointlist.at(i).y()));
+    }
+
+    qchart->setAnimationOptions(QChart::SeriesAnimations);//设置曲线动画模式
+    qchart->legend()->hide(); //隐藏图例
+    qchart->addSeries(scatterSeries);//输入数据
+    qchart->setAxisX(axisX, series);
+    qchart->setAxisY(axisY, series);
+}
+
+void Chart::buildChartWithNiceColor(QList<QPointF> pointlistF1, QList<QPointF> pointlistF2){
     //创建数据源
     series_mapfea = new QSplineSeries(this);
     series_tradfea = new QSplineSeries(this);
@@ -547,7 +616,19 @@ void Chart::Show_Save(){
     newchart->setContentsMargins(0, 0, 0, 0);  //设置外边界全部为0
     newchart->setMargins(QMargins(0, 0, 0, 0));
     // newchart->setAnimationOptions(QChart::SeriesAnimations);//设置曲线动画模式
-    if(!multipleSeries){
+    if(dataSetType=="FEATURE"){
+        QScatterSeries *newseries = new QScatterSeries();
+        newseries->setPen(QPen(Qt::blue,1));
+        newseries->clear();
+        for(int i=0; i<points.size();i++)
+            newseries->append(points.at(i).x(), points.at(i).y());
+        newchart->setTitle(chartTitle);
+        newchart->legend()->hide(); //隐藏图例
+        newchart->addSeries(newseries);//输入数据
+        newchart->setAxisX(newaxisX, newseries);
+        newchart->setAxisY(newaxisY, newseries);
+    }
+    else if(!multipleSeries){
         QSplineSeries *newseries = new QSplineSeries();
         newseries->setPen(QPen(Qt::blue,1,Qt::SolidLine));
         newseries->clear();

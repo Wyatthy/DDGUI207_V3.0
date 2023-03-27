@@ -332,8 +332,10 @@ def generator_model_documents(args):
     model_type.appendChild(model_item)
 
     model_infos = {
+        'Model_DataType':"RCS",
         'Model_Name':model_naming,
         'Model_Algorithm':'TRAD_'+str(model_name),
+        'Model_AlgorithmType':'传统深度学习模型',   
         'Model_AccuracyOnTrain':'-',
         'Model_AccuracyOnVal':str(args.valAcc),
         'Model_Framework':'Keras',
@@ -345,7 +347,8 @@ def generator_model_documents(args):
         'Model_TrainBatchSize':str(args.batch_size),
         'Model_WindowsLength':str(args.windows_length), 
         'Model_WindowsStep':str(args.windows_step), 
-        'Model_Note':'-'
+        'Model_Note':'-',
+        'Model_Type':"TRAD"
     } 
 
     for key in model_infos.keys():
@@ -354,7 +357,7 @@ def generator_model_documents(args):
         info_item.appendChild(info_text)
         model_item.appendChild(info_item)
 
-    with open(os.path.join(project_path,'model.xml'),'w',encoding='utf-8') as f:
+    with open(os.path.join(project_path,model_naming+'.xml'),'w',encoding='utf-8') as f:
         doc.writexml(f,indent = '\t',newl = '\n', addindent = '\t',encoding='utf-8')
 
 

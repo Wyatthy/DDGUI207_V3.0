@@ -401,8 +401,7 @@ def generator_model_documents(args):
     model_type.appendChild(model_item)
 
     model_infos = {
-        'ProjectType':"HRRP",
-        'ModelType':"HRRP",
+        'Model_DataType':"HRRP",
         'Model_Name':str(model_naming),
         'Model_Algorithm':"Baseline_"+str(model_name),
         'Model_AlgorithmType':"传统深度学习模型",
@@ -415,7 +414,8 @@ def generator_model_documents(args):
         'Model_NumClassCategories':str(args.class_number), 
         'Model_Path':os.path.abspath(os.path.join(project_path,model_naming+'.trt')),
         'Model_TrainBatchSize':str(args.batch_size),
-        'Model_Note':'-'
+        'Model_Note':'-',
+        'Model_Type':"BASE"
     } 
 
     for key in model_infos.keys():
@@ -460,5 +460,5 @@ if __name__ == '__main__':
 
     save_params()
     generator_model_documents(args)
-    # convert_hdf5_to_trt(project_path, model_naming)
+    convert_hdf5_to_trt(project_path, model_naming)
     print("Train Ended:")

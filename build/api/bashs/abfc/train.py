@@ -162,8 +162,10 @@ def generator_model_documents(args):
     model_type.appendChild(model_item)
 
     model_infos = {
+        'Model_DataType':"FEATURE",#实际还可以是HRRP
         'Model_Name':str(model_naming),
         'Model_Algorithm':'ABFC',
+        'Model_AlgorithmType':'特征权重模型',
         'Model_AccuracyOnTrain':'-',
         'Model_AccuracyOnVal':str(args.valAcc),
         'Model_Framework':'Keras',
@@ -173,7 +175,8 @@ def generator_model_documents(args):
         'Model_NumClassCategories':str(args.class_number), 
         'Model_Path':os.path.abspath(os.path.join(project_path,model_naming+'.trt')),
         'Model_TrainBatchSize':str(args.batch_size),
-        'Model_Note':'-'
+        'Model_Note':'-',
+        'Model_Type':'ABFC'
     } 
 
     for key in model_infos.keys():
@@ -182,7 +185,7 @@ def generator_model_documents(args):
         info_item.appendChild(info_text)
         model_item.appendChild(info_item)
 
-    with open(os.path.join(project_path,'model.xml'),'w',encoding='utf-8') as f:
+    with open(os.path.join(project_path,model_naming+'.xml'),'w',encoding='utf-8') as f:
         doc.writexml(f,indent = '\t',newl = '\n', addindent = '\t',encoding='utf-8')
 
 # 保存参数

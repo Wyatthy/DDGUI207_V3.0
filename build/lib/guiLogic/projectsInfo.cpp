@@ -197,7 +197,7 @@ string ProjectsInfo::showXmlAttri(std::string xmlpath){
             for(auto &attr: datasetAttrMap){
                 // qDebug()<<"(attr.first="<<attr.first.c_str()<<", attr.second="<<attr.second.c_str();
                 // 如果属性是“ModelType”，返回值
-                if(attr.first == "ModelType"){
+                if(attr.first == "ProjectType"){
                     return attr.second;
                 }
             }

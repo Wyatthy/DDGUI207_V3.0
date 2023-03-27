@@ -357,13 +357,15 @@ def generator_model_documents(args):
     #model_type.setAttribute('typeID','1')
     root.appendChild(model_type)
 
-    model_item = doc.createElement(project_path)
+    model_item = doc.createElement(model_naming)
     #model_item.setAttribute('nameID','1')
     model_type.appendChild(model_item)
 
     model_infos = {
+        'Model_DataType':"HRRP",
         'Model_Name':model_naming,
         'Model_Algorithm':'TRAD_'+str(model_name),
+        'Model_AlgorithmType':'传统深度学习模型',   
         'Model_AccuracyOnTrain':'-',
         'Model_AccuracyOnVal':str(args.valAcc),
         'Model_Framework':'Keras',
@@ -373,7 +375,8 @@ def generator_model_documents(args):
         'Model_NumClassCategories':str(args.class_number), 
         'Model_Path':os.path.abspath(os.path.join(project_path,model_naming+'.trt')),
         'Model_TrainBatchSize':str(args.batch_size),
-        'Model_Note':'-'
+        'Model_Note':'-',
+        'Model_Type':"TRAD"
     } 
 
     for key in model_infos.keys():

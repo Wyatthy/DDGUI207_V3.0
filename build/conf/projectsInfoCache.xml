@@ -2,41 +2,62 @@
 <globalProjectInfo dataTypeNum="4">
     <FEATURE typeID="1">
         <基于特征数据的ABFC网络 nameID="1">
+            <ModelType>FEATURE</ModelType>
             <Model_AccuracyOnTrain>-</Model_AccuracyOnTrain>
-            <Model_AccuracyOnVal>71.67</Model_AccuracyOnVal>
+            <Model_AccuracyOnVal>80.67</Model_AccuracyOnVal>
             <Model_Algorithm>ABFC</Model_Algorithm>
+            <Model_AlgorithmType>特征权重模型</Model_AlgorithmType>
             <Model_Framework>Keras</Model_Framework>
             <Model_Name>基于特征数据的ABFC网络</Model_Name>
             <Model_Note>-</Model_Note>
-            <Model_NumClassCategories>3</Model_NumClassCategories>
+            <Model_NumClassCategories>4</Model_NumClassCategories>
             <Model_Path>N:\207\GUI207_V3.0\work_dirs\基于特征数据的ABFC网络\基于特征数据的ABFC网络.trt</Model_Path>
             <Model_TrainBatchSize>32</Model_TrainBatchSize>
             <Model_TrainDataset>基于特征数据的ABFC网络</Model_TrainDataset>
-            <Model_TrainEpoch>10</Model_TrainEpoch>
+            <Model_TrainEpoch>30</Model_TrainEpoch>
             <Model_TrainLR>0.001</Model_TrainLR>
+            <ProjectType>FEATURE</ProjectType>
             <Project_Path>N:/207/GUI207_V3.0/work_dirs/基于特征数据的ABFC网络</Project_Path>
+            <datasetClassName>Big_ball,Cone,Cone_cylinder,DT,Small_ball,Spherical_cone</datasetClassName>
+            <datasetClassNum>6</datasetClassNum>
+            <datasetNote>-</datasetNote>
         </基于特征数据的ABFC网络>
     </FEATURE>
     <HRRP typeID="2">
-        <基于HRRP数据的ABFC网络 nameID="2">
+        <【优化】基于HRRP数据的DropBlock模型（-14dB） nameID="2">
+            <ProjectType>HRRP</ProjectType>
+            <Project_Path>N:/207/GUI207_V3.0/work_dirs/【优化】基于HRRP数据的DropBlock模型（-14dB）</Project_Path>
+            <datasetClassName>Big_ball,Cone,Cone_cylinder,DT,Small_ball,Spherical_cone</datasetClassName>
+            <datasetClassNum>6</datasetClassNum>
+            <datasetNote>-</datasetNote>
+        </【优化】基于HRRP数据的DropBlock模型（-14dB）>
+        <基于HRRP数据的ABFC网络 nameID="3">
+            <ModelType>FEATURE</ModelType>
             <Model_AccuracyOnTrain>-</Model_AccuracyOnTrain>
-            <Model_AccuracyOnVal>97.5</Model_AccuracyOnVal>
+            <Model_AccuracyOnVal>100.0</Model_AccuracyOnVal>
             <Model_Algorithm>ABFC</Model_Algorithm>
+            <Model_AlgorithmType>特征权重模型</Model_AlgorithmType>
             <Model_Framework>Keras</Model_Framework>
             <Model_Name>基于HRRP数据的ABFC网络</Model_Name>
             <Model_Note>-</Model_Note>
-            <Model_NumClassCategories>3</Model_NumClassCategories>
+            <Model_NumClassCategories>4</Model_NumClassCategories>
             <Model_Path>N:\207\GUI207_V3.0\work_dirs\基于HRRP数据的ABFC网络\基于HRRP数据的ABFC网络.trt</Model_Path>
-            <Model_TrainBatchSize>64</Model_TrainBatchSize>
+            <Model_TrainBatchSize>32</Model_TrainBatchSize>
             <Model_TrainDataset>基于HRRP数据的ABFC网络</Model_TrainDataset>
-            <Model_TrainEpoch>20</Model_TrainEpoch>
+            <Model_TrainEpoch>30</Model_TrainEpoch>
             <Model_TrainLR>0.001</Model_TrainLR>
+            <ProjectType>HRRP</ProjectType>
             <Project_Path>N:/207/GUI207_V3.0/work_dirs/基于HRRP数据的ABFC网络</Project_Path>
+            <datasetClassName>Big_ball,Cone,Cone_cylinder,DT,Small_ball,Spherical_cone</datasetClassName>
+            <datasetClassNum>6</datasetClassNum>
+            <datasetNote>-</datasetNote>
         </基于HRRP数据的ABFC网络>
-        <基于HRRP数据的ATEC网络 nameID="3">
+        <基于HRRP数据的ATEC网络 nameID="4">
+            <ModelType>HRRP</ModelType>
             <Model_AccuracyOnTrain>-</Model_AccuracyOnTrain>
-            <Model_AccuracyOnVal>99.83</Model_AccuracyOnVal>
+            <Model_AccuracyOnVal>99.0</Model_AccuracyOnVal>
             <Model_Algorithm>ATEC</Model_Algorithm>
+            <Model_AlgorithmType>特征关联模型</Model_AlgorithmType>
             <Model_Framework>Keras</Model_Framework>
             <Model_Name>基于HRRP数据的ATEC网络</Model_Name>
             <Model_Note>-</Model_Note>
@@ -46,29 +67,40 @@
             <Model_TrainDataset>基于HRRP数据的ATEC网络</Model_TrainDataset>
             <Model_TrainEpoch>256</Model_TrainEpoch>
             <Model_TrainLR>0.001</Model_TrainLR>
+            <ProjectType>HRRP</ProjectType>
             <Project_Path>N:/207/GUI207_V3.0/work_dirs/基于HRRP数据的ATEC网络</Project_Path>
+            <datasetClassName>Big_ball,Cone,Cone_cylinder,DT,Small_ball,Spherical_cone</datasetClassName>
+            <datasetClassNum>6</datasetClassNum>
+            <datasetNote>-</datasetNote>
         </基于HRRP数据的ATEC网络>
-        <基于HRRP数据的Baseline_CNN网络 nameID="4">
-            <Project_Path>N:/207/GUI207_V3.0/work_dirs/基于HRRP数据的Baseline_CNN网络</Project_Path>
-        </基于HRRP数据的Baseline_CNN网络>
-        <基于HRRP数据的Densenet网络 nameID="5">
+        <基于HRRP数据的Baseline_DNN网络 nameID="5">
+            <ModelType>HRRP</ModelType>
             <Model_AccuracyOnTrain>-</Model_AccuracyOnTrain>
-            <Model_AccuracyOnVal>96.17</Model_AccuracyOnVal>
-            <Model_Algorithm>TRAD_DenseNet121</Model_Algorithm>
+            <Model_AccuracyOnVal>100.0</Model_AccuracyOnVal>
+            <Model_Algorithm>Baseline_DNN</Model_Algorithm>
+            <Model_AlgorithmType>传统深度学习模型</Model_AlgorithmType>
             <Model_Framework>Keras</Model_Framework>
-            <Model_Name>基于HRRP数据的Densenet网络</Model_Name>
+            <Model_Name>基于HRRP数据的Baseline_DNN网络</Model_Name>
             <Model_Note>-</Model_Note>
             <Model_NumClassCategories>6</Model_NumClassCategories>
-            <Model_Path>N:\207\GUI207_V3.0\work_dirs\基于HRRP数据的Densenet网络\基于HRRP数据的Densenet网络.trt</Model_Path>
+            <Model_Path>N:\207\GUI207_V3.0\work_dirs\基于HRRP数据的Baseline_DNN网络\基于HRRP数据的Baseline_DNN网络.trt</Model_Path>
             <Model_TrainBatchSize>16</Model_TrainBatchSize>
-            <Model_TrainDataset>基于HRRP数据的Densenet网络</Model_TrainDataset>
-            <Model_TrainEpoch>15</Model_TrainEpoch>
+            <Model_TrainDataset>基于HRRP数据的Baseline_DNN网络</Model_TrainDataset>
+            <Model_TrainEpoch>500</Model_TrainEpoch>
             <Model_TrainLR>0.001</Model_TrainLR>
-            <Project_Path>N:/207/GUI207_V3.0/work_dirs/基于HRRP数据的Densenet网络</Project_Path>
-        </基于HRRP数据的Densenet网络>
-        <基于HRRP数据的Resnet50网络 nameID="6">
-            <Project_Path>N:/207/GUI207_V3.0/work_dirs/基于HRRP数据的Resnet50网络</Project_Path>
-        </基于HRRP数据的Resnet50网络>
+            <ProjectType>HRRP</ProjectType>
+            <Project_Path>N:/207/GUI207_V3.0/work_dirs/基于HRRP数据的Baseline_DNN网络</Project_Path>
+            <datasetClassName>Big_ball,Cone,Cone_cylinder,DT,Small_ball,Spherical_cone</datasetClassName>
+            <datasetClassNum>6</datasetClassNum>
+            <datasetNote>-</datasetNote>
+        </基于HRRP数据的Baseline_DNN网络>
+        <基于HRRP数据的DenseNet网络 nameID="6">
+            <ProjectType>HRRP</ProjectType>
+            <Project_Path>N:/207/GUI207_V3.0/work_dirs/基于HRRP数据的DenseNet网络</Project_Path>
+            <datasetClassName>Big_ball,Cone,Cone_cylinder,DT,Small_ball,Spherical_cone</datasetClassName>
+            <datasetClassNum>6</datasetClassNum>
+            <datasetNote>-</datasetNote>
+        </基于HRRP数据的DenseNet网络>
         <基于HRRP数据的增量模型 nameID="7">
             <Model_AccuracyOnTrain>-</Model_AccuracyOnTrain>
             <Model_AccuracyOnVal>-</Model_AccuracyOnVal>
@@ -96,6 +128,8 @@
             <Model_AccuracyOnTrain>-</Model_AccuracyOnTrain>
             <Model_AccuracyOnVal>100.0</Model_AccuracyOnVal>
             <Model_Algorithm>TRAD_ResNet101</Model_Algorithm>
+            <Model_AlgorithmType>传统深度学习模型</Model_AlgorithmType>
+            <Model_DataType>IMAGE</Model_DataType>
             <Model_Framework>Keras</Model_Framework>
             <Model_Name>基于历程图数据的Resnet101网络</Model_Name>
             <Model_Note>-</Model_Note>
@@ -105,17 +139,23 @@
             <Model_TrainDataset>基于历程图数据的Resnet101网络</Model_TrainDataset>
             <Model_TrainEpoch>360</Model_TrainEpoch>
             <Model_TrainLR>0.001</Model_TrainLR>
+            <Model_Type>TRAD</Model_Type>
             <Model_WindowsLength>32</Model_WindowsLength>
             <Model_WindowsStep>10</Model_WindowsStep>
+            <ProjectType>IMAGE</ProjectType>
             <Project_Path>N:/207/GUI207_V3.0/work_dirs/基于历程图数据的Resnet101网络</Project_Path>
+            <datasetClassName>Big_ball,Cone,Cone_cylinder,DT,Small_ball,Spherical_cone</datasetClassName>
+            <datasetClassNum>6</datasetClassNum>
+            <datasetNote>-</datasetNote>
         </基于历程图数据的Resnet101网络>
     </IMAGE>
     <RCS typeID="4">
         <基于RCS数据的Efficientnet网络 nameID="10">
-            <Dataset_Name>QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ</Dataset_Name>
+            <ModelType>RCS</ModelType>
             <Model_AccuracyOnTrain>-</Model_AccuracyOnTrain>
             <Model_AccuracyOnVal>100.0</Model_AccuracyOnVal>
             <Model_Algorithm>TRAD_EfficientNetB0</Model_Algorithm>
+            <Model_AlgorithmType>传统深度学习模型</Model_AlgorithmType>
             <Model_Framework>Keras</Model_Framework>
             <Model_Name>基于RCS数据的Efficientnet网络</Model_Name>
             <Model_Note>-</Model_Note>
@@ -123,14 +163,22 @@
             <Model_Path>N:\207\GUI207_V3.0\work_dirs\基于RCS数据的Efficientnet网络\基于RCS数据的Efficientnet网络.trt</Model_Path>
             <Model_TrainBatchSize>16</Model_TrainBatchSize>
             <Model_TrainDataset>基于RCS数据的Efficientnet网络</Model_TrainDataset>
-            <Model_TrainEpoch>23</Model_TrainEpoch>
+            <Model_TrainEpoch>500</Model_TrainEpoch>
             <Model_TrainLR>0.001</Model_TrainLR>
             <Model_WindowsLength>32</Model_WindowsLength>
             <Model_WindowsStep>10</Model_WindowsStep>
+            <ProjectType>RCS</ProjectType>
             <Project_Path>N:/207/GUI207_V3.0/work_dirs/基于RCS数据的Efficientnet网络</Project_Path>
+            <datasetClassName>Big_ball,Cone,Cone_cylinder,DT,Small_ball,Spherical_cone</datasetClassName>
+            <datasetClassNum>6</datasetClassNum>
+            <datasetNote>-</datasetNote>
         </基于RCS数据的Efficientnet网络>
         <基于RCS数据的Mobilenet网络 nameID="11">
+            <ProjectType>RCS</ProjectType>
             <Project_Path>N:/207/GUI207_V3.0/work_dirs/基于RCS数据的Mobilenet网络</Project_Path>
+            <datasetClassName>Big_ball,Cone,Cone_cylinder,DT,Small_ball,Spherical_cone</datasetClassName>
+            <datasetClassNum>6</datasetClassNum>
+            <datasetNote>-</datasetNote>
         </基于RCS数据的Mobilenet网络>
     </RCS>
 </globalProjectInfo>

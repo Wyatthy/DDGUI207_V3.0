@@ -33,7 +33,7 @@
        </sizepolicy>
       </property>
       <property name="currentIndex">
-       <number>5</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="page_senseSet">
        <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -135,8 +135,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1022</width>
-             <height>1368</height>
+             <width>930</width>
+             <height>1414</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -192,7 +192,7 @@
                       </widget>
                      </item>
                      <item>
-                      <widget class="QRadioButton" name="radioButton_unknow_choice">
+                      <widget class="QRadioButton" name="radioButton_unknown_choice">
                        <property name="text">
                         <string>未知集</string>
                        </property>
@@ -1425,8 +1425,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>681</width>
-             <height>457</height>
+             <width>859</width>
+             <height>479</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_51">
@@ -2440,8 +2440,8 @@
                            <rect>
                             <x>0</x>
                             <y>0</y>
-                            <width>512</width>
-                            <height>194</height>
+                            <width>55</width>
+                            <height>24</height>
                            </rect>
                           </property>
                           <layout class="QVBoxLayout" name="verticalLayout_72">
@@ -2603,8 +2603,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>360</width>
-               <height>525</height>
+               <width>368</width>
+               <height>563</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -2792,8 +2792,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>573</width>
-               <height>584</height>
+               <width>699</width>
+               <height>620</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -3180,8 +3180,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>287</width>
-             <height>253</height>
+             <width>353</width>
+             <height>307</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_57">
@@ -3417,8 +3417,8 @@
                        <rect>
                         <x>0</x>
                         <y>0</y>
-                        <width>114</width>
-                        <height>69</height>
+                        <width>143</width>
+                        <height>85</height>
                        </rect>
                       </property>
                       <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -3662,8 +3662,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1351</width>
-             <height>900</height>
+             <width>1577</width>
+             <height>1042</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_61">
@@ -5052,8 +5052,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>572</width>
-             <height>921</height>
+             <width>1645</width>
+             <height>925</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_87">
@@ -6479,7 +6479,7 @@
    <property name="minimumSize">
     <size>
      <width>280</width>
-     <height>144</height>
+     <height>176</height>
     </size>
    </property>
    <property name="features">
@@ -6536,7 +6536,7 @@
      <x>0</x>
      <y>0</y>
      <width>1393</width>
-     <height>22</height>
+     <height>26</height>
     </rect>
    </property>
    <property name="minimumSize">

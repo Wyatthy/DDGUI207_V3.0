@@ -55,6 +55,9 @@ void MonitorPage::startListen(){
     if(modelType == "ABFC"|| modelType == "ATEC" || modelType == "OPTI" || modelType == "CIL" || modelType == "OPTI_CAM"){
         QMessageBox::warning(NULL, "实时监测", "监听失败,当前工程属性不支持");
         return;
+    }if(dataType == "IMAGE"){
+        QMessageBox::warning(NULL, "实时监测", "监听失败,当前工程属性不支持");
+        return;
     }
     // QString projectPath = QString::fromStdString(projectsInfo->pathOfSelectedProject);
     QString windowsLength = "";

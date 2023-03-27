@@ -151,6 +151,7 @@ void ProjectDock::drawExample(){//TODO mat变量不合适和样本索引范围�
     //绘图
     QString matFilePath = selectedMatFilePath;
     QString matFileName = selectedMatFilePath.split('/').last();
+    ui->label_datasetDock_examChart->clear();
     Chart *previewChart = new Chart(ui->label_datasetDock_examChart,QString::fromStdString(leftSelType),matFilePath);
     previewChart->drawImage(ui->label_datasetDock_examChart,examIdx);
     //ui->projectDock_examIdx->setText(std::to_string(examIdx));
