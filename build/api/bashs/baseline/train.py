@@ -148,8 +148,8 @@ def show_confusion_matrix(classes, confusion_matrix, work_dir):
 def train_acc(epoch, acc, work_dir):
     x = np.arange(epoch+1)[1:]
     plt.figure()
-    plt.plot(x, acc)
-    plt.scatter(x, acc)
+    plt.plot(x, acc, linewidth=0.7)
+    plt.scatter(x, acc, s=0.7)
     plt.grid()
     plt.title('Training accuracy', fontsize=16)
     plt.ylabel('Accuracy', fontsize=16)
@@ -162,8 +162,8 @@ def train_acc(epoch, acc, work_dir):
 def val_acc(v_acc, work_dir):
     x = np.arange(len(v_acc)+1)[1:]
     plt.figure()
-    plt.plot(x, v_acc)
-    plt.scatter(x, v_acc)
+    plt.plot(x, v_acc, linewidth=0.7)
+    plt.scatter(x, v_acc, s=0.7)
     plt.grid()
     plt.title('Verification accuracy', fontsize=16)
     plt.ylabel('Accuracy', fontsize=16)
@@ -460,5 +460,5 @@ if __name__ == '__main__':
 
     save_params()
     generator_model_documents(args)
-    convert_hdf5_to_trt(project_path, model_naming)
+    # convert_hdf5_to_trt(project_path, model_naming)
     print("Train Ended:")

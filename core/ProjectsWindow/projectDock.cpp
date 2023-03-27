@@ -409,6 +409,8 @@ void ProjectDock::onAction_ShotProject(){
     projectTreeViewGroup[rightSelType]->model()->setData(this->rightMsIndex, font, Qt::FontRole);
     QMessageBox::information(NULL, "设为活动工程", QString::fromStdString("活动工程已设定为"+rightSelName));
 
+
+
     //根据工程名字确定projectsInfo->modelTypeOfSelectedProject
     std::string tempProjectName = rightSelName;
     std::transform(tempProjectName.begin(), tempProjectName.end(), tempProjectName.begin(),
@@ -420,7 +422,12 @@ void ProjectDock::onAction_ShotProject(){
     else if(tempProjectName.find("增量") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "CIL";
     else if(tempProjectName.find("baseline") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "BASE";
     else projectsInfo->modelTypeOfSelectedProject = "TRAD";
-    
+
+    //根据工程xml中的ProjectType键值更新projectsInfo->modelTypeOfSelectedProject
+    std::string tempProjectTye = projectsInfo->getAttri(rightSelType,rightSelName,"Model_Type");
+    // if(tempProjectTye!="") projectsInfo->modelTypeOfSelectedProject = tempProjectTye;
+
+
     //根据project类型设置projectsInfo中的pathOfSelectedModel_forInfer和pathOfSelectedModel_forVis
     string tempModelType = projectsInfo->modelTypeOfSelectedProject;
     QString project_path = QString::fromStdString(projectsInfo->getAttri(rightSelType,rightSelName,"Project_Path"));

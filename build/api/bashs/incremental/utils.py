@@ -348,8 +348,8 @@ def show_confusion_matrix(classes, confusion_matrix, work_dir):
 def show_accplot(epoch, acc, work_dir):
     x = np.arange(epoch+1)[1:]
     plt.figure()
-    plt.plot(x, acc)
-    plt.scatter(x, acc)
+    plt.plot(x, acc, linewidth=0.7)
+    plt.scatter(x, acc, s=0.7)
     plt.grid()
     plt.title('Verification accuracy', fontsize=16)
     plt.ylabel('Accuracy', fontsize=16)
