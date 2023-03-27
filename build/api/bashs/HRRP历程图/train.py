@@ -7,6 +7,8 @@ import scipy.io as sio
 import tensorflow as tf
 from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
 from functools import reduce
+from tensorflow.keras.utils import plot_model  
+from contextlib import redirect_stdout
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 from sklearn.metrics import classification_report
@@ -245,6 +247,7 @@ def run_main(x_train, y_train, x_val, y_val, class_num, folder_name, work_dir, m
     train_acc(max_epochs, h_parameter['accuracy'], work_dir)
     val_acc(h_parameter['val_accuracy'], work_dir)
     save_model = tf.keras.models.load_model(work_dir+'/'+model_naming+'.hdf5')
+    saveModelInfo(save_model.get_layer(model.layers[0].name), work_dir+'/'+model_naming+'.hdf5')
     Y_val = np.argmax(y_val, axis=1)
     y_pred = np.argmax(save_model.predict(x_val), axis=1)
 
@@ -257,6 +260,65 @@ def run_main(x_train, y_train, x_val, y_val, class_num, folder_name, work_dir, m
     classification_report_txt.write(classification_report(Y_val, y_pred, digits=4))
     classification_report_txt.close()
     print(classification_report(Y_val, y_pred, digits=4))
+
+
+# 保存模型结构信息
+def saveModelInfo(model, modelPath):
+    rootPath = os.path.dirname(modelPath)
+    modelName = os.path.basename(modelPath).split('.')[0]
+
+    # 保存模型所有基本信息
+    with open(rootPath + '/'+ modelName + "_modelInfo.txt", 'w') as f:
+        with redirect_stdout(f):
+            model.summary(line_length=200, positions=[0.30,0.60,0.7,1.0])
+        
+    # 保存模型所有层的名称至xml文件
+    from xml.dom.minidom import Document
+    xmlDoc = Document()
+    child_1 = xmlDoc.createElement(modelName)
+    xmlDoc.appendChild(child_1)
+    child_2 = xmlDoc.createElement(modelName)
+    child_1.appendChild(child_2)
+    for layer in model.layers:  
+        layer = layer.name.replace("/", "_")
+        nodeList = layer.split("_")
+        for i in range(len(nodeList)):
+            modeName = nodeList[i].strip()
+            if modeName.isdigit():
+                modeName = "_" + modeName
+            if i == 0:
+                # 如果以modeName为名的节点已经存在，就不再创建，直接挂
+                if len(child_2.getElementsByTagName(modeName)) == 0:
+                    node1 = xmlDoc.createElement(modeName)
+                    child_2.appendChild(node1)
+                else:
+                    node1 = child_2.getElementsByTagName(modeName)[0]
+            elif i == 1:
+                if len(node1.getElementsByTagName(modeName)) == 0:
+                    node2 = xmlDoc.createElement(modeName)
+                    node1.appendChild(node2)
+                else:
+                    node2 = node1.getElementsByTagName(modeName)[0]
+            elif i == 2:
+                if len(node2.getElementsByTagName(modeName)) == 0:
+                    node3 = xmlDoc.createElement(modeName)
+                    node2.appendChild(node3)
+                else:
+                    node3 = node2.getElementsByTagName(modeName)[0]
+            elif i == 3:
+                if len(node3.getElementsByTagName(modeName)) == 0:
+                    node4 = xmlDoc.createElement(modeName)
+                    node3.appendChild(node4)
+                else:
+                    node4 = node3.getElementsByTagName(modeName)[0]
+    f = open(rootPath + '/'+ modelName + "_struct.xml", "w")
+    xmlDoc.writexml(f, addindent='\t', newl='\n', encoding="utf-8")
+    f.close()
+
+    # 保存模型结构图
+    if not os.path.exists(rootPath + '/'+ modelName + "_structImage"):
+        os.makedirs(rootPath + '/'+ modelName + "_structImage")
+    plot_model(model, to_file = rootPath + '/'+ modelName + "_structImage/framework.png", show_shapes=True, show_layer_names=True, dpi=800)
 
 
 def convert_h5to_pb(h5Path, pbPath):

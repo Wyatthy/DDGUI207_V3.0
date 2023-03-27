@@ -112,6 +112,9 @@ private:
     int maxMatIndex = -1;
     int currMatIndex = -1;
 
+    QString windowsLength = "0";
+    QString windowsStep = "0";
+
     QString choicedModelName;   // 模型名
     QString choicedModelPATH;   // 模型路径
     QString choicedModelSuffix; // 模型后缀
