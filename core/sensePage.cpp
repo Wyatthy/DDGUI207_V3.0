@@ -16,6 +16,7 @@ SenseSetPage::SenseSetPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, 
 {
     ui->lineEdit_sense_sampleIndex->setValidator(new QRegularExpressionValidator(QRegularExpression("^[1-9]\\d*0?[1-9]$|^[1-9]$")));
 
+
     // 数据集类别选择框事件相应
     BtnGroup_typeChoice->addButton(ui->radioButton_train_choice, 0);
     BtnGroup_typeChoice->addButton(ui->radioButton_test_choice, 1);
@@ -93,6 +94,27 @@ SenseSetPage::~SenseSetPage(){
 
 }
 
+void SenseSetPage::refreshGlobalInfo(){
+    ui->label_sense_project->setText(QString::fromStdString(projectsInfo->pathOfSelectedProject));
+    ui->label_sense_datasetType->setText(QString::fromStdString(projectsInfo->dataTypeOfSelectedProject));
+    // train文件夹路径
+    QString projectPath = QString::fromStdString(projectsInfo->pathOfSelectedProject);
+    QString trainPath = projectPath + "/train";
+    // 把train文件夹下所有的文件夹名字作为类别名字，放在一个QString里面
+    QString classNames = "";
+    QStringList folders = QDir(trainPath).entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+    for (int i = 0; i < folders.size(); i++) {
+        QString folderName = folders.at(i);
+        // 最后一个不要,
+        if (i == folders.size() - 1) classNames += folderName;
+        else classNames += folderName + ",";
+    }
+    // 得到train文件夹下所有文件夹的个数作为类别数量
+    int classNum = folders.size();
+    ui->label_sense_claNum->setText(QString::number(classNum));
+    ui->label_sense_classNames->setText(classNames);
+}
+
 void SenseSetPage::saveDatasetNote()
 {
     // 保存至内存
@@ -146,6 +168,7 @@ void SenseSetPage::saveModelNote()
 }
 
 void SenseSetPage::confirmDataset(bool notDialog = false){
+    updateAttriLabel();
     QString project_path = QString::fromStdString(projectsInfo->pathOfSelectedProject);
     qDebug() << "project_path: " << project_path;
     QString selectedType = this->BtnGroup_typeChoice->checkedButton()->objectName().split("_")[1];
@@ -204,10 +227,16 @@ void SenseSetPage::confirmDataset(bool notDialog = false){
     }
 
     //搜索最大索引和样本数量
+
     int maxIndex = 1000000;
     minMatNum(maxIndex);
-    ui->label_sense_allIndex->setText(QString::fromStdString(to_string(maxIndex)));
-    qDebug() << "SenseSetPage::confirmDataset maxIndex: " << maxIndex;
+    if (maxIndex > 0)
+        ui->label_sense_allIndex->setText(QString::fromStdString(to_string(maxIndex-1)));
+    qDebug() << "maxIndex: " << maxIndex-1;
+    QIntValidator *validator = new QIntValidator(ui->lineEdit_sense_sampleIndex);
+    validator->setBottom(1);
+    validator->setTop(maxIndex-1);
+    ui->lineEdit_sense_sampleIndex->setValidator(validator);
 
     // 绘制类别图
     for(int i = 0; i<folders.size(); i++){

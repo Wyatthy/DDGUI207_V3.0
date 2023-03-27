@@ -1,19 +1,32 @@
 #include "DialogNewProject.h"
 #include "ui_DialogNewProject.h"
 
-DialogNewProject::DialogNewProject(QString *projectName,QMap<QString,QString> *projectPath ,QWidget *parent) :
+DialogNewProject::DialogNewProject(QString *projectName,QMap<QString,QString> *projectPath , bool newflag, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::DialogNewProject),
     projectName(projectName),
-    projectPath(projectPath)
+    projectPath(projectPath),
+    newflag(newflag)
 {
     ui->setupUi(this);
     // 界面名称
-    this->setWindowTitle("新建工程文件");
+    if (newflag){
+        this->setWindowTitle("新建工程文件");
+    }else{
+        this->setWindowTitle("修改工程文件");
+        ui->textEdit_projectName->setText(*projectName);
+        oldName = *projectName;
+        ui->textEdit_trainPath->setText((*projectPath)["train_path"]);
+        ui->textEdit_valPath->setText((*projectPath)["val_path"]);
+        ui->textEdit_testPath->setText((*projectPath)["test_path"]);
+        ui->textEdit_unknown->setText((*projectPath)["unknown_test"]);
+    }
+    
     connect(ui->pushButton_trainPath, &QPushButton::clicked, this, &DialogNewProject::on_pushButton_trainPath_clicked);
     connect(ui->pushButton_valPath,&QPushButton::clicked,this,&DialogNewProject::on_pushButton_valPath_clicked);
     connect(ui->pushButton_testPath,&QPushButton::clicked,this,&DialogNewProject::on_pushButton_testPath_clicked);
     connect(ui->pushButton_unknown,&QPushButton::clicked,this,&DialogNewProject::on_pushButton_unknown_clicked);
+
     
 
 }
@@ -39,17 +52,32 @@ void DialogNewProject::accept()
         {
             QMessageBox::warning(this, tr("Warning"), tr("请检查输入的路径是否正确!"));
         }else{
-            // 如果工程名字路径已存在，则弹窗提示
-            QString currentPath = QDir::currentPath();
-            QFileInfo fileInfo(currentPath);
-            QString path = fileInfo.path() + "/work_dirs/" + *projectName;
-            // qDebug() << "nowProjectPath: " << path;
-            if (QDir(path).exists())
-            {
-                QMessageBox::warning(this, tr("Warning"), tr("工程文件夹已存在!修改工程名称！"));
+            if (newflag){
+                // 如果工程名字路径已存在，则弹窗提示
+                QString currentPath = QDir::currentPath();
+                QFileInfo fileInfo(currentPath);
+                QString path = fileInfo.path() + "/work_dirs/" + *projectName;
+                // qDebug() << "nowProjectPath: " << path;
+                if (QDir(path).exists())
+                {
+                    QMessageBox::warning(this, tr("Warning"), tr("工程文件夹已存在!修改工程名称！"));
+                }else{
+                    QDialog::accept();
+                }
             }else{
-                QDialog::accept();
+                // 如果工程名字路径已存在，则弹窗提示
+                QString currentPath = QDir::currentPath();
+                QFileInfo fileInfo(currentPath);
+                QString path = fileInfo.path() + "/work_dirs/" + *projectName;
+                // qDebug() << "nowProjectPath: " << path;
+                if (QDir(path).exists() && oldName != *projectName)
+                {
+                    QMessageBox::warning(this, tr("Warning"), tr("工程文件夹已存在!修改工程名称！"));
+                }else{
+                    QDialog::accept();
+                }
             }
+
         }
 
     }else{

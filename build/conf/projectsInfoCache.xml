@@ -38,7 +38,7 @@
             <Model_AlgorithmType>特征权重模型</Model_AlgorithmType>
             <Model_DataType>HRRP</Model_DataType>
             <Model_Framework>Keras</Model_Framework>
-            <Model_Name>基于HRRP数据的ABFC网络</Model_Name>
+            <Model_Name>基于HRRP的Resnet50网络</Model_Name>
             <Model_Note>-</Model_Note>
             <Model_NumClassCategories>4</Model_NumClassCategories>
             <Model_Path>N:\207\GUI207_V3.0\work_dirs\基于HRRP数据的ABFC网络\基于HRRP数据的ABFC网络.trt</Model_Path>
@@ -60,7 +60,7 @@
             <Model_AlgorithmType>特征关联模型</Model_AlgorithmType>
             <Model_DataType>HRRP</Model_DataType>
             <Model_Framework>Keras</Model_Framework>
-            <Model_Name>基于HRRP数据的ATEC网络</Model_Name>
+            <Model_Name>基于HRRP的Resnet50网络222</Model_Name>
             <Model_Note>-</Model_Note>
             <Model_NumClassCategories>4</Model_NumClassCategories>
             <Model_Path>N:\207\GUI207_V3.0\work_dirs\基于HRRP数据的ATEC网络\基于HRRP数据的ATEC网络.trt</Model_Path>

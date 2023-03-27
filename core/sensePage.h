@@ -27,6 +27,7 @@ public:
     std::vector<QLabel*> imgInfoGroup;
     std::vector<QLabel*> chartGroup;
     std::vector<QLabel*> chartInfoGroup;
+    void refreshGlobalInfo();
     // 显示图片的最大数据索引
 
     QButtonGroup *BtnGroup_typeChoice = new QButtonGroup;

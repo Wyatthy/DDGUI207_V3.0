@@ -97,6 +97,7 @@ void MainWindow::refreshPages(){
     this->modelEvalPage->refreshGlobalInfo();
     this->monitorPage->refresh();
     this->modelTrainPage->refreshGlobalInfo();
+    this->senseSetPage->refreshGlobalInfo();
 }
 
 void MainWindow::fullScreen(){

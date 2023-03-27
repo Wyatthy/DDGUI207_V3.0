@@ -14,7 +14,7 @@ class DialogNewProject : public QDialog
     Q_OBJECT
 
 public:
-    explicit DialogNewProject(QString *projectName,QMap<QString,QString> *projectPath,QWidget *parent = nullptr);
+    explicit DialogNewProject(QString *projectName,QMap<QString,QString> *projectPath,bool newflag,QWidget *parent = nullptr);
     ~DialogNewProject();
 
 public slots:
@@ -26,9 +26,11 @@ public slots:
 private:
     Ui::DialogNewProject *ui;
     QString *projectName;
+    bool newflag;
     QMap<QString,QString> *projectPath;
     // 重写accept函数
     void accept();
+    QString oldName;
 };
 
 #endif // DIALOGNEWPROJECT_H

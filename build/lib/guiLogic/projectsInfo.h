@@ -54,6 +54,8 @@ public:
 
     std::map<std::string, std::string> var2TypeName;
     std::map<std::string, std::string> typeName2Var;
+    void modifyPrjName(std::string Type, std::string oldName, std::string newName);
+    void modifyModelAttrName(std::string Type, const std::string oldName, const std::string newName);
     void modifyAttri(std::string Type, std::string Name, std::string Attri, std::string AttriValue);   //修改某一数据集的属性
 
     bool checkMap(std::string type, std::string name="NULL", std::string attri="NULL");
