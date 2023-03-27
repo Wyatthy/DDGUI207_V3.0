@@ -115,9 +115,9 @@ def capActAndGrad(signals, labels, checkpoint_path, \
             scores = tf.gather_nd(prediction, tf.stack([tf.range(prediction.shape[0]), labels], axis=1))
 
         # Gradient() computes the gradient using operations recorded in context of this tape
-        print("score: ", scores)
+        # print("score: ", scores)
         gradients = tape.gradient(scores, activations)
-        print("gradients: ", gradients.numpy().min(), gradients.numpy().max())
+        # print("gradients: ", gradients.numpy().min(), gradients.numpy().max())
 
 
     # Change the position of channel axes, for visualization
@@ -131,6 +131,19 @@ def capActAndGrad(signals, labels, checkpoint_path, \
         gradients = tf.transpose(gradients, perm=[0, 3, 1, 2])
 
     return activations.numpy(), gradients.numpy(), prediction_idx
+
+
+# 滑窗截取HRRP数据，制作HRRP历程图
+def HRRP_windows_cut(HRRP_data, windows_length, windows_step):
+    data_num = len(HRRP_data)
+    windows_num = int((data_num-windows_length)/windows_step) + 1
+    HRRP_picture = []
+    win_start = 0  # 滑窗截取开始位置
+    for i in range(0, windows_num):
+        hrrp_pic = HRRP_data[win_start:(windows_length+win_start)]
+        win_start += windows_step
+        HRRP_picture.append(hrrp_pic)
+    return np.array(HRRP_picture)
 
 
 def shuffle(data, label):
@@ -147,19 +160,19 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--project_path',
-        default="../../../work_dirs/基于HRRP数据的ATEC模型",
+        default="../../../work_dirs/基于RCS数据的ResNet50V2模型",
         type=str,
         help='工程文件路径, 包含数据集的工程文件夹路径'
     )
     parser.add_argument(
         '--model_name', 
-        default="HRRP_ATEC_fit_model.hdf5",
+        default="RCS_ResNet50V2.hdf5",
         type=str,
         help='工程路径下模型名指定'
     )
     parser.add_argument(
         '--mat_path',
-        default="../../../work_dirs/基于HRRP数据的ResNet50V2模型/train/DT/DT.mat",
+        default="../../../work_dirs/基于RCS数据的ResNet50V2模型/train/类别1/target201.mat",
         type=str,
         help='指定要可视化的.mat文件名'
     )
@@ -167,7 +180,7 @@ if __name__ == '__main__':
         '--mat_idx',
         nargs='+',
         type=int,
-        default=[5,6],
+        default=[1,5],
         help='指定.mat文件的索引,指定起始和终止位置,支持单个或多个索引'
     )
     parser.add_argument(
@@ -179,7 +192,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--visualize_layer',
-        default="conv1d_1",
+        default="conv2_block1_1_conv",
         type=str,
         help='可视化的隐层名'
     )
@@ -188,6 +201,24 @@ if __name__ == '__main__':
         default=False,
         type=str,
         help='是否保存模型信息至xml文件'
+    )
+    parser.add_argument(
+        '--RCS',
+        default=True,
+        type=bool,
+        help='是否使用RCS数据集, False使用RCS数据集'
+    )
+    parser.add_argument(
+        '--IMAGE_WINDOWS_LENGTH',
+        default=32,
+        type=int,
+        help='历程图/RCS数据集的窗口长度, 0表示不使用历程图数据集, 默认为32'
+    )
+    parser.add_argument(
+        '--IMAGE_WINDOWS_STEP',
+        default=10,
+        type=int,
+        help='历程图/RCS数据集的窗口步长, 0表示不使用历程图数据集, 默认为10'
     )
     args = parser.parse_args()
 
@@ -207,13 +238,27 @@ if __name__ == '__main__':
     else:
         repeatData = 64
 
-    ori_data = scio.loadmat(args.mat_path)
-    signals = data_normalization(ori_data[list(ori_data.keys())[-1]].T)
-    signals = signals[args.mat_idx[0]-1:args.mat_idx[1]]
-    # 堆叠数据, 或根据输入调整信号维度
-    if repeatData > 1:
-        signals = signals[:,:,None].repeat(repeatData, 2)
-    signals = signals[..., None]    # 补上通道数
+    ori_data = scio.loadmat(args.mat_path) # HRRP:(128, 50), RCS:(1, 1000)
+    if args.RCS:
+        signals = ori_data[list(ori_data.keys())[-1]].T
+        # 去除信号中的多余维度, 并归一化
+        signals = np.squeeze(signals)
+        signals -= np.min(signals)
+        signals /= np.max(signals)
+        signals = signals[..., None]
+    else:
+        signals = data_normalization(ori_data[list(ori_data.keys())[-1]].T)
+
+    if args.IMAGE_WINDOWS_LENGTH > 0 :   # 历程图数据集
+        signals = HRRP_windows_cut(signals, args.IMAGE_WINDOWS_LENGTH, args.IMAGE_WINDOWS_STEP)[args.mat_idx[0]-1:args.mat_idx[1]]
+        if args.RCS:
+            signals = signals.repeat(64, 2)[..., None]
+    else:   
+        signals = signals[args.mat_idx[0]-1:args.mat_idx[1]]
+        # 堆叠数据, 或根据输入调整信号维度
+        if repeatData > 1:
+            signals = signals[:,:,None].repeat(repeatData, 2)
+        signals = signals[..., None]    # 补上通道数
     # 分配标签
     labels = np.full((signals.shape[0],), folder_names.index(class_name))
     label_names = [class_name for i in range(signals.shape[0])]
@@ -231,24 +276,37 @@ if __name__ == '__main__':
 
     camCalculator = eval(args.cam_method)(signals, label_names)
     scaledCAMs = camCalculator(activations, gradients)    # bz, h, w
-    if "CNN" in args.model_name or "DNN" in args.model_name \
-                                or "ATEC" in args.model_name:
-        scaledCAMs = scaledCAMs
+    if args.IMAGE_WINDOWS_LENGTH > 0:    # 历程图数据集
+        if args.RCS:
+            scaledCAMs = np.mean(scaledCAMs, axis=2)[:, :, None]
+            camsOverlay = camCalculator._overlay_cam_on_signal(
+                imgs = signals,
+                cams = scaledCAMs,
+                layerName = "model."+args.visualize_layer
+            )
+        else:
+            camsOverlay = camCalculator._overlay_cam_on_image(
+                imgs = signals,
+                cams = scaledCAMs,
+            )
     else:
-        scaledCAMs = np.mean(scaledCAMs, axis=2)[:, :, None]
-    camsOverlay = camCalculator._overlay_cam_on_signal(
-        imgs = signals,
-        cams = scaledCAMs,
-        layerName = "model."+args.visualize_layer
-    )
-
+        if "CNN" in args.model_name or "DNN" in args.model_name \
+                                or "ATEC" in args.model_name:
+            scaledCAMs = scaledCAMs
+        else:
+            scaledCAMs = np.mean(scaledCAMs, axis=2)[:, :, None]
+        camsOverlay = camCalculator._overlay_cam_on_signal(
+            imgs = signals,
+            cams = scaledCAMs,
+            layerName = "model."+args.visualize_layer
+        )
     ############################# 保存 #############################
     saveImgPath = args.project_path + "/CAM_Output/" + \
-            +dataset_path.rsplit('/', 1)[-1] +"/"+ class_name +"/"+ mat_name
+            dataset_path.rsplit('/', 1)[-1] +"/"+ class_name +"/"+ mat_name
     if not os.path.exists(saveImgPath):
         os.makedirs(saveImgPath)
     for i, (camOverlay, scaledCAM) in enumerate(zip(camsOverlay, scaledCAMs)):
-        # 保存CAM图像
+        print(f"Saving {i+1}/{len(camsOverlay)}")
         cv2.imencode('.png', camOverlay)[1].tofile(saveImgPath +"/"+ \
                         str(args.mat_idx[0]+i) +'_'+ args.cam_method + ".png")
         # 保存CAM矩阵数据

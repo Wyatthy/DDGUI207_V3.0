@@ -95,6 +95,24 @@ if __name__ == '__main__':
         help='CAM决策可视化算法指定, \
             可选: GradCAM, GradCAMpp, XGradCAM, EigenGradCAM, LayerCAM'
     )
+    parser.add_argument(
+        '--RCS',
+        default=False,
+        type=bool,
+        help='是否使用RCS数据集'
+    )
+    parser.add_argument(
+        '--IMAGE_WINDOWS_LENGTH',
+        default=0,
+        type=int,
+        help='历程图数据集的窗口长度, 0表示不使用历程图数据集, 默认为32'
+    )
+    parser.add_argument(
+        '--IMAGE_WINDOWS_STEP',
+        default=0,
+        type=int,
+        help='历程图数据集的窗口步长, 0表示不使用历程图数据集, 默认为10'
+    )
     args = parser.parse_args()
 
     # 获取dataset的类别名, 并进行排序，保证与模型对应

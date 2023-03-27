@@ -111,6 +111,11 @@ void ModelCAMPage::confirmVis(){
         QMessageBox::warning(NULL,"错误","不支持该类型模型!");
         return;
     }
+    std::string dataType = projectsInfo->dataTypeOfSelectedProject;
+    QString isRCS = "False";
+    if(dataType == "RCS"){
+        isRCS = "True";
+    }
 
     // 执行python脚本
     QString activateEnv = "conda activate "+this->condaEnvName+"&&";
@@ -121,7 +126,10 @@ void ModelCAMPage::confirmVis(){
         " --mat_idx "           +QString::number(this->choicedMatIndexBegin)+ \
                                 " "+QString::number(this->choicedMatIndexEnd)+ \
         " --visualize_layer="   +this->targetVisLayer+ \
-        " --cam_method="        +this->choicedCamMethod;
+        " --cam_method="        +this->choicedCamMethod+ \
+        " --IMAGE_WINDOWS_LENGTH="+this->windowsLength+ \
+        " --IMAGE_WINDOWS_STEP=" +this->windowsStep+ \
+        " --RCS="               +isRCS;
     this->camImgsSavePath = this->projectPath+"/CAM_Output/"+ \
                             this->choicedStage+"/"+this->choicedLabel+"/"+ \
                             this->choicedMatName+"/" +\
@@ -480,9 +488,21 @@ void ModelCAMPage::on_comboBox_mat(QString choicedMat){
         ui->lineEdit_CAM_begin->clear();
         ui->lineEdit_CAM_end->clear();
         ui->lineEdit_CAM_begin->setText("1");
-        ui->lineEdit_CAM_end->setText(QString::number(N));
-
-        this->maxMatIndex = N;
+        // 加历程图相关功能
+        std::string dataType = projectsInfo->dataTypeOfSelectedProject;
+        if(dataType == "IMAGE" || dataType == "RCS"){
+            this->windowsLength = QString::fromStdString(projectsInfo->getAllAttri(dataType,projectsInfo->nameOfSelectedProject)["Model_WindowsLength"]);
+            this->windowsStep = QString::fromStdString(projectsInfo->getAllAttri(dataType,projectsInfo->nameOfSelectedProject)["Model_WindowsStep"]);
+            int sampleNum = (N - this->windowsLength.toInt())/this->windowsStep.toInt() + 1;
+            ui->lineEdit_CAM_end->setText(QString::number(sampleNum));
+            this->maxMatIndex = sampleNum;
+        }
+        else{
+            this->windowsLength = "0";
+            this->windowsStep = "0";
+            ui->lineEdit_CAM_end->setText(QString::number(N));
+            this->maxMatIndex = N;
+        }
     }
 }
 
@@ -858,6 +878,11 @@ void ModelCAMPage::confirmVis_2(){
         QMessageBox::warning(NULL,"错误","不支持该类型模型!");
         return;
     }
+    std::string dataType = projectsInfo->dataTypeOfSelectedProject;
+    QString isRCS = "False";
+    if(dataType == "RCS"){
+        isRCS = "True";
+    }
 
     // 执行python脚本
     QString activateEnv = "conda activate "+this->condaEnvName+"&&";
@@ -868,7 +893,10 @@ void ModelCAMPage::confirmVis_2(){
         " --mat_idx "           +QString::number(this->choicedMatIndexBegin_2)+ \
                                 " "+QString::number(this->choicedMatIndexEnd_2)+ \
         " --visualize_layer="   +this->targetVisLayer_2+ \
-        " --cam_method="        +this->choicedCamMethod_2;
+        " --cam_method="        +this->choicedCamMethod_2+ \
+        " --IMAGE_WINDOWS_LENGTH="+this->windowsLength+ \
+        " --IMAGE_WINDOWS_STEP=" +this->windowsStep+ \
+        " --RCS="               +isRCS;
     this->camImgsSavePath_2 = this->projectPath+"/CAM_Output/"+ \
                             this->choicedStage_2+"/"+this->choicedLabel_2+"/"+ \
                             this->choicedMatName_2+"/" +\
@@ -1021,9 +1049,22 @@ void ModelCAMPage::on_comboBox_mat_2(QString choicedMat){
         ui->lineEdit_CAM_begin_2->clear();
         ui->lineEdit_CAM_end_2->clear();
         ui->lineEdit_CAM_begin_2->setText("1");
-        ui->lineEdit_CAM_end_2->setText(QString::number(N));
-
-        this->maxMatIndex_2 = N;
+        // 加历程图相关功能
+        std::string dataType = projectsInfo->dataTypeOfSelectedProject;
+        if(dataType == "IMAGE" || dataType == "RCS"){
+            this->windowsLength = QString::fromStdString(projectsInfo->getAllAttri(dataType,projectsInfo->nameOfSelectedProject)["Model_WindowsLength"]);
+            this->windowsStep = QString::fromStdString(projectsInfo->getAllAttri(dataType,projectsInfo->nameOfSelectedProject)["Model_WindowsStep"]);
+            int sampleNum = (N - this->windowsLength.toInt())/this->windowsStep.toInt() + 1;
+            ui->lineEdit_CAM_end_2->setText(QString::number(sampleNum));
+            this->maxMatIndex_2 = sampleNum;
+        }
+        else{
+            this->windowsLength = "0";
+            this->windowsStep = "0";
+            ui->lineEdit_CAM_end_2->setText(QString::number(N));
+            this->maxMatIndex_2 = N;
+        }
     }
+
 }
 /************************************************************************/

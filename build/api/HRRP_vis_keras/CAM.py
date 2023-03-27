@@ -129,7 +129,7 @@ class BaseCAM():
                             cams: List[np.ndarray]=None,
                             use_rgb: bool = False,
                             colormap: int = cv2.COLORMAP_JET,
-                            image_weight: float = 0.5) -> List[np.ndarray]:
+                            image_weight: float = 0.6) -> List[np.ndarray]:
         """ This function overlays the cam mask on the image as an heatmap.
         By default the heatmap is in BGR format.
         :param img: The base image in RGB or BGR format.
@@ -160,7 +160,7 @@ class BaseCAM():
 
             cam = (1 - image_weight) * heatmap + image_weight * img
             cam = cam / np.max(cam)
-            result.append(np.uint8(255 * cam).transpose(1, 0, 2))
+            result.append(np.uint8(255 * cam))
         return result
 
 
