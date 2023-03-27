@@ -35,7 +35,7 @@ public:
     std::vector<QLabel*> chartInfoGroup;
     QString workDir;
     void reloadTreeView();
-
+    void makeProjectDock(QString projectName,QString projectPath);
     std::string leftSelType;
     std::string leftSelName;
     std::string rightSelType;

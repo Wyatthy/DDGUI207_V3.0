@@ -280,7 +280,6 @@ void ModelVisPage::confirmModel(){
     this->choicedModelSuffix = "." + this->choicedModelName.split(".").last();
     this->modelStructXmlPath = this->projectPath + "/" + this->choicedModelName.split(".").first() + "_struct.xml";
     this->modelStructImgPath = this->projectPath + "/" + this->choicedModelName.split(".").first() + "_structImage";
-
     // 判断是否存在模型结构文件*_struct.xml，如果没有则返回
     if (!dirTools->isExist(this->modelStructXmlPath.toStdString())){
         QMessageBox::warning(NULL, "", "模型不支持可视化，请重新选择！");
@@ -317,6 +316,7 @@ void ModelVisPage::confirmData(){
     }
 
     //绘图
+    qDebug()<<QString::fromStdString(projectsInfo->dataTypeOfSelectedProject);
     this->currMatIndex = this->choicedMatIndexBegin;
     ui->lineEdit_mV_currIndex->setText(QString::number(this->currMatIndex));
     Chart *previewChart = new Chart(ui->label_mV_choicedImg, QString::fromStdString(projectsInfo->dataTypeOfSelectedProject), this->choicedMatPATH);
@@ -583,7 +583,7 @@ void ModelVisPage::loadModelStruct_L1(QStringList &currLayers, std::map<std::str
     QDomElement RootElement = datasetInfoDoc.documentElement();    //根元素, Info
     //遍历一级根结点
     for(QDomElement currL1Ele = RootElement.firstChildElement(); !currL1Ele.isNull(); currL1Ele = currL1Ele.nextSiblingElement()){
-        // cout<<"----->"<<currL1Ele->tagName().toStdString()<<endl;
+        qDebug()<<currL1Ele.tagName();
         currLayers.append(currL1Ele.tagName());
     }
 }

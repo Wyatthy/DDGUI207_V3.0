@@ -287,7 +287,7 @@ def saveModelInfo(model, modelPath):
                     node3.appendChild(node4)
                 else:
                     node4 = node3.getElementsByTagName(modeName)[0]
-    f = open(rootPath + '/'+ modelName + "_struct.xml", "w")
+    f = open(rootPath + '/'+ modelName + "_struct.xml", "w", encoding='utf-8')
     xmlDoc.writexml(f, addindent='\t', newl='\n', encoding="utf-8")
     f.close()
 

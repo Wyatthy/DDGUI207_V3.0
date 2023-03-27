@@ -119,7 +119,48 @@ string ProjectDock::getPathByRightClicked(){
     retPath = rootPath + rearConent;
     return retPath;
 }
-
+void ProjectDock::makeProjectDock(QString projectName,QString projectPath){
+    vector<string> allXmlNames;
+    dirTools->getFilesplus(allXmlNames, ".xml",projectPath.toStdString());
+    auto xmlIdx = std::find(allXmlNames.begin(), allXmlNames.end(), projectName.toStdString()+".xml");
+    if (xmlIdx == allXmlNames.end()){
+        terminal->print("工程添加成功，但该工程没有说明文件.xml!");
+        QMessageBox::warning(NULL, "添加工程", "工程添加成功，但该工程没有说明文件.xml!");
+        xmlIdx = std::find(allXmlNames.begin(), allXmlNames.end(), "model.xml");
+        if(xmlIdx != allXmlNames.end()){
+            QString xmlPath = projectPath + "/model.xml";
+            projectsInfo->addProjectFromXML(xmlPath.toStdString());
+        }
+    }
+    else{
+        QString xmlPath = projectPath + "/" + projectName + ".xml";
+        projectsInfo->addProjectFromXML(xmlPath.toStdString());
+        terminal->print("工程添加成功:"+xmlPath);
+        QMessageBox::information(NULL, "添加工程", "工程添加成功!");
+    }
+    // train文件夹路径
+    QString trainPath = projectPath + "/train";
+    // 把train文件夹下所有的文件夹名字作为类别名字，放在一个QString里面
+    QString classNames = "";
+    QStringList folders = QDir(trainPath).entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+    for (int i = 0; i < folders.size(); i++) {
+        QString folderName = folders.at(i);
+        // 最后一个不要、
+        if (i == folders.size() - 1) classNames += folderName;
+        else classNames += folderName + ",";
+    }
+    // 得到train文件夹下所有文件夹的个数作为类别数量
+    int classNum = folders.size();
+    
+    this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"Project_Path", projectPath.toStdString());
+    this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"Model_DataType", rightSelType);
+    this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"datasetClassNum", std::to_string(classNum));
+    this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"datasetClassName", classNames.toStdString());
+    this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"datasetNote", "-");
+    this->reloadTreeView();
+    qDebug()<<"import and writeToXML";
+    this->projectsInfo->writeToXML(projectsInfo->defaultXmlPath);
+}
 void ProjectDock::drawExample(){//TODO mat变量不合适和样本索引范围不合适要不要提醒的问题
     /*相关控件：
         QLineEdit样本索引号：ui->projectDock_examIdx
@@ -290,7 +331,7 @@ void ProjectDock::onAction_modifyProject(){
 
             // modelInfo->writeToXML(modelXmlPath);
             // ProjectDockMessage(projectNaming, newProjectPath);
-            ProjectDockMessage(projectNaming,currentProjPath);
+            // ProjectDockMessage(projectNaming,currentProjPath);
             updateDatasetInfo(projectNaming, newProjectPath);
 
             QMessageBox::information(NULL, "修改工程", "修改成功！");
@@ -399,8 +440,9 @@ void ProjectDock::onAction_NewProject(){
         // qDebug()<< "labelPathOut:" << projectPath["unknown_test"];
         // if (confirmProjectType(projectNaming)){
         newProjectPath = makeNewProject(projectNaming, projectInputPath);
-        ProjectDockMessage(projectNaming, newProjectPath);
-        updateDatasetInfo(projectNaming, newProjectPath);
+        // ProjectDockMessage(projectNaming, newProjectPath);
+        // updateDatasetInfo(projectNaming, newProjectPath);
+        makeProjectDock(projectNaming, newProjectPath);
         // }
     }
 }
@@ -753,8 +795,9 @@ void ProjectDock::onAction_AddProject(){
         // 如果工程文件不存在，就复制过去
         if (!QDir(currentProjPath).exists()){
             copyDir(projectPath,currentProjPath);
-            ProjectDockMessage(projectNameQ,currentProjPath);
-            updateDatasetInfo(projectNameQ,currentProjPath);
+                // ProjectDockMessage(projectNameQ,currentProjPath);
+                // updateDatasetInfo(projectNameQ,currentProjPath);S
+            makeProjectDock(projectNameQ, currentProjPath);
         }else{
             // 如果工程文件夹存在，先弹窗询问是否覆盖
             QMessageBox::StandardButton button;
@@ -767,8 +810,9 @@ void ProjectDock::onAction_AddProject(){
                 // qDebug() << "覆盖工程的源路径：" << projectPath;
                 // qDebug() << "覆盖工程：" << currentProjPath;
                 copyDir(projectPath,currentProjPath);
-                ProjectDockMessage(projectNameQ,currentProjPath);
-                updateDatasetInfo(projectNameQ,currentProjPath);
+                // ProjectDockMessage(projectNameQ,currentProjPath);
+                // updateDatasetInfo(projectNameQ,currentProjPath);
+                makeProjectDock(projectNameQ, currentProjPath);
             }
 
         }
@@ -856,10 +900,10 @@ void ProjectDock::updateDatasetInfo(QString projectName,QString projectPath){
     }else{
         this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"Project_Path", "-");
     }
-    if (this->projectsInfo->checkMap(rightSelType, projectName.toStdString(),"ProjectType")){
-        this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"ProjectType", rightSelType);
+    if (this->projectsInfo->checkMap(rightSelType, projectName.toStdString(),"Model_DataType")){
+        this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"Model_DataType", rightSelType);
     }else{
-        this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"ProjectType", "-");
+        this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"Model_DataType", "-");
     }
     if (this->projectsInfo->checkMap(rightSelType, projectName.toStdString(),"datasetClassNum")){
         this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"datasetClassNum", std::to_string(classNum));
