@@ -145,6 +145,7 @@ int ProjectsInfo::addProjectFromXML(string xmlpath){
             this->infoMap[currTypeEle->Value()][currNameEle->Value()].insert(datasetAttrMap.begin(),datasetAttrMap.end());
         }
     }
+    fclose(xmlFile);
     return 1;
 }
 
@@ -198,6 +199,8 @@ string ProjectsInfo::showXmlAttri(std::string xmlpath){
                 // qDebug()<<"(attr.first="<<attr.first.c_str()<<", attr.second="<<attr.second.c_str();
                 // 如果属性是“ModelType”，返回值
                 if(attr.first == "ModelType"){
+                    // 要及时关闭打开的xml文件，不然会删不了
+                    fclose(xmlFile);
                     return attr.second;
                 }
             }
@@ -210,6 +213,26 @@ string ProjectsInfo::showXmlAttri(std::string xmlpath){
 void ProjectsInfo::modifyAttri(string Type, string projectName, string Attri, string AttriValue){
     this->infoMap[Type][projectName][Attri] = AttriValue;
 }
+
+// 修改工程层级名字
+void ProjectsInfo::modifyPrjName(string Type, string oldName, string newName){
+    this->infoMap[Type][newName] = this->infoMap[Type][oldName];
+    this->infoMap[Type].erase(oldName);
+}
+
+
+// 修改三级属性名字(修改工程层级名附属函数)
+void ProjectsInfo::modifyModelAttrName(std::string Type, const std::string oldName, const std::string newName){
+    for(auto &item:infoMap[Type][newName]){
+        std::string& value = item.second;
+        size_t pos = value.find(oldName);
+        while(pos != std::string::npos){
+            value.replace(pos, oldName.length(), newName);
+            pos = value.find(oldName, pos + newName.length());
+        }
+    }
+}
+
 
 void ProjectsInfo::deleteProject(string type, string projectName){
     if(checkMap(type, projectName)){

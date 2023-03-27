@@ -14,6 +14,14 @@
 #include "core/projectsWindow/chart.h"
 #include "./lib/guiLogic/tools/searchFolder.h"
 #include <mat.h>
+#include <io.h>
+#include <string>
+#include <QDomDocument>
+#include <QDomElement>
+#include <QDomNode>
+#include <QTextStream>
+#include <QXmlStreamReader>
+#include <QXmlStreamWriter>
 
 class ProjectDock:public QObject{
     Q_OBJECT
@@ -41,8 +49,6 @@ public:
     // 新建工程文件夹的路径
     QString newProjectPath;
 
-
-
 // public slots:
 //     void importDataset(std::string type);
 //     void deleteDataset();
@@ -57,6 +63,7 @@ private slots:
     void onAction_DeleteProject();
     void onAction_ShotProject();
     void onAction_AddProject();
+    void onAction_modifyProject();
     void onAction_NewProject();
     void onAction_Expand();
     void onAction_Collapse();
@@ -73,6 +80,7 @@ private:
     QModelIndex rightMsIndex;
     QModelIndex leftMsIndex;
     ProjectsInfo *projectsInfo;
+
     QString selectedMatFilePath = ""; 
     void addFilesToItem(QStandardItem *parentItem, const QString &path);
     QModelIndex findModelIndexByName(QStandardItem *item, const QString &name);
@@ -86,13 +94,16 @@ private:
     QString lastProjectDataType = "";
     // 不同平台下文件夹搜索工具
     SearchFolder *dirTools = new SearchFolder();
-
-    bool copyDir(const QString& srcPath, const QString& dstPath);
+    bool copyFile(const QString &srcFilePath, const QString &tgtFilePath);
+    bool copyDir(const QString &srcDirPath, const QString &tgtDirPath);
     QString makeNewProject(QString name, QMap<QString, QString> path);
-    void makeProjectDock(QString projectName,QString projectPath);
-    bool deleteDir(const QString& path);
+    void ProjectDockMessage(QString projectName,QString projectPath);
+    void updateDatasetInfo(QString projectName,QString projectPath);
+    bool deleteDir(const QString &strPath);
+    bool removeDir(const QString &dirPath);
     bool confirmProjectType(QString projectPath);
-
+    void renameFiles(const QString& path, const QString& oldName, const QString& newName);
+    void updateXmlFile(QString filePath, QString oldName, QString newName);
 };
 
 #endif // DATASETDOCK_H
