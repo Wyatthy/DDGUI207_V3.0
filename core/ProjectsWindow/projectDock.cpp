@@ -47,6 +47,14 @@ ProjectDock::ProjectDock(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, Pr
     projectInputPath.insert("test_path", "/path/to/test");
     projectInputPath.insert("unknown_test", "/path/to/unknown_test");
 
+    // 工程文件夹预览初始化
+    this->projectPreview["datasetClassNum"] = ui->label_projectDock_clasNUm;
+    this->projectPreview["datasetClassName"] = ui->label_projectDock_claName;
+    this->projectPreview["Model_Algorithm"] = ui->label_projectDock_modelAlgorithm;
+    this->projectPreview["Model_AlgorithmType"] = ui->label_projectDock_algorithmType;
+    this->projectPreview["Model_AccuracyOnVal"] = ui->label_projectDock_modelAcc;
+
+
     // 获取当前工程路径
     QString currentPath = QDir::currentPath();
     // qDebug() << "currentPath = " << currentPath;
@@ -123,14 +131,16 @@ void ProjectDock::makeProjectDock(QString projectName,QString projectPath){
     vector<string> allXmlNames;
     dirTools->getFilesplus(allXmlNames, ".xml",projectPath.toStdString());
     auto xmlIdx = std::find(allXmlNames.begin(), allXmlNames.end(), projectName.toStdString()+".xml");
+    qDebug()<< "xmlIdx:" << xmlIdx->c_str();
+
     if (xmlIdx == allXmlNames.end()){
         terminal->print("工程添加成功，但该工程没有说明文件.xml!");
         QMessageBox::warning(NULL, "添加工程", "工程添加成功，但该工程没有说明文件.xml!");
-        xmlIdx = std::find(allXmlNames.begin(), allXmlNames.end(), "model.xml");
-        if(xmlIdx != allXmlNames.end()){
-            QString xmlPath = projectPath + "/model.xml";
-            projectsInfo->addProjectFromXML(xmlPath.toStdString());
-        }
+        // xmlIdx = std::find(allXmlNames.begin(), allXmlNames.end(), "model.xml");
+        // if(xmlIdx != allXmlNames.end()){
+        //     QString xmlPath = projectPath + "/model.xml";
+        //     projectsInfo->addProjectFromXML(xmlPath.toStdString());
+
     }
     else{
         QString xmlPath = projectPath + "/" + projectName + ".xml";
@@ -206,11 +216,12 @@ void ProjectDock::treeItemClicked(const QModelIndex &index){
     if(depth == 0){     //选中了第一层,下面刷新工程信息
         // 显示数据集预览属性信息
         qDebug()<<"depth0 "<<itemPath;
-        // map<string,string> attriContents = projectsInfo->getAllAttri(leftSelType, leftSelName);
-        // if(attriContents.size() != 0)
-        //     for(auto &currAttriLabel: attriLabelGroup){
-        //         currAttriLabel.second->setText(QString::fromStdString(attriContents[currAttriLabel.first]));
-        //     }
+        map<string,string> attriContents = projectsInfo->getAllAttri(leftSelType, leftSelName);
+        if(attriContents.size() != 0)
+            for(auto &currAttriLabel: projectPreview){
+                currAttriLabel.second->setText(QString::fromStdString(attriContents[currAttriLabel.first]));
+            }
+
     }
     else if(depth == 1){     //
         qDebug()<<"depth1 "<<itemPath;
@@ -490,143 +501,22 @@ bool ProjectDock::deleteDir(const QString &strPath)//要删除的文件夹或文
 	return true;
 }
 
-
-// bool ProjectDock::removeDir(const QString &dirPath)
-// {
-//     // 检查路径是否存在
-//     if (!QFileInfo(dirPath).exists()) {
-//         return false;
-//     }
-    
-//     // 检查是否有文件正在使用
-//     QDir dir(dirPath);
-//     QFileInfoList fileList = dir.entryInfoList(QDir::AllEntries | QDir::Hidden | QDir::System);
-//     for (const QFileInfo &fileInfo : fileList) {
-//         if (fileInfo.isFile()) {
-//             QFile file(fileInfo.absoluteFilePath());
-//             if (!file.remove()) {
-//                 return false;
-//             }
-//         } else if (fileInfo.isDir()) {
-//             if (!removeDir(fileInfo.absoluteFilePath())) {
-//                 return false;
-//             }
-//         }
-//     }
-    
-//     // 删除目录
-//     if (!dir.rmdir(dirPath)) {
-//         return false;
-//     }
-    
-//     return true;
-// }
-
-
-/* 复制文件夹下的所有文件
-
-    * @param filePaths 待复制的文件路径列表
-    * @param destPath 目标路径
-
-*/
-// bool ProjectDock::copyDir(const QString& srcPath,const QString& dstPath)
-// {
-//     QDir srcDir(srcPath);
-//     QDir dstDir(dstPath);
-
-//     if(!dstDir.exists(dstPath)){
-//         dstDir.mkpath(dstPath);
-//     }
-
-
-//     QFileInfoList files = srcDir.entryInfoList(QDir::Files | QDir::Hidden | QDir::NoSymLinks);
-//     foreach (QFileInfo fileInfo, files) {
-//         QString dstFileName = dstDir.filePath(fileInfo.fileName());
-//         if (!QFile::copy(fileInfo.filePath(), dstFileName)) {
-//             return false;
-//         }
-//     }
-
-//     QFileInfoList dirs = srcDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
-//     foreach (QFileInfo dirInfo, dirs) {
-//         QString srcSubDir = srcPath + "/" + dirInfo.fileName();
-//         QString dstSubDir = dstPath + "/" + dirInfo.fileName();
-//         if (!copyDir(srcSubDir, dstSubDir)) {
-//             return false;
-//         }
-//     }
-
-//     return true;
-// }
-
-// 复制文件函数
-bool ProjectDock::copyFile(const QString &srcFilePath, const QString &tgtFilePath)
+void ProjectDock::copyDir(QString src, QString dst)
 {
-    QFile srcFile(srcFilePath);
-    if (!srcFile.exists() || !srcFile.open(QIODevice::ReadOnly))
-        return false;
-
-    QFile tgtFile(tgtFilePath);
-    // if (tgtFile.exists()) {
-    //     int ret = QMessageBox::warning(nullptr, tr("Confirm File Replace"),
-    //                                    tr("File %1 already exists. Do you want to replace it?")
-    //                                        .arg(tgtFilePath),
-    //                                    QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
-    //     if (ret != QMessageBox::Yes)
-    //         return false;
-        tgtFile.remove(); // 移除原文件
-    // }
-
-    if (!tgtFile.open(QIODevice::WriteOnly))
-        return false;
-
-    qint64 totalBytes = srcFile.size();
-    qint64 bytesWritten = 0;
-    char buf[1024];
-    qint64 bytesRead;
-    while ((bytesRead = srcFile.read(buf, sizeof(buf))) > 0) {
-        bytesWritten = tgtFile.write(buf, bytesRead);
-        if (bytesWritten != bytesRead) {
-            srcFile.close();
-            tgtFile.close();
-            return false;
-        }
-        bytesWritten += bytesWritten;
-        if (bytesWritten < totalBytes) {
-            // 拷贝进度
-        }
+    QDir dir(src);
+    if (! dir.exists())
+        return;
+ 
+    foreach (QString d, dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+        QString dst_path = dst + QDir::separator() + d;
+        dir.mkpath(dst_path);
+        copyDir(src+ QDir::separator() + d, dst_path);//use recursion
     }
-    srcFile.close();
-    tgtFile.close();
-    return true;
+ 
+    foreach (QString f, dir.entryList(QDir::Files)) {
+        QFile::copy(src + QDir::separator() + f, dst + QDir::separator() + f);
+    }
 }
-
-// 复制文件夹函数
-bool ProjectDock::copyDir(const QString &srcDirPath, const QString &tgtDirPath)
-{
-    QDir srcDir(srcDirPath);
-    QDir tgtDir(tgtDirPath);
-    if (!tgtDir.exists())
-        tgtDir.mkpath(tgtDirPath); // 创建目标路径
-
-    foreach (QFileInfo fileInfo, srcDir.entryInfoList(QDir::Files)) {
-        QString srcFilePath = fileInfo.absoluteFilePath();
-        QString tgtFilePath = tgtDirPath + QDir::separator() + fileInfo.fileName();
-        if (!copyFile(srcFilePath, tgtFilePath))
-            return false;
-    }
-
-    foreach (QFileInfo subDirInfo, srcDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot)) {
-        QString subDirName = subDirInfo.fileName();
-        QString subSrcDirPath = subDirInfo.absoluteFilePath();
-        QString subTgtDirPath = tgtDirPath + QDir::separator() + subDirName;
-        if (!copyDir(subSrcDirPath, subTgtDirPath))
-            return false;
-    }
-    return true;
-}
-
-
 
 void ProjectDock::onAction_Delete(){
     QMessageBox confirmMsg;
@@ -764,6 +654,12 @@ void ProjectDock::onAction_ShotProject(){
     // qDebug()<<"更新工程路径："<<QString::fromStdString(projectsInfo->pathOfSelectedProject);
     // updateDatasetInfo(QString::fromStdString(rightSelName),QString::fromStdString(projectsInfo->pathOfSelectedProject));
 
+    //更新工程信息到xml
+    // xml路径
+    std::string modelXmlPath = projectsInfo->pathOfSelectedProject + "/" + rightSelName + ".xml";
+    qDebug()<<"更新工程信息到xml："<<QString::fromStdString(modelXmlPath);
+    this->projectsInfo->writePrjInfoToXML(modelXmlPath,rightSelName);
+
 
     // 发送信号给MainWIndow，让其刷新各个界面，比如调用EvalPage的refreshGlobalInfo
     if(this->lastProjectPath != project_path){
@@ -795,28 +691,24 @@ void ProjectDock::onAction_AddProject(){
         // 如果工程文件不存在，就复制过去
         if (!QDir(currentProjPath).exists()){
             copyDir(projectPath,currentProjPath);
-                // ProjectDockMessage(projectNameQ,currentProjPath);
-                // updateDatasetInfo(projectNameQ,currentProjPath);S
             makeProjectDock(projectNameQ, currentProjPath);
         }else{
-            // 如果工程文件夹存在，先弹窗询问是否覆盖
-            QMessageBox::StandardButton button;
-            button = QMessageBox::question(NULL, "提示", "该工程已存在，是否覆盖？", QMessageBox::Yes | QMessageBox::No);
-            if (button == QMessageBox::No) {
-                return;
-            }else{
-                // deleteDir(currentProjPath);
-
                 // qDebug() << "覆盖工程的源路径：" << projectPath;
                 // qDebug() << "覆盖工程：" << currentProjPath;
-                copyDir(projectPath,currentProjPath);
-                // ProjectDockMessage(projectNameQ,currentProjPath);
-                // updateDatasetInfo(projectNameQ,currentProjPath);
-                makeProjectDock(projectNameQ, currentProjPath);
-            }
-
+                if (projectPath == currentProjPath){
+                    makeProjectDock(projectNameQ, currentProjPath);
+                }
+                else{
+                    // 如果工程文件夹存在，先弹窗询问是否覆盖
+                    // QMessageBox::StandardButton button;
+                    // button = QMessageBox::question(NULL, "提示", "该工程已存在，是否覆盖？", QMessageBox::Yes | QMessageBox::No);
+                    // if (button == QMessageBox::No) {
+                    //     return;
+                    // }
+                    copyDir(projectPath,currentProjPath);
+                    makeProjectDock(projectNameQ, currentProjPath);
+                }
         }
-        
     }
 }
 
@@ -856,7 +748,7 @@ void ProjectDock::ProjectDockMessage(QString projectName,QString projectPath)
     vector<string> allXmlNames;
     dirTools->getFilesplus(allXmlNames, ".xml",projectPath.toStdString());
     auto xmlIdx = std::find(allXmlNames.begin(), allXmlNames.end(), projectName.toStdString()+".xml");
-    qDebug()<< "allXmlNames.end()" << QString::fromStdString(allXmlNames.back());
+
     if (xmlIdx == allXmlNames.end()){
         terminal->print("工程添加成功，但该工程没有说明文件.xml!");
         QMessageBox::warning(NULL, "添加工程", "工程添加成功，但该工程没有说明文件.xml!");
@@ -904,6 +796,11 @@ void ProjectDock::updateDatasetInfo(QString projectName,QString projectPath){
         this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"Model_DataType", rightSelType);
     }else{
         this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"Model_DataType", "-");
+    }
+    if (this->projectsInfo->checkMap(rightSelType, projectName.toStdString(),"ProjectType")){
+        this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"ProjectType", rightSelType);
+    }else{
+        this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"ProjectType", "-");
     }
     if (this->projectsInfo->checkMap(rightSelType, projectName.toStdString(),"datasetClassNum")){
         this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"datasetClassNum", std::to_string(classNum));

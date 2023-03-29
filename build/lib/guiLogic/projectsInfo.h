@@ -26,6 +26,7 @@ public:
 
     std::string defaultXmlPath;
     int writeToXML(std::string xmlPath);             // 将载入的数据集信息保存至.xml文件
+    int writePrjInfoToXML(std::string xmlPath,std::string prjFolderName);
     int loadFromXML(std::string xmlPath);            // 从.xml文件中读取所载入数据集的信息
 
     int addProjectFromXML(std::string xmlPath);        // 从.xml文件中导入新数据集

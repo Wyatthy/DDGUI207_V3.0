@@ -48,6 +48,8 @@ public:
     QMap<QString,QString> projectInputPath;
     // 新建工程文件夹的路径
     QString newProjectPath;
+    // 工程文件夹预览
+    std::map<std::string, QLabel*> projectPreview;
 
 // public slots:
 //     void importDataset(std::string type);
@@ -95,7 +97,8 @@ private:
     // 不同平台下文件夹搜索工具
     SearchFolder *dirTools = new SearchFolder();
     bool copyFile(const QString &srcFilePath, const QString &tgtFilePath);
-    bool copyDir(const QString &srcDirPath, const QString &tgtDirPath);
+    // bool copyDir(const QString &srcDirPath, const QString &tgtDirPath);
+    void copyDir(QString src, QString dst);
     QString makeNewProject(QString name, QMap<QString, QString> path);
     void ProjectDockMessage(QString projectName,QString projectPath);
     void updateDatasetInfo(QString projectName,QString projectPath);

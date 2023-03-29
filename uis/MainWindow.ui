@@ -33,7 +33,7 @@
        </sizepolicy>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="page_senseSet">
        <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -134,7 +134,7 @@
            <property name="geometry">
             <rect>
              <x>0</x>
-             <y>-78</y>
+             <y>0</y>
              <width>930</width>
              <height>1414</height>
             </rect>
@@ -2587,7 +2587,7 @@
                <x>0</x>
                <y>0</y>
                <width>368</width>
-               <height>770</height>
+               <height>563</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -2776,7 +2776,7 @@
                <x>0</x>
                <y>0</y>
                <width>699</width>
-               <height>770</height>
+               <height>620</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -3163,8 +3163,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>951</width>
-             <height>801</height>
+             <width>353</width>
+             <height>307</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_57">
@@ -3400,8 +3400,8 @@
                        <rect>
                         <x>0</x>
                         <y>0</y>
-                        <width>442</width>
-                        <height>579</height>
+                        <width>143</width>
+                        <height>85</height>
                        </rect>
                       </property>
                       <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -6310,13 +6310,25 @@
            <layout class="QHBoxLayout" name="horizontalLayout_31">
             <item>
              <widget class="QLabel" name="label_72">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
-               <string>目标类别数</string>
+               <string>目标类别数:</string>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QLabel" name="label_projectDock_clasNUm">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="minimumSize">
                <size>
                 <width>10</width>
@@ -6334,13 +6346,25 @@
            <layout class="QHBoxLayout" name="horizontalLayout_37">
             <item>
              <widget class="QLabel" name="label_84">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
-               <string>模型框架</string>
+               <string>类别名称:</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="label_projectDock_frame">
+             <widget class="QLabel" name="label_projectDock_claName">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="minimumSize">
                <size>
                 <width>10</width>
@@ -6358,13 +6382,25 @@
            <layout class="QHBoxLayout" name="horizontalLayout_33">
             <item>
              <widget class="QLabel" name="label_76">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
-               <string>是否可解释</string>
+               <string>模型算法:</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="label_projectDock_visualize">
+             <widget class="QLabel" name="label_projectDock_modelAlgorithm">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="minimumSize">
                <size>
                 <width>10</width>
@@ -6382,13 +6418,25 @@
            <layout class="QHBoxLayout" name="horizontalLayout_32">
             <item>
              <widget class="QLabel" name="label_74">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
-               <string>模型准确率</string>
+               <string>算法类型:</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="label_projectDock_modelAcc">
+             <widget class="QLabel" name="label_projectDock_algorithmType">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="minimumSize">
                <size>
                 <width>10</width>
@@ -6406,13 +6454,25 @@
            <layout class="QHBoxLayout" name="horizontalLayout_34">
             <item>
              <widget class="QLabel" name="label_78">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
-               <string>每类下样本数：</string>
+               <string>模型准确率:</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="label_projectDock_targetNumEachCla">
+             <widget class="QLabel" name="label_projectDock_modelAcc">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="minimumSize">
                <size>
                 <width>10</width>
@@ -6427,28 +6487,7 @@
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_35">
-            <item>
-             <widget class="QLabel" name="label_80">
-              <property name="text">
-               <string>工程路径:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_projectDock_path">
-              <property name="minimumSize">
-               <size>
-                <width>10</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string/>
-              </property>
-             </widget>
-            </item>
-           </layout>
+           <layout class="QHBoxLayout" name="horizontalLayout_35"/>
           </item>
          </layout>
         </item>
@@ -6948,8 +6987,8 @@
   </action>
  </widget>
  <resources>
-  <include location="../sources/MainWindow_sources.qrc"/>
   <include location="../build/conf/QRibbon/QRibbon.qrc"/>
+  <include location="../sources/MainWindow_sources.qrc"/>
  </resources>
  <connections>
   <connection>
