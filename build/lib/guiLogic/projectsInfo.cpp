@@ -97,6 +97,60 @@ int ProjectsInfo::writeToXML(string xmlPath){
     return 1;
 }
 
+//projectInfo写入工程文件夹下的xml
+int ProjectsInfo::writePrjInfoToXML(string xmlPath, string prjFolderName) {
+    TiXmlDocument *writeDoc = new TiXmlDocument; //xml文档指针
+    TiXmlDeclaration *decl = new TiXmlDeclaration("1.0", "UTF-8", "yes");       //文档格式声明
+    writeDoc->LinkEndChild(decl); //写入文档
+
+    TiXmlElement *RootElement = new TiXmlElement("globalProjectInfo");          //根元素
+    RootElement->SetAttribute("dataTypeNum", this->typeNum());  //属性
+    writeDoc->LinkEndChild(RootElement);
+
+    int typeID = 0;
+    int nameID = 0;
+    for(auto &datasetType: this->infoMap){  //n个父节点,即n个数据类型
+        /* 对每个数据集类型建立节点 */
+        typeID += 1;
+        TiXmlElement *currTypeEle = new TiXmlElement(datasetType.first.c_str());
+        currTypeEle->SetAttribute("typeID",typeID);         //设置节点属性
+        RootElement->LinkEndChild(currTypeEle);             //父节点根节点
+
+        //子元素
+        for(auto &datasetName: datasetType.second){
+            /* 对每个数据集建立节点 */
+            nameID += 1;
+            TiXmlElement *currNameEle = new TiXmlElement(datasetName.first.c_str());
+            currTypeEle->LinkEndChild(currNameEle);
+            currNameEle->SetAttribute("nameID",nameID);
+
+            // qDebug() << "prjFolderName: " << QString::fromStdString(prjFolderName);
+            // 如果工程文件名字等于prjFolderName，说明是当前工程，需要将其属性写入
+            if (datasetName.first == prjFolderName) {
+                qDebug() << "datasetName.first: " << QString::fromStdString(datasetName.first);
+                for(auto &datasetAttr: datasetName.second){
+                    /* 对每个属性建立节点 */
+                    TiXmlElement *currAttrEle = new TiXmlElement(datasetAttr.first.c_str());
+                    currNameEle->LinkEndChild(currAttrEle);
+
+                    TiXmlText *attrContent = new TiXmlText(datasetAttr.second.c_str());
+                    currAttrEle->LinkEndChild(attrContent);
+                }
+            }
+        }
+    }
+    // 判断xmlpath是否存在
+    
+    if (writeDoc->SaveFile(xmlPath.c_str()))
+        qDebug() << "writePrjInfoToXML success";
+    else
+        qDebug() << "writePrjInfoToXML failed";
+    delete writeDoc;
+
+    return 1;
+}
+
+
 //将project单独的xml提供的信息写入XML
 int ProjectsInfo::addProjectFromXML(string xmlpath){   
     std::wstring wpath = QString::fromStdString(xmlpath).toStdWString();
