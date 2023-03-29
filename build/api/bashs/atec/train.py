@@ -1,4 +1,4 @@
-import os,sys
+import os,sys,shutil
 import re
 import numpy as np
 import scipy.io as sio
@@ -326,7 +326,8 @@ def generator_model_documents(args):
         'Model_Path':os.path.abspath(os.path.join(project_path,model_naming+'.trt')),
         'Model_TrainBatchSize':str(args.batch_size),
         'Model_Note':'-',
-        'Model_Type':"ATEC"
+        'Model_Type':"ATEC",
+        'ProjectType':"HRRP"
     } 
 
     for key in model_infos.keys():
@@ -429,7 +430,7 @@ if __name__ == '__main__':
     save_params()
     train_x, train_y, val_x, val_y, folder_name, folder_file_name, file_class_num = read_project(project_path)
     inference(train_x, train_y, val_x, val_y, batch_size, max_epochs, folder_name, project_path)
-
+    shutil.copy("../sources/modelIMG/ATEC.png",project_path + '/'+model_naming+'.png')
     generator_model_documents(args)
     # convert_hdf5_to_trt(model_name, project_path, model_naming, '1')
     print("Train Ended:")

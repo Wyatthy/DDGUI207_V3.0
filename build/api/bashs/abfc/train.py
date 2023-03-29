@@ -162,7 +162,7 @@ def generator_model_documents(args):
     model_type.appendChild(model_item)
 
     model_infos = {
-        'Model_DataType':"FEATURE",#实际还可以是HRRP
+        'Model_DataType':str(args.data_type),
         'Model_Name':str(model_naming),
         'Model_Algorithm':'ABFC',
         'Model_AlgorithmType':'特征权重模型',
@@ -176,7 +176,8 @@ def generator_model_documents(args):
         'Model_Path':os.path.abspath(os.path.join(project_path,model_naming+'.trt')),
         'Model_TrainBatchSize':str(args.batch_size),
         'Model_Note':'-',
-        'Model_Type':'ABFC'
+        'Model_Type':'ABFC',
+        'ProjectType':str(args.data_type)
     } 
 
     for key in model_infos.keys():
@@ -228,6 +229,7 @@ if __name__ == '__main__':
     inference(max_epochs, batch_size, fea_start, fea_num, fea_step, project_path, data_type)
     generator_model_documents(args)
     shutil.copy(project_path + '/ABFC_feature_' + str(model_num) + '.hdf5',project_path + '/'+model_naming+'.hdf5')
+    shutil.copy("../sources/modelIMG/ABFC.png",project_path + '/'+model_naming+'.png')
     # cmd="python ./api/bashs/hdf52trt.py --model_type ABFC --work_dir "+ \
     #     project_path+" --model_name "+model_naming+" --abfcmode_Idx " + str(model_num)
     # os.system(cmd)

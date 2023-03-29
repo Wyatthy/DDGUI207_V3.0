@@ -39,10 +39,7 @@ public:
     QString choicedDatasetPATH;
     QString projectPath;
     QProcess *processTrain;
-    std::vector<std::string> modelTypes={"HRRP","AFS","FewShot"};
-    std::string modelType = "";
-    std::string modelName = "";
-    std::string dataType = "";
+    // std::vector<std::string> modelTypes={"HRRP","AFS","FewShot"};
 
     QString cmd="";
     QString time = "";
@@ -57,6 +54,7 @@ public:
     ModelTrainPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, DatasetInfo *globalDatasetInfo,
                    ModelInfo *globalModelInfo,ProjectsInfo *globalProjectInfo);
     void refreshGlobalInfo();
+    void refreshTrainResult();
     void uiInitial();
     void execuCmd(QString cmd);   // 开放在终端运行命令接口
     void showTrianResult();
@@ -85,11 +83,19 @@ private:
     // 缩放图像组件
     std::map<QGraphicsView*, ImageWidget*> all_Images;     // 防止内存泄露
     void recvShowPicSignal(QPixmap image, QGraphicsView* graphicsView);
+    QGraphicsScene *qgraphicsScene = new QGraphicsScene; //要用QGraphicsView就必须要有QGraphicsScene搭配着用
 
     void showATECfeatrend();
     std::string trainingProjectName,trainingProjectPath,trainingDataType;
 
     int dataDimension;
+    std::string modelTypeOfCurrtProject = "";
+    std::string shotModelType = "";
+    QString shotModelAlgorithm = "";
+    std::string trainningModelType = "";
+    std::string modelName = "";
+    std::string dataType = "";
+    SearchFolder *dirTools = new SearchFolder();
 };
 
 

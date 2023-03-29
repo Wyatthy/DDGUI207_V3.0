@@ -393,7 +393,8 @@ def generator_model_documents(args):
         'Model_NamesOfOldClass':args.old_class_names,
         'Model_ClassNames':args.train_classname,
         'Model_Note':'-',
-        'Model_Type':"CIL"
+        'Model_Type':"CIL",
+        'ProjectType':"HRRP"
     } 
 
     for key in model_infos.keys():
@@ -404,7 +405,7 @@ def generator_model_documents(args):
 
     with open(os.path.join(args.work_dir, projectName + '.xml'), 'w', encoding='utf-8') as f:
         doc.writexml(f, indent='\t', newl='\n', addindent='\t', encoding='utf-8')
-
+    shutil.copy("../sources/modelIMG/Incremental.png",project_path + '/'+projectName+'.png')
     # shutil.copy(args.work_dir+"/"+args.model_name+".trt", os.path.join(args.modeldir, args.model_name+'.trt'))
     # shutil.copy(args.work_dir+"/model/incrementModel.pt", os.path.join(args.modeldir, args.model_name+'.pt'))
     # shutil.copy(args.work_dir+"/"+"confusion_matrix.jpg", os.path.join(args.modeldir, 'confusion_matrix.jpg'))

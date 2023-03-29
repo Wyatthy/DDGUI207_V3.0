@@ -33,7 +33,7 @@
        </sizepolicy>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="page_senseSet">
        <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -134,7 +134,7 @@
            <property name="geometry">
             <rect>
              <x>0</x>
-             <y>-78</y>
+             <y>0</y>
              <width>930</width>
              <height>1414</height>
             </rect>
@@ -2366,7 +2366,7 @@
                       <enum>Qt::LeftToRight</enum>
                      </property>
                      <property name="currentIndex">
-                      <number>4</number>
+                      <number>2</number>
                      </property>
                      <widget class="QWidget" name="trainpage_trainAcc">
                       <attribute name="title">
@@ -2587,7 +2587,7 @@
                <x>0</x>
                <y>0</y>
                <width>368</width>
-               <height>770</height>
+               <height>563</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -2776,7 +2776,7 @@
                <x>0</x>
                <y>0</y>
                <width>699</width>
-               <height>770</height>
+               <height>620</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -3163,8 +3163,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>951</width>
-             <height>801</height>
+             <width>353</width>
+             <height>307</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_57">
@@ -3400,8 +3400,8 @@
                        <rect>
                         <x>0</x>
                         <y>0</y>
-                        <width>442</width>
-                        <height>579</height>
+                        <width>143</width>
+                        <height>85</height>
                        </rect>
                       </property>
                       <layout class="QVBoxLayout" name="verticalLayout_2">

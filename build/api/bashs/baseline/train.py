@@ -22,6 +22,7 @@ parser.add_argument('--data_dir', help='the directory of the training data',defa
 parser.add_argument('--batch_size', type=int, help='the number of batch size',default=32)
 parser.add_argument('--max_epochs', type=int, help='the number of epochs',default=10)
 parser.add_argument('--class_number', type=int, help="class_number", default="6")
+parser.add_argument('--algorithm', type=str, help="model algorithm", default='cnn')
 args = parser.parse_args()
 
 # 归一化
@@ -415,7 +416,8 @@ def generator_model_documents(args):
         'Model_Path':os.path.abspath(os.path.join(project_path,model_naming+'.trt')),
         'Model_TrainBatchSize':str(args.batch_size),
         'Model_Note':'-',
-        'Model_Type':"BASE"
+        'Model_Type':"BASE",
+        'ProjectType':"HRRP"
     } 
 
     for key in model_infos.keys():
@@ -448,7 +450,7 @@ if __name__ == '__main__':
 
     x_train, y_train, x_val, y_val, folder_name = read_project(project_path)
 
-    lowProjectPath = model_naming.lower()
+    lowProjectPath = args.algorithm.lower()
     if 'dnn' in lowProjectPath:
         model_name = 'DNN'
         inference_DNN(x_train, y_train, x_val, y_val, folder_name,project_path,model_naming)
@@ -457,8 +459,8 @@ if __name__ == '__main__':
         inference_CNN(x_train, y_train, x_val, y_val, folder_name,project_path,model_naming)
     else:
         assert False, '请在工程目录中包含CNN、DNN中的一个'
-
+    shutil.copy("../sources/modelIMG/"+model_name+".png",project_path + '/'+model_naming+'.png')
     save_params()
     generator_model_documents(args)
-    # convert_hdf5_to_trt(project_path, model_naming)
+    convert_hdf5_to_trt(project_path, model_naming)
     print("Train Ended:")

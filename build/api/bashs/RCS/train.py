@@ -1,7 +1,7 @@
 # encoding: utf-8
 import os
 import re
-import sys
+import sys,shutil
 import numpy as np
 import scipy.io as sio
 import tensorflow as tf
@@ -27,6 +27,7 @@ parser.add_argument('--max_epochs', type=int, help='the number of epochs',defaul
 parser.add_argument('--class_number', type=int, help="class_number", default=6)
 parser.add_argument('--windows_length', type=int, help="windows_length", default=32)
 parser.add_argument('--windows_step', type=int, help="windows_step", default=10)
+parser.add_argument('--algorithm', type=str, help="model algorithm", default='densenet')
 args = parser.parse_args()
 
 # 归一化
@@ -410,7 +411,8 @@ def generator_model_documents(args):
         'Model_WindowsLength':str(args.windows_length), 
         'Model_WindowsStep':str(args.windows_step), 
         'Model_Note':'-',
-        'Model_Type':"TRAD"
+        'Model_Type':"TRAD",
+        'ProjectType':"RCS"
     } 
 
     for key in model_infos.keys():
@@ -445,7 +447,7 @@ if __name__ == '__main__':
     # 分割路径，获取文件名
     model_naming = project_path.split('/')[-1]
     # 网络名字
-    lowProjectPath = model_naming.lower()
+    lowProjectPath = args.algorithm.lower()
     if 'densenet' in lowProjectPath:
         model_name = 'DenseNet121'
     elif 'resnet50' in lowProjectPath:
@@ -472,6 +474,7 @@ if __name__ == '__main__':
     run_main(x_train, y_train, x_val, y_val, class_num, folder_name, project_path, model_name)
     h5Path = project_path + '/' + model_naming + '.hdf5'
     pbPath = project_path + '/' + model_naming + '.pb'
+    shutil.copy("../sources/modelIMG/"+model_name+".png",project_path + '/'+model_naming+'.png')
     generator_model_documents(args)
     # convert_hdf5_to_trt(model_type, project_path, model_naming, '1')
     print("Train Ended:")

@@ -23,7 +23,8 @@ ModelTrainPage::ModelTrainPage(Ui_MainWindow *main_ui, BashTerminal *bash_termin
     connect(ui->startTrainButton, &QPushButton::clicked, this, &ModelTrainPage::startTrain);
     connect(ui->stopTrainButton,  &QPushButton::clicked, this, &ModelTrainPage::stopTrain);
     connect(ui->editModelButton,  &QPushButton::clicked, this, &ModelTrainPage::editModelFile);
-    connect(ui->trainpage_modelTypeBox, &QComboBox::currentIndexChanged, this, &ModelTrainPage::changeTrainType);
+    // connect(ui->trainpage_modelTypeBox, &QComboBox::currentIndexChanged, this, &ModelTrainPage::changeTrainType);
+    connect(ui->trainpage_modelTypeBox, SIGNAL(textActivated(QString)), this, SLOT(changeTrainType()));
 
 
     cliListWidget = new QListWidget;
@@ -36,7 +37,7 @@ void ModelTrainPage::refreshGlobalInfo(){
     ui->widget_windowRelate->setVisible(false);
     ui->widget_abfcRelate->setVisible(false);
     dataType = projectsInfo->dataTypeOfSelectedProject;
-    modelType = projectsInfo->modelTypeOfSelectedProject;
+    modelTypeOfCurrtProject = projectsInfo->modelTypeOfSelectedProject;
     dataDimension = QString::fromStdString(projectsInfo->getAttri(projectsInfo->dataTypeOfSelectedProject, projectsInfo->nameOfSelectedProject, "Dataset_SampleLength")).toInt();
     //Common parm
     ui->trainBatchEdit->setText("16");
@@ -81,7 +82,7 @@ void ModelTrainPage::refreshGlobalInfo(){
         ui->trainpage_modelTypeBox->addItem("TRAD_Resnet101");
         ui->trainpage_modelTypeBox->addItem("TRAD_Mobilenet");
         ui->trainpage_modelTypeBox->addItem("TRAD_Efficientnet");
-        ui->trainpage_modelTypeBox->addItem("CIL");
+        ui->trainpage_modelTypeBox->addItem("Incremental_增量学习模型");
     }else if(projectsInfo->dataTypeOfSelectedProject == "RCS" || projectsInfo->dataTypeOfSelectedProject == "IMAGE"){
         ui->trainpage_modelTypeBox->addItem("TRAD_Densenet");
         ui->trainpage_modelTypeBox->addItem("TRAD_Resnet50");
@@ -91,26 +92,60 @@ void ModelTrainPage::refreshGlobalInfo(){
     }else if(projectsInfo->dataTypeOfSelectedProject == "FEATURE"){
         ui->trainpage_modelTypeBox->addItem("ABFC");
     }
+    refreshTrainResult();
 }
 
+void ModelTrainPage::refreshTrainResult(){
+    QString currtTrainAccPic = QString::fromStdString(projectsInfo->pathOfSelectedProject + "/training_accuracy.jpg");
+    QString currtValAccPic = QString::fromStdString(projectsInfo->pathOfSelectedProject + "/verification_accuracy.jpg");
+    QString currtConfusionPic = QString::fromStdString(projectsInfo->pathOfSelectedProject + "/verification_confusion_matrix.jpg");
+    QString currtFeaRelPic = QString::fromStdString(projectsInfo->pathOfSelectedProject + "/features_Accuracy.jpg");
+    QString currtFeaWPic = QString::fromStdString(projectsInfo->pathOfSelectedProject + "/features_weights.jpg");
+    
+    if(this->dirTools->isExist(currtTrainAccPic.toStdString())){
+        recvShowPicSignal(QPixmap(currtTrainAccPic), ui->graphicsView_train_trainacc);
+    }
+    if(this->dirTools->isExist(currtValAccPic.toStdString())){
+        recvShowPicSignal(QPixmap(currtValAccPic), ui->graphicsView_train_valacc);
+    }
+    if(this->dirTools->isExist(currtConfusionPic.toStdString())){
+        recvShowPicSignal(QPixmap(currtConfusionPic), ui->graphicsView_train_confusion);
+    }
+    if(this->dirTools->isExist(currtFeaRelPic.toStdString())){
+        recvShowPicSignal(QPixmap(currtFeaRelPic), ui->graphicsView_train_fearel);
+    }
+    if(this->dirTools->isExist(currtFeaWPic.toStdString())){
+        recvShowPicSignal(QPixmap(currtFeaWPic), ui->graphicsView_train_feaw);
+    }
+    if(modelTypeOfCurrtProject == "ATEC"){
+        showATECfeatrend();
+    }
+}
 
 void ModelTrainPage::changeTrainType(){
+    ui->widget_cilRelate->setVisible(false);
+    ui->widget_windowRelate->setVisible(false);
+    ui->widget_abfcRelate->setVisible(false);
+    shotModelType = ui->trainpage_modelTypeBox->currentText().split("_")[0].toStdString();
+    if(ui->trainpage_modelTypeBox->currentText().split("_").size()==2)
+        shotModelAlgorithm = ui->trainpage_modelTypeBox->currentText().split("_")[1];    
+    // qDebug()<<"get shotModelType"<<QString::fromStdString(shotModelType)<<"     shotModelAlgorithm"<<shotModelAlgorithm;
     QString pathOfTrainDataset = QString::fromStdString(projectsInfo->pathOfSelectedProject) + "/train";
     for(int i=0;i<10;i++){
         ui->tabWidget->removeTab(0);
     }
-    if(modelType=="ABFC"){
+    if(shotModelType=="ABFC"){
         ui->widget_abfcRelate->setVisible(true);
         ui->tabWidget->addTab(ui->trainpage_fearel,"特征关联性能");
         ui->tabWidget->addTab(ui->trainpage_feaw,"特征权重");
         ui->tabWidget->addTab(ui->trainpage_confusion,"混淆矩阵");
-    }else if(modelType=="ATEC"){
+    }else if(shotModelType=="ATEC"){
         ui->tabWidget->addTab(ui->trainpage_trainAcc,"训练集准确率");
         ui->tabWidget->addTab(ui->trainpage_valAcc,"验证集准确率");
         ui->tabWidget->addTab(ui->trainpage_confusion,"混淆矩阵");
         ui->tabWidget->addTab(ui->trainpage_featrend,"特征趋势");
 
-    }else if(modelType=="CIL"){
+    }else if(shotModelType=="Incremental"){
         ui->widget_cilRelate->setVisible(true);
         while (cliListWidget->count() > 0){
             QListWidgetItem *item = cliListWidget->takeItem(0);
@@ -155,10 +190,15 @@ void ModelTrainPage::changeTrainType(){
 
 
 void ModelTrainPage::startTrain(){
+    if(shotModelType == ""){
+        QMessageBox::information(NULL, "模型训练", "请先从下拉框中选择欲训练模型");
+        return;
+    }
     this->trainingProjectName = projectsInfo->nameOfSelectedProject;
     this->trainingProjectPath = projectsInfo->pathOfSelectedProject;
     this->trainingDataType = projectsInfo->dataTypeOfSelectedProject;
-    if(projectsInfo->modelTypeOfSelectedProject == "OPTI" || projectsInfo->modelTypeOfSelectedProject == "OPTI_CAM"){
+    qDebug()<<"shotModelType===="<<QString::fromStdString(shotModelType);
+    if(shotModelType == "OPTI" || shotModelType == "OPTI_CAM"){
         QMessageBox::information(NULL, "模型训练", "优化模型暂不支持训练");
         return;
     }
@@ -206,20 +246,20 @@ void ModelTrainPage::startTrain(){
             " --fea_start "+ fea_start + " --data_type FEATURE";
     }
     else if (dataType == "HRRP"){
-        if(modelType == "TRAD"){
+        if(shotModelType == "TRAD"){
             cmd="activate tf24 && python ./api/bashs/HRRP_Tr/train.py --data_dir "+projectPath+ \
                 " --batch_size "+batchSize+" --max_epochs "+epoch;
-        }else if(modelType == "BASE"){
+        }else if(shotModelType == "BASE"){
             cmd="activate tf24 && python ./api/bashs/baseline/train.py --data_dir "+projectPath+ \
                 " --batch_size "+batchSize+" --max_epochs "+epoch;
-        }else if(modelType == "ATEC"){
+        }else if(shotModelType == "ATEC"){
             cmd="activate tf24 && python ./api/bashs/ATEC/train.py --data_dir "+projectPath+ \
                 " --batch_size "+batchSize+" --max_epochs "+epoch;
-        }else if(modelType == "ABFC"){
+        }else if(shotModelType == "ABFC"){
             cmd="activate tf24 && python ./api/bashs/ABFC/train.py --data_dir "+projectPath+ \
                 " --batch_size "+batchSize+" --max_epochs "+epoch+" --fea_num "+ fea_num+ \
                 " --fea_start "+ fea_start + " --fea_step " + fea_step + " --data_type HRRP";
-        }else if(modelType == "CIL"){
+        }else if(shotModelType == "Incremental"){
             reduce_sample=reduce_sample==""?"1.0":reduce_sample;
             old_class_num=old_class_num==""?"5":old_class_num;
             pretrain_epoch=pretrain_epoch==""?"1":pretrain_epoch;
@@ -239,6 +279,7 @@ void ModelTrainPage::startTrain(){
     }
     qDebug()<<"(ModelTrainPage::startTrain) cmd="<<cmd;
     execuCmd(cmd);
+    trainningModelType = shotModelType;
 }
 
 void ModelTrainPage::uiInitial(){
@@ -333,16 +374,16 @@ void ModelTrainPage::monitorTrainProcess(){
 void ModelTrainPage::showTrianResult(){
     ui->trainProgressBar->setMaximum(100);
     ui->trainProgressBar->setValue(100);
-    if(modelType=="ABFC"){
+    if(trainningModelType=="ABFC"){
         recvShowPicSignal(QPixmap(projectPath+"/features_Accuracy.jpg"), ui->graphicsView_train_fearel);
         recvShowPicSignal(QPixmap(projectPath+"/verification_confusion_matrix.jpg"), ui->graphicsView_train_confusion);
         recvShowPicSignal(QPixmap(projectPath+"/features_weights.jpg"), ui->graphicsView_train_feaw);
     }
-    else if(modelType=="CIL"){
+    else if(trainningModelType=="Incremental"){
         recvShowPicSignal(QPixmap(projectPath+"/verification_accuracy.jpg"), ui->graphicsView_train_valacc);
         recvShowPicSignal(QPixmap(projectPath+"/verification_confusion_matrix.jpg"), ui->graphicsView_train_confusion);
     }
-    else if(modelType=="ATEC"){
+    else if(trainningModelType=="ATEC"){
         recvShowPicSignal(QPixmap(projectPath+"/training_accuracy.jpg"), ui->graphicsView_train_trainacc);
         recvShowPicSignal(QPixmap(projectPath+"/verification_accuracy.jpg"), ui->graphicsView_train_valacc);
         recvShowPicSignal(QPixmap(projectPath+"/verification_confusion_matrix.jpg"), ui->graphicsView_train_confusion);
@@ -397,13 +438,13 @@ void ModelTrainPage::editModelFile(){
         modelFilePath="./api/bashs/ABFC/train.py";
     }
     else if (dataType == "HRRP"){
-        if(modelType == "TRAD"){
+        if(shotModelType == "TRAD"){
             modelFilePath="./api/bashs/HRRP_Tr/train.py";
-        }else if(modelType == "BASE"){
+        }else if(shotModelType == "BASE"){
             modelFilePath="./api/bashs/baseline/train.py";
-        }else if(modelType == "ATEC"){
+        }else if(shotModelType == "ATEC"){
             modelFilePath="./api/bashs/ATEC/train.py";
-        }else if(modelType == "CIL"){
+        }else if(shotModelType == "Incremental"){
             modelFilePath="./api/bashs/incremental/train.py";
         }
     }
