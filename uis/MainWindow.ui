@@ -2373,7 +2373,7 @@
                       <enum>Qt::LeftToRight</enum>
                      </property>
                      <property name="currentIndex">
-                      <number>4</number>
+                      <number>2</number>
                      </property>
                      <widget class="QWidget" name="trainpage_trainAcc">
                       <attribute name="title">
