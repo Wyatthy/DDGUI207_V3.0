@@ -905,6 +905,11 @@ void ProjectDock::updateDatasetInfo(QString projectName,QString projectPath){
     }else{
         this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"Model_DataType", "-");
     }
+    if (this->projectsInfo->checkMap(rightSelType, projectName.toStdString(),"ProjectType")){
+        this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"ProjectType", rightSelType);
+    }else{
+        this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"ProjectType", "-");
+    }
     if (this->projectsInfo->checkMap(rightSelType, projectName.toStdString(),"datasetClassNum")){
         this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"datasetClassNum", std::to_string(classNum));
     }else{

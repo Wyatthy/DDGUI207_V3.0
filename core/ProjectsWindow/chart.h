@@ -55,16 +55,16 @@ class Chart : public QWidget{
         void setAxis(QString _xname, qreal _xmin, qreal _xmax, int _xtickc, \
                      QString _yname, qreal _ymin, qreal _ymax, int _ytickc);
         void readHRRPtxt();
-        void drawHRRPimage(QLabel* chartLabel, int emIdx); 
+        void drawHRRPimage(QLabel* chartLabel, int emIdx, int windowlen=16, int windowstep=1); 
         void readHRRPmat(int emIndex);
         void readRadiomat(int emIndex);
         void readFeaturemat(int emIndex);
-        void readRCSmat(int emIndex);
+        void readRCSmat(int emIndex, int windowlen=16, int windowstep=1);
         void buildChart(QList<QPointF> pointlist);
         void buildChartAsScatter(QList<QPointF> pointlist);
         void buildChartWithNiceColor(QList<QPointF> pointlist1,QList<QPointF> pointlist2);
         void buildChartWithNiceColor2(QList<QPointF> pointlist1,QList<QPointF> pointlist2);
-        void drawImage(QLabel* chartLabel, int examIdx=0);
+        void drawImage(QLabel* chartLabel, int examIdx=0, int windowlen=16, int windowstep=1);
         void drawImageWithSingleSignal(QLabel* chartLabel, QVector<float>& dataFrameQ);
         void drawImageWithMultipleVector(QLabel* chartLabel, QVector<QVector<float>> dataFrames, QString mesg);
         QWidget* drawDisDegreeChart(QString &classGT, std::vector<float> &degrees, std::map<int, std::string> &classNames);

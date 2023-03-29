@@ -198,7 +198,7 @@ string ProjectsInfo::showXmlAttri(std::string xmlpath){
             for(auto &attr: datasetAttrMap){
                 // qDebug()<<"(attr.first="<<attr.first.c_str()<<", attr.second="<<attr.second.c_str();
                 // 如果属性是“ModelType”，返回值
-                if(attr.first == "Model_DataType"){
+                if(attr.first == "ProjectType"){
                     // 要及时关闭打开的xml文件，不然会删不了
                     fclose(xmlFile);
                     return attr.second;

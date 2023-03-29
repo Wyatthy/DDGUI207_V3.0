@@ -97,9 +97,9 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--RCS',
-        default=False,
-        type=bool,
-        help='是否使用RCS数据集'
+        default=0,
+        type=int,
+        help='是否使用RCS数据集, 0表示不使用RCS数据集, 1表示使用RCS数据集'
     )
     parser.add_argument(
         '--IMAGE_WINDOWS_LENGTH',

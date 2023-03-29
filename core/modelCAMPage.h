@@ -42,6 +42,7 @@ public slots:
 
     void confirmData();                 // 数据样本选择
     void switchIndex();                 // 切换样本
+    void nextIndex();                   // 下一个样本
     void refreshVisInfo();              // 刷新预览图像与可视化目标层
     void clearStructComboBox();         // 清空下拉框
 
@@ -65,6 +66,7 @@ public slots:
     /**************** 以下同样的实现代码(为了实现两个可视化对比) ****************/
     void confirmData_2();                 // 数据样本选择
     void switchIndex_2();                 // 切换样本
+    void nextIndex_2();                   // 下一个样本
     void refreshVisInfo_2();              // 刷新预览图像与可视化目标层
     void clearStructComboBox_2();         // 清空下拉框
 
@@ -110,7 +112,7 @@ private:
     int choicedMatIndexBegin = -1;
     int choicedMatIndexEnd = -1;
     int maxMatIndex = -1;
-    int currMatIndex = -1;
+    int currMatIndex = 0;
 
     QString windowsLength = "0";
     QString windowsStep = "0";
@@ -140,7 +142,7 @@ private:
     int choicedMatIndexBegin_2 = -1;
     int choicedMatIndexEnd_2 = -1;
     int maxMatIndex_2 = -1;
-    int currMatIndex_2 = -1;
+    int currMatIndex_2 = 0;
 
     // 可视化进程
     QProcess *processVis_2;

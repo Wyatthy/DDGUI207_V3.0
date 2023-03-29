@@ -40,6 +40,7 @@ public slots:
 
     void updateAttriLabel();
     void drawClassImage();
+    void sampleBatchChart();
     void nextBatchChart();
     void saveDatasetNote();
     void saveModelNote();
@@ -51,6 +52,8 @@ private:
 
     DatasetInfo *datasetInfo;
     ProjectsInfo *projectsInfo;
+
+    int sampleIndex = 0;
 
     // 不同平台下文件夹搜索工具
     SearchFolder *dirTools = new SearchFolder();

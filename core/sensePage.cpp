@@ -29,7 +29,8 @@ SenseSetPage::SenseSetPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, 
     connect(ui->pushButton_datasetConfirm, &QPushButton::clicked, this, &SenseSetPage::confirmDataset);
 
     // 索引取样
-    connect(ui->pushButton_sense_sample,&QPushButton::clicked,this,&SenseSetPage::nextBatchChart);
+    connect(ui->pushButton_sense_sample,&QPushButton::clicked,this,&SenseSetPage::sampleBatchChart);
+    connect(ui->pushButton_sense_nextIndex,&QPushButton::clicked,this,&SenseSetPage::nextBatchChart);
 
     // 数据集备注保存
     connect(ui->pushButton_saveDatasetNote,&QPushButton::clicked,this,&SenseSetPage::saveDatasetNote);
@@ -263,7 +264,7 @@ void SenseSetPage::confirmDataset(bool notDialog = false){
     //    }
         chartGroup[i]->clear();
     }
-    nextBatchChart();
+    sampleBatchChart();
 
     // 绘制表格 TODO
     if(!notDialog)
@@ -308,7 +309,7 @@ void SenseSetPage::drawClassImage(){
 }
 
 // 如果传入的参数是""，那么就随机取索引显示图片，如果不是空，则转为int，用这个作为索引
-void SenseSetPage::nextBatchChart(){
+void SenseSetPage::sampleBatchChart(){
     QString exampleIdx = ui->lineEdit_sense_sampleIndex->text();
     string rootPath = projectsInfo->pathOfSelectedDataset;
     vector<string> subDirNames = projectsInfo->classNamesOfSelectedDataset;
@@ -345,6 +346,8 @@ void SenseSetPage::nextBatchChart(){
             if(randomIdx > 0 && randomIdx <= N){
                 previewChart = new Chart(ui->label_mE_chartGT,QString::fromStdString(projectsInfo->dataTypeOfSelectedProject),matFilePath);
                 previewChart->drawImage(chartGroup[i],randomIdx);
+                this->sampleIndex = randomIdx;
+                ui->lineEdit_sense_sampleIndex->setText(QString::number(this->sampleIndex));
             }else{
                 QMessageBox::information(NULL, "错误", "索引超出范围");
                 return;
@@ -353,6 +356,45 @@ void SenseSetPage::nextBatchChart(){
     }
 }
 
+
+void SenseSetPage::nextBatchChart(){
+    this->sampleIndex += 1;
+    string rootPath = projectsInfo->pathOfSelectedDataset;
+    vector<string> subDirNames = projectsInfo->classNamesOfSelectedDataset;
+    // qDebug()<<"(SenseSetPage::nextBatchImage) subDirNames.size()="<<subDirNames.size();
+    // 按类别显示
+    for(int i=0; i<subDirNames.size(); i++){
+        srand((unsigned)time(NULL));
+        // 选取类别
+        string choicedClass = subDirNames[i];
+        string classPath = rootPath +"/"+ choicedClass;
+        Chart *previewChart;
+
+        // 选取Mat
+        vector<string> allMatFile;
+        if(dirTools->getFilesplus(allMatFile, ".mat", classPath)){
+            QString matFilePath = QString::fromStdString(classPath + "/" + allMatFile[0]);
+            MATFile* pMatFile = NULL;
+            mxArray* pMxArray = NULL;
+            pMatFile = matOpen(matFilePath.toStdString().c_str(), "r");
+            if(!pMatFile){qDebug()<<"(ModelEvalPage::randSample)文件指针空!!!!";return;}
+            pMxArray = matGetNextVariable(pMatFile, NULL);
+            if(!pMxArray){
+                qDebug()<<"(Chart::readHRRPmat)pMxArray变量没找到!!!!";
+                return;
+            }
+            int N = mxGetN(pMxArray);  //N 列数
+            if(this->sampleIndex > 0 && this->sampleIndex <= N){
+                previewChart = new Chart(ui->label_mE_chartGT,QString::fromStdString(projectsInfo->dataTypeOfSelectedProject),matFilePath);
+                previewChart->drawImage(chartGroup[i],this->sampleIndex);
+                ui->lineEdit_sense_sampleIndex->setText(QString::number(this->sampleIndex));
+            }else{
+                QMessageBox::information(NULL, "错误", "索引超出范围");
+                return;
+            }
+        }
+    }
+}
 
 // 所有样本类别中的最小样本数，作为索引最大值
 void SenseSetPage::minMatNum(int &minNum)

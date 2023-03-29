@@ -38,6 +38,7 @@ ModelVisPage::ModelVisPage(Ui_MainWindow *main_ui,
     // 可视化相关按钮信号槽绑定
     connect(ui->pushButton_mV_confirmIndex, &QPushButton::clicked, this, &ModelVisPage::confirmData);
     connect(ui->pushButton_mV_switchIndex, &QPushButton::clicked, this, &ModelVisPage::switchIndex);
+    connect(ui->pushButton_mV_nextIndex, &QPushButton::clicked, this, &ModelVisPage::nextIndex);
     connect(ui->pushButton_mV_confirmVis, &QPushButton::clicked, this, &ModelVisPage::confirmVis);
     connect(ui->pushButton_mV_clear, &QPushButton::clicked, this, &ModelVisPage::clearStructComboBox);
     connect(ui->pushButton_mV_nextPage, &QPushButton::clicked, this, &ModelVisPage::nextFeaImgsPage);
@@ -62,6 +63,7 @@ ModelVisPage::ModelVisPage(Ui_MainWindow *main_ui,
     // 可视化相关按钮信号槽绑定
     connect(ui->pushButton_mV_confirmIndex_2, &QPushButton::clicked, this, &ModelVisPage::confirmData_2);
     connect(ui->pushButton_mV_switchIndex_2, &QPushButton::clicked, this, &ModelVisPage::switchIndex_2);
+    connect(ui->pushButton_mV_nextIndex_2, &QPushButton::clicked, this, &ModelVisPage::nextIndex_2);
     connect(ui->pushButton_mV_confirmVis_2, &QPushButton::clicked, this, &ModelVisPage::confirmVis_2);
     connect(ui->pushButton_mV_clear_2, &QPushButton::clicked, this, &ModelVisPage::clearStructComboBox_2);
     connect(ui->pushButton_mV_nextPage_2, &QPushButton::clicked, this, &ModelVisPage::nextFeaImgsPage_2);
@@ -123,9 +125,9 @@ void ModelVisPage::confirmVis(){
         return;
     }
     std::string dataType = projectsInfo->dataTypeOfSelectedProject;
-    QString isRCS = "False";
+    QString isRCS = "0";
     if(dataType == "RCS"){
-        isRCS = "True";
+        isRCS = "1";
     }
 
     // 执行python脚本
@@ -265,6 +267,7 @@ void ModelVisPage::refreshGlobalInfo(){
 
 }
 
+
 void ModelVisPage::confirmModel(){
     // 获取comboBox_mV_modelChoice的内容
     this->choicedModelName = ui->comboBox_mV_modelChoice->currentText();
@@ -320,7 +323,7 @@ void ModelVisPage::confirmData(){
     this->currMatIndex = this->choicedMatIndexBegin;
     ui->lineEdit_mV_currIndex->setText(QString::number(this->currMatIndex));
     Chart *previewChart = new Chart(ui->label_mV_choicedImg, QString::fromStdString(projectsInfo->dataTypeOfSelectedProject), this->choicedMatPATH);
-    previewChart->drawImage(ui->label_mV_choicedImg, this->currMatIndex-1);
+    previewChart->drawImage(ui->label_mV_choicedImg, this->currMatIndex, this->windowsLength.toInt(), this->windowsStep.toInt());
 
     QMessageBox::information(NULL, "数据切换提醒", "数据切换为：" + this->choicedMatPATH + "\n索引范围为：" + QString::number(this->choicedMatIndexBegin) + " - " + QString::number(this->choicedMatIndexEnd));
 
@@ -337,7 +340,40 @@ void ModelVisPage::switchIndex(){
     }
     //绘图
     Chart *previewChart = new Chart(ui->label_mV_choicedImg, QString::fromStdString(projectsInfo->dataTypeOfSelectedProject), this->choicedMatPATH);
-    previewChart->drawImage(ui->label_mV_choicedImg, this->currMatIndex-1);
+    previewChart->drawImage(ui->label_mV_choicedImg, this->currMatIndex, this->windowsLength.toInt(), this->windowsStep.toInt());
+
+    // 更新可视化结果
+    this->feaImgsSavePath = this->projectPath+"/Features_Output/"+ \
+                            this->choicedStage+"/"+this->choicedLabel+"/"+ \
+                            this->choicedMatName+"/"+ \
+                            QString::number(this->currMatIndex)+"/"+ \
+                            this->actOrGrad+"/"+this->targetVisLayer;
+    if(dirTools->isDir(this->feaImgsSavePath.toStdString())){
+        // 按页加载图像
+        this->currFeaPage = 0;
+        // 获取图片文件夹下的所有图片文件名
+        vector<string> imageFileNames;
+        dirTools->getFilesplus(imageFileNames, ".png", this->feaImgsSavePath.toStdString());
+        this->feaNum = imageFileNames.size();
+        this->allFeaPage = this->feaNum/NUM_FEA + bool(this->feaNum%NUM_FEA);
+        ui->label_mV_pageAll->setText(QString::number(this->allFeaPage));
+        nextFeaImgsPage();
+    }
+}
+
+
+void ModelVisPage::nextIndex(){
+    // 获取用户输入的索引值
+    this->currMatIndex += 1;
+    // 判断索引值是否合法
+    if(this->currMatIndex < this->choicedMatIndexBegin || this->currMatIndex > this->choicedMatIndexEnd){
+        QMessageBox::warning(NULL, "数据索引问题", "索引值超出所选数据范围！");
+        return;
+    }
+    //绘图
+    ui->lineEdit_mV_currIndex->setText(QString::number(this->currMatIndex));
+    Chart *previewChart = new Chart(ui->label_mV_choicedImg, QString::fromStdString(projectsInfo->dataTypeOfSelectedProject), this->choicedMatPATH);
+    previewChart->drawImage(ui->label_mV_choicedImg, this->currMatIndex, this->windowsLength.toInt(), this->windowsStep.toInt());
 
     // 更新可视化结果
     this->feaImgsSavePath = this->projectPath+"/Features_Output/"+ \
@@ -556,6 +592,11 @@ void ModelVisPage::on_comboBox_mat(QString choicedMat){
         if(dataType == "IMAGE" || dataType == "RCS"){
             this->windowsLength = QString::fromStdString(projectsInfo->getAllAttri(dataType,projectsInfo->nameOfSelectedProject)["Model_WindowsLength"]);
             this->windowsStep = QString::fromStdString(projectsInfo->getAllAttri(dataType,projectsInfo->nameOfSelectedProject)["Model_WindowsStep"]);
+            if(this->windowsLength == "0" || this->windowsStep == "0" || this->windowsLength == "" || this->windowsStep == ""){
+                // 模型未训练，不能可视化
+                QMessageBox::warning(NULL, "警告", "模型未训练，不能可视化！");
+                return;
+            }
             int sampleNum = (N - this->windowsLength.toInt())/this->windowsStep.toInt() + 1;
             ui->lineEdit_mV_end->setText(QString::number(sampleNum));
             this->maxMatIndex = sampleNum;
@@ -784,7 +825,7 @@ void ModelVisPage::confirmData_2(){
         QString::fromStdString(projectsInfo->dataTypeOfSelectedProject),
         this->choicedMatPATH_2
     );
-    previewChart->drawImage(ui->label_mV_choicedImg_2, this->currMatIndex_2-1);
+    previewChart->drawImage(ui->label_mV_choicedImg_2, this->currMatIndex_2);
 
     QMessageBox::information(NULL, "数据切换提醒", "数据切换为：" + this->choicedMatPATH_2 + \
             "\n索引范围为：" + QString::number(this->choicedMatIndexBegin_2) + \
@@ -803,7 +844,40 @@ void ModelVisPage::switchIndex_2(){
     //绘图
     Chart *previewChart = new Chart(ui->label_mV_choicedImg_2, \
         QString::fromStdString(projectsInfo->dataTypeOfSelectedProject), this->choicedMatPATH_2);
-    previewChart->drawImage(ui->label_mV_choicedImg_2, this->currMatIndex_2-1);
+    previewChart->drawImage(ui->label_mV_choicedImg_2, this->currMatIndex_2, this->windowsLength.toInt(), this->windowsStep.toInt());
+
+    // 更新可视化结果
+    this->feaImgsSavePath_2 = this->projectPath+"/Features_Output/"+ \
+                              this->choicedStage_2+"/"+this->choicedLabel_2+"/"+ \
+                              this->choicedMatName_2+"/"+ \
+                              QString::number(this->currMatIndex_2)+"/"+ \
+                              this->actOrGrad_2+"/"+this->targetVisLayer_2;
+    if(dirTools->isDir(this->feaImgsSavePath_2.toStdString())){
+        // 按页加载图像
+        this->currFeaPage_2 = 0;
+        // 获取图片文件夹下的所有图片文件名
+        vector<string> imageFileNames;
+        dirTools->getFilesplus(imageFileNames, ".png", this->feaImgsSavePath_2.toStdString());
+        this->feaNum_2 = imageFileNames.size();
+        this->allFeaPage_2 = this->feaNum_2/NUM_FEA + bool(this->feaNum_2%NUM_FEA);
+        ui->label_mV_pageAll_2->setText(QString::number(this->allFeaPage_2));
+        nextFeaImgsPage_2();
+    }
+}
+
+void ModelVisPage::nextIndex_2(){
+    // 获取下一个索引值
+    this->currMatIndex_2 += 1;
+    // 判断索引值是否合法
+    if(this->currMatIndex_2 < this->choicedMatIndexBegin_2 || this->currMatIndex_2 > this->choicedMatIndexEnd_2){
+        QMessageBox::warning(NULL, "数据索引问题", "索引值超出所选数据范围！");
+        return;
+    }
+    //绘图
+    ui->lineEdit_mV_currIndex_2->setText(QString::number(this->currMatIndex_2));
+    Chart *previewChart = new Chart(ui->label_mV_choicedImg_2, \
+        QString::fromStdString(projectsInfo->dataTypeOfSelectedProject), this->choicedMatPATH_2);
+    previewChart->drawImage(ui->label_mV_choicedImg_2, this->currMatIndex_2, this->windowsLength.toInt(), this->windowsStep.toInt());
 
     // 更新可视化结果
     this->feaImgsSavePath_2 = this->projectPath+"/Features_Output/"+ \
@@ -956,9 +1030,9 @@ void ModelVisPage::confirmVis_2(){
         return;
     }
     std::string dataType = projectsInfo->dataTypeOfSelectedProject;
-    QString isRCS = "False";
+    QString isRCS = "0";
     if(dataType == "RCS"){
-        isRCS = "True";
+        isRCS = "1";
     }
 
     // 执行python脚本
@@ -1173,6 +1247,11 @@ void ModelVisPage::on_comboBox_mat_2(QString choicedMat){
         if(dataType == "IMAGE" || dataType == "RCS"){
             this->windowsLength = QString::fromStdString(projectsInfo->getAllAttri(dataType,projectsInfo->nameOfSelectedProject)["Model_WindowsLength"]);
             this->windowsStep = QString::fromStdString(projectsInfo->getAllAttri(dataType,projectsInfo->nameOfSelectedProject)["Model_WindowsStep"]);
+            if(this->windowsLength == "0" || this->windowsStep == "0" || this->windowsLength == "" || this->windowsStep == ""){
+                // 模型未训练，不能可视化
+                QMessageBox::warning(NULL, "警告", "模型未训练，不能可视化！");
+                return;
+            }
             int sampleNum = (N - this->windowsLength.toInt())/this->windowsStep.toInt() + 1;
             ui->lineEdit_mV_end_2->setText(QString::number(sampleNum));
             this->maxMatIndex_2 = sampleNum;

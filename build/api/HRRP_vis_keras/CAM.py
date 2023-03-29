@@ -10,9 +10,9 @@ from typing import Any, List
 
 class BaseCAM():
     def __init__(self, imgs:np.ndarray, CLASSES: List[str]) -> None:
-        for i in range(len(imgs)):
-            imgs[i] -= np.min(imgs[i])
-            imgs[i] /= np.max(imgs[i])
+        # for i in range(len(imgs)):
+        #     imgs[i] -= np.min(imgs[i])
+        #     imgs[i] /= np.max(imgs[i])
         self.imgs = imgs
         self.CLASSES = CLASSES
         self.bz, self.h, self.w, self.nc = imgs.shape

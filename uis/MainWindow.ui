@@ -33,7 +33,7 @@
        </sizepolicy>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>5</number>
       </property>
       <widget class="QWidget" name="page_senseSet">
        <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -134,9 +134,9 @@
            <property name="geometry">
             <rect>
              <x>0</x>
-             <y>-78</y>
-             <width>930</width>
-             <height>1414</height>
+             <y>0</y>
+             <width>1022</width>
+             <height>1368</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -532,6 +532,13 @@
                       <widget class="QPushButton" name="pushButton_sense_sample">
                        <property name="text">
                         <string>取样</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="pushButton_sense_nextIndex">
+                       <property name="text">
+                        <string>下一页</string>
                        </property>
                       </widget>
                      </item>
@@ -1425,8 +1432,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>951</width>
-             <height>830</height>
+             <width>1039</width>
+             <height>855</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_51">
@@ -2423,8 +2430,8 @@
                            <rect>
                             <x>0</x>
                             <y>0</y>
-                            <width>406</width>
-                            <height>437</height>
+                            <width>454</width>
+                            <height>486</height>
                            </rect>
                           </property>
                           <layout class="QVBoxLayout" name="verticalLayout_72">
@@ -2586,8 +2593,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>368</width>
-               <height>770</height>
+               <width>484</width>
+               <height>817</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -2775,8 +2782,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>699</width>
-               <height>770</height>
+               <width>573</width>
+               <height>800</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -3163,8 +3170,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>951</width>
-             <height>801</height>
+             <width>1039</width>
+             <height>831</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_57">
@@ -3400,8 +3407,8 @@
                        <rect>
                         <x>0</x>
                         <y>0</y>
-                        <width>442</width>
-                        <height>579</height>
+                        <width>490</width>
+                        <height>647</height>
                        </rect>
                       </property>
                       <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -3643,10 +3650,10 @@
           <widget class="QWidget" name="scrollAreaWidgetContents_7">
            <property name="geometry">
             <rect>
-             <x>0</x>
+             <x>-319</x>
              <y>0</y>
-             <width>1577</width>
-             <height>1042</height>
+             <width>1341</width>
+             <height>932</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_61">
@@ -3970,10 +3977,23 @@
                          </property>
                          <property name="minimumSize">
                           <size>
-                           <width>70</width>
+                           <width>50</width>
                            <height>0</height>
                           </size>
                          </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>50</width>
+                           <height>16777215</height>
+                          </size>
+                         </property>
+                         <property name="text">
+                          <string>切换</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QPushButton" name="pushButton_mV_nextIndex">
                          <property name="maximumSize">
                           <size>
                            <width>70</width>
@@ -3981,7 +4001,7 @@
                           </size>
                          </property>
                          <property name="text">
-                          <string>切换</string>
+                          <string>下一个</string>
                          </property>
                         </widget>
                        </item>
@@ -4573,6 +4593,25 @@
                          </property>
                          <property name="minimumSize">
                           <size>
+                           <width>50</width>
+                           <height>0</height>
+                          </size>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>50</width>
+                           <height>16777215</height>
+                          </size>
+                         </property>
+                         <property name="text">
+                          <string>切换</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QPushButton" name="pushButton_mV_nextIndex_2">
+                         <property name="minimumSize">
+                          <size>
                            <width>70</width>
                            <height>0</height>
                           </size>
@@ -4584,7 +4623,7 @@
                           </size>
                          </property>
                          <property name="text">
-                          <string>切换</string>
+                          <string>下一个</string>
                          </property>
                         </widget>
                        </item>
@@ -5033,10 +5072,10 @@
           <widget class="QWidget" name="scrollAreaWidgetContents_9">
            <property name="geometry">
             <rect>
-             <x>0</x>
+             <x>-375</x>
              <y>0</y>
-             <width>1645</width>
-             <height>925</height>
+             <width>1397</width>
+             <height>881</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_87">
@@ -5375,6 +5414,25 @@
                          </property>
                          <property name="minimumSize">
                           <size>
+                           <width>50</width>
+                           <height>0</height>
+                          </size>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>50</width>
+                           <height>16777215</height>
+                          </size>
+                         </property>
+                         <property name="text">
+                          <string>切换</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QPushButton" name="pushButton_CAM_nextIndex">
+                         <property name="minimumSize">
+                          <size>
                            <width>70</width>
                            <height>0</height>
                           </size>
@@ -5386,7 +5444,7 @@
                           </size>
                          </property>
                          <property name="text">
-                          <string>切换</string>
+                          <string>下一个</string>
                          </property>
                         </widget>
                        </item>
@@ -5883,6 +5941,25 @@
                          </property>
                          <property name="minimumSize">
                           <size>
+                           <width>50</width>
+                           <height>0</height>
+                          </size>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>50</width>
+                           <height>16777215</height>
+                          </size>
+                         </property>
+                         <property name="text">
+                          <string>切换</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QPushButton" name="pushButton_CAM_nextIndex_2">
+                         <property name="minimumSize">
+                          <size>
                            <width>70</width>
                            <height>0</height>
                           </size>
@@ -5894,7 +5971,7 @@
                           </size>
                          </property>
                          <property name="text">
-                          <string>切换</string>
+                          <string>下一个</string>
                          </property>
                         </widget>
                        </item>
@@ -6519,7 +6596,7 @@
      <x>0</x>
      <y>0</y>
      <width>1393</width>
-     <height>26</height>
+     <height>22</height>
     </rect>
    </property>
    <property name="minimumSize">

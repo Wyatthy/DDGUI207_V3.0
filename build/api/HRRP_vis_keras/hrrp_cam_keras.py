@@ -204,9 +204,9 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--RCS',
-        default=True,
-        type=bool,
-        help='是否使用RCS数据集, False使用RCS数据集'
+        default=0,
+        type=int,
+        help='是否使用RCS数据集, 0表示不使用RCS数据集, 1表示使用RCS数据集'
     )
     parser.add_argument(
         '--IMAGE_WINDOWS_LENGTH',
@@ -242,10 +242,10 @@ if __name__ == '__main__':
     if args.RCS:
         signals = ori_data[list(ori_data.keys())[-1]].T
         # 去除信号中的多余维度, 并归一化
-        signals = np.squeeze(signals)
-        signals -= np.min(signals)
-        signals /= np.max(signals)
-        signals = signals[..., None]
+        # signals = np.squeeze(signals)
+        # signals -= np.min(signals)
+        # signals /= np.max(signals)
+        # signals = signals[..., None]
     else:
         signals = data_normalization(ori_data[list(ori_data.keys())[-1]].T)
 

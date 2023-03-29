@@ -67,9 +67,7 @@ QImage matToQImage(const cv::Mat& mat){
     }
 }
 
-void Chart::drawHRRPimage(QLabel* chartLabel, int emIdx){    
-    int windowlen = 16;
-    int windowstep = 1;
+void Chart::drawHRRPimage(QLabel* chartLabel, int emIdx, int windowlen, int windowstep){
     MATFile* pMatFile = NULL;
     mxArray* pMxArray = NULL;
     // 读取.mat文件（例：mat文件名为"initUrban.mat"，其中包含"initA"）
@@ -100,9 +98,9 @@ void Chart::drawHRRPimage(QLabel* chartLabel, int emIdx){
     cv::Mat mat8bit;
     cv::normalize(mat, mat8bit, 0, 255, cv::NORM_MINMAX, CV_8UC1);
     // 调用applyColorMap函数将灰度图转换为热图
-    cv::Mat heatmap;
-    cv::applyColorMap(mat8bit, heatmap, cv::COLORMAP_JET);
-    QImage qImage = matToQImage(heatmap);
+    // cv::Mat heatmap;
+    // cv::applyColorMap(mat8bit, heatmap, cv::COLORMAP_JET);
+    QImage qImage = matToQImage(mat8bit);
     // 将图像缩放以适合QLabel大小
     QPixmap pixmap = QPixmap::fromImage(qImage).scaled(chartLabel->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation);
     // 在QLabel中显示QPixmap
@@ -126,10 +124,10 @@ void Chart::drawHRRPimage(QLabel* chartLabel, int emIdx){
     pHLayout->addWidget(label);
 }
 
-void Chart::drawImage(QLabel* chartLabel, int examIdx){
+void Chart::drawImage(QLabel* chartLabel, int examIdx, int windowlen, int windowstep){
     std::string dataFileFormat=filefullpath.split(".").last().toStdString();
     if(dataSetType=="IMAGE"){
-        drawHRRPimage(chartLabel,examIdx);
+        drawHRRPimage(chartLabel,examIdx, windowlen, windowstep);
         return;
     }
     //把目标样本点添加到points中
@@ -141,7 +139,7 @@ void Chart::drawImage(QLabel* chartLabel, int examIdx){
         setAxis("特征索引",xmin,xmax,10, "特征值",ymin,ymax,10);
         qDebug()<<"read feature matle";
     }else if(dataFileFormat=="mat"&& dataSetType=="RCS"){
-        readRCSmat(examIdx);
+        readRCSmat(examIdx, windowlen, windowstep);
         setAxis("Time/mm",xmin,xmax,10, "dB(V/m)",ymin,ymax,10);
     }else return;
     
@@ -331,15 +329,13 @@ void Chart::readFeaturemat(int emIdx){
 
 }
 
-void Chart::readRCSmat(int emIdx){
-    int windowlen=16;  //窗口长度传过来太麻烦了 默认128
-    int windowstep = 1;
+void Chart::readRCSmat(int emIdx, int windowlen, int windowstep){
     points.clear();
     float y_min = 200000,y_max = -200000;
     MATFile* pMatFile = NULL;
     mxArray* pMxArray = NULL;
 
-    int* matdata;
+    double* matdata;
     pMatFile = matOpen(filefullpath.toStdString().c_str(), "r");
     if(!pMatFile){
         qDebug()<<"(Chart::readHRRPmat)文件指针空！！！！！！";
@@ -350,7 +346,7 @@ void Chart::readRCSmat(int emIdx){
         qDebug()<<"(Chart::readHRRPmat)pMxArray变量没找到!!!";
         return;
     }
-    matdata = (int*)mxGetData(pMxArray);
+    matdata = (double*)mxGetData(pMxArray);
     int M = mxGetM(pMxArray);  // 行数
     int N = mxGetN(pMxArray);  // 列数
     if(emIdx>(N-windowlen)/windowstep+1) emIdx=(N-windowlen)/windowstep+1;  

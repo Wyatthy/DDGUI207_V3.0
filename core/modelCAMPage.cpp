@@ -36,6 +36,7 @@ ModelCAMPage::ModelCAMPage(Ui_MainWindow *main_ui,
     // 各种可视化相关按钮信号槽绑定
     connect(ui->pushButton_CAM_confirmIndex, &QPushButton::clicked, this, &ModelCAMPage::confirmData);
     connect(ui->pushButton_CAM_switchIndex, &QPushButton::clicked, this, &ModelCAMPage::switchIndex);
+    connect(ui->pushButton_CAM_nextIndex, &QPushButton::clicked, this, &ModelCAMPage::nextIndex);
     connect(ui->pushButton_CAM_clear, &QPushButton::clicked, this, &ModelCAMPage::clearStructComboBox);
     connect(ui->pushButton_CAM_confirmVis, &QPushButton::clicked, this, &ModelCAMPage::confirmVis);
 
@@ -58,6 +59,7 @@ ModelCAMPage::ModelCAMPage(Ui_MainWindow *main_ui,
     // 各种可视化相关按钮信号槽绑定
     connect(ui->pushButton_CAM_confirmIndex_2, &QPushButton::clicked, this, &ModelCAMPage::confirmData_2);
     connect(ui->pushButton_CAM_switchIndex_2, &QPushButton::clicked, this, &ModelCAMPage::switchIndex_2);
+    connect(ui->pushButton_CAM_nextIndex_2, &QPushButton::clicked, this, &ModelCAMPage::nextIndex_2);
     connect(ui->pushButton_CAM_clear_2, &QPushButton::clicked, this, &ModelCAMPage::clearStructComboBox_2);
     connect(ui->pushButton_CAM_confirmVis_2, &QPushButton::clicked, this, &ModelCAMPage::confirmVis_2);
 
@@ -112,9 +114,9 @@ void ModelCAMPage::confirmVis(){
         return;
     }
     std::string dataType = projectsInfo->dataTypeOfSelectedProject;
-    QString isRCS = "False";
+    QString isRCS = "0";
     if(dataType == "RCS"){
-        isRCS = "True";
+        isRCS = "1";
     }
 
     // 执行python脚本
@@ -266,7 +268,7 @@ void ModelCAMPage::confirmData(){
     this->currMatIndex = this->choicedMatIndexBegin;
     ui->lineEdit_CAM_currIndex->setText(QString::number(this->currMatIndex));
     Chart *previewChart = new Chart(ui->label_CAM_choicedImg, QString::fromStdString(projectsInfo->dataTypeOfSelectedProject), this->choicedMatPATH);
-    previewChart->drawImage(ui->label_CAM_choicedImg, this->currMatIndex-1);
+    previewChart->drawImage(ui->label_CAM_choicedImg, this->currMatIndex, this->windowsLength.toInt(), this->windowsStep.toInt());
 
     QMessageBox::information(NULL, "数据切换提醒", "数据切换为：" + this->choicedMatPATH + "\n索引范围为：" + QString::number(this->choicedMatIndexBegin) + " - " + QString::number(this->choicedMatIndexEnd));
 
@@ -274,7 +276,7 @@ void ModelCAMPage::confirmData(){
 
 
 void ModelCAMPage::switchIndex(){
-    // 获取用户输入的索引值
+    // 获取下一个索引值
     this->currMatIndex = ui->lineEdit_CAM_currIndex->text().toInt();
     // 判断索引值是否合法
     if(this->currMatIndex < this->choicedMatIndexBegin || this->currMatIndex > this->choicedMatIndexEnd){
@@ -283,7 +285,31 @@ void ModelCAMPage::switchIndex(){
     }
     //绘图
     Chart *previewChart = new Chart(ui->label_CAM_choicedImg, QString::fromStdString(projectsInfo->dataTypeOfSelectedProject), this->choicedMatPATH);
-    previewChart->drawImage(ui->label_CAM_choicedImg, this->currMatIndex-1);
+    previewChart->drawImage(ui->label_CAM_choicedImg, this->currMatIndex, this->windowsLength.toInt(), this->windowsStep.toInt());
+
+    // 更新可视化结果
+    this->camImgsSavePath = this->projectPath+"/CAM_Output/"+ \
+                            this->choicedStage+"/"+this->choicedLabel+"/"+ \
+                            this->choicedMatName+"/" +\
+                            QString::number(this->currMatIndex)+"_"+ \
+                            this->choicedCamMethod+".png";
+    if(dirTools->isExist(this->camImgsSavePath.toStdString())){
+        recvShowPicSignal(QPixmap(this->camImgsSavePath), ui->graphicsView_CAM_camImg);
+    }
+}
+
+
+void ModelCAMPage::nextIndex(){
+    this->currMatIndex += 1;
+    // 判断索引值是否合法
+    if(this->currMatIndex < this->choicedMatIndexBegin || this->currMatIndex > this->choicedMatIndexEnd){
+        QMessageBox::warning(NULL, "数据索引问题", "索引值超出所选数据范围！");
+        return;
+    }
+    //绘图
+    ui->lineEdit_CAM_currIndex->setText(QString::number(this->currMatIndex));
+    Chart *previewChart = new Chart(ui->label_CAM_choicedImg, QString::fromStdString(projectsInfo->dataTypeOfSelectedProject), this->choicedMatPATH);
+    previewChart->drawImage(ui->label_CAM_choicedImg, this->currMatIndex, this->windowsLength.toInt(), this->windowsStep.toInt());
 
     // 更新可视化结果
     this->camImgsSavePath = this->projectPath+"/CAM_Output/"+ \
@@ -493,6 +519,11 @@ void ModelCAMPage::on_comboBox_mat(QString choicedMat){
         if(dataType == "IMAGE" || dataType == "RCS"){
             this->windowsLength = QString::fromStdString(projectsInfo->getAllAttri(dataType,projectsInfo->nameOfSelectedProject)["Model_WindowsLength"]);
             this->windowsStep = QString::fromStdString(projectsInfo->getAllAttri(dataType,projectsInfo->nameOfSelectedProject)["Model_WindowsStep"]);
+            if(this->windowsLength == "0" || this->windowsStep == "0" || this->windowsLength == "" || this->windowsStep == ""){
+                // 模型未训练，不能可视化
+                QMessageBox::warning(NULL, "警告", "模型未训练，不能可视化！");
+                return;
+            }
             int sampleNum = (N - this->windowsLength.toInt())/this->windowsStep.toInt() + 1;
             ui->lineEdit_CAM_end->setText(QString::number(sampleNum));
             this->maxMatIndex = sampleNum;
@@ -722,7 +753,7 @@ void ModelCAMPage::confirmData_2(){
         QString::fromStdString(projectsInfo->dataTypeOfSelectedProject), 
         this->choicedMatPATH_2
     );
-    previewChart->drawImage(ui->label_CAM_choicedImg_2, this->currMatIndex_2-1);
+    previewChart->drawImage(ui->label_CAM_choicedImg_2, this->currMatIndex_2, this->windowsLength.toInt(), this->windowsStep.toInt());
 
     QMessageBox::information(NULL, "数据切换提醒", "数据切换为：" + this->choicedMatPATH_2 + \
             "\n索引范围为：" + QString::number(this->choicedMatIndexBegin_2) + " - " + \
@@ -741,7 +772,32 @@ void ModelCAMPage::switchIndex_2(){
     //绘图
     Chart *previewChart = new Chart(ui->label_CAM_choicedImg_2, \
         QString::fromStdString(projectsInfo->dataTypeOfSelectedProject), this->choicedMatPATH_2);
-    previewChart->drawImage(ui->label_CAM_choicedImg_2, this->currMatIndex_2-1);
+    previewChart->drawImage(ui->label_CAM_choicedImg_2, this->currMatIndex_2, this->windowsLength.toInt(), this->windowsStep.toInt());
+
+    // 更新可视化结果
+    this->camImgsSavePath_2 = this->projectPath+"/CAM_Output/"+ \
+                              this->choicedStage_2+"/"+this->choicedLabel_2+"/"+ \
+                              this->choicedMatName_2+"/" +\
+                              QString::number(this->currMatIndex_2)+"_"+ \
+                              this->choicedCamMethod_2+".png";
+    if(dirTools->isExist(this->camImgsSavePath_2.toStdString())){
+        recvShowPicSignal(QPixmap(this->camImgsSavePath_2), ui->graphicsView_CAM_camImg_2);
+    }
+}
+
+void ModelCAMPage::nextIndex_2(){
+    // 获取下一个索引值
+    this->currMatIndex_2 += 1;
+    // 判断索引值是否合法
+    if(this->currMatIndex_2 < this->choicedMatIndexBegin_2 || this->currMatIndex_2 > this->choicedMatIndexEnd_2){
+        QMessageBox::warning(NULL, "数据索引问题", "索引值超出所选数据范围！");
+        return;
+    }
+    //绘图
+    ui->lineEdit_CAM_currIndex_2->setText(QString::number(this->currMatIndex_2));
+    Chart *previewChart = new Chart(ui->label_CAM_choicedImg_2, \
+        QString::fromStdString(projectsInfo->dataTypeOfSelectedProject), this->choicedMatPATH_2);
+    previewChart->drawImage(ui->label_CAM_choicedImg_2, this->currMatIndex_2, this->windowsLength.toInt(), this->windowsStep.toInt());
 
     // 更新可视化结果
     this->camImgsSavePath_2 = this->projectPath+"/CAM_Output/"+ \
@@ -879,9 +935,9 @@ void ModelCAMPage::confirmVis_2(){
         return;
     }
     std::string dataType = projectsInfo->dataTypeOfSelectedProject;
-    QString isRCS = "False";
+    QString isRCS = "0";
     if(dataType == "RCS"){
-        isRCS = "True";
+        isRCS = "1";
     }
 
     // 执行python脚本
@@ -1054,6 +1110,11 @@ void ModelCAMPage::on_comboBox_mat_2(QString choicedMat){
         if(dataType == "IMAGE" || dataType == "RCS"){
             this->windowsLength = QString::fromStdString(projectsInfo->getAllAttri(dataType,projectsInfo->nameOfSelectedProject)["Model_WindowsLength"]);
             this->windowsStep = QString::fromStdString(projectsInfo->getAllAttri(dataType,projectsInfo->nameOfSelectedProject)["Model_WindowsStep"]);
+            if(this->windowsLength == "0" || this->windowsStep == "0", this->windowsLength == "" || this->windowsStep == ""){
+                // 模型未训练，不能可视化
+                QMessageBox::warning(NULL, "警告", "模型未训练，不能可视化！");
+                return;
+            }
             int sampleNum = (N - this->windowsLength.toInt())/this->windowsStep.toInt() + 1;
             ui->lineEdit_CAM_end_2->setText(QString::number(sampleNum));
             this->maxMatIndex_2 = sampleNum;
