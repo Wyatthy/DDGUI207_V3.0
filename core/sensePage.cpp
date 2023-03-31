@@ -114,6 +114,14 @@ void SenseSetPage::refreshGlobalInfo(){
     int classNum = folders.size();
     ui->label_sense_claNum->setText(QString::number(classNum));
     ui->label_sense_classNames->setText(classNames);
+    QString imgPath = QString::fromStdString(projectsInfo->pathOfSelectedProject + "/" +projectsInfo->nameOfSelectedProject);
+    updateAttriLabel();
+    if(std::filesystem::exists(std::filesystem::u8path(imgPath.toStdString()))){
+        recvShowPicSignal(QPixmap(imgPath), ui->graphicsView_sense_modelImg);
+    }
+    else{
+        terminal->print("模型图像地址:"+imgPath+"不存在");
+    }
 }
 
 void SenseSetPage::saveDatasetNote()

@@ -278,6 +278,7 @@ void ModelCAMPage::confirmData(){
 void ModelCAMPage::switchIndex(){
     // 获取下一个索引值
     this->currMatIndex = ui->lineEdit_CAM_currIndex->text().toInt();
+    this->choicedCamMethod = ui->comboBox_CAM_camMethod->currentText();
     // 判断索引值是否合法
     if(this->currMatIndex < this->choicedMatIndexBegin || this->currMatIndex > this->choicedMatIndexEnd){
         QMessageBox::warning(NULL, "数据索引问题", "索引值超出所选数据范围！");
@@ -301,6 +302,7 @@ void ModelCAMPage::switchIndex(){
 
 void ModelCAMPage::nextIndex(){
     this->currMatIndex += 1;
+    this->choicedCamMethod = ui->comboBox_CAM_camMethod->currentText();
     // 判断索引值是否合法
     if(this->currMatIndex < this->choicedMatIndexBegin || this->currMatIndex > this->choicedMatIndexEnd){
         QMessageBox::warning(NULL, "数据索引问题", "索引值超出所选数据范围！");
@@ -763,6 +765,7 @@ void ModelCAMPage::confirmData_2(){
 
 void ModelCAMPage::switchIndex_2(){
     // 获取用户输入的索引值
+    this->choicedCamMethod_2 = ui->comboBox_CAM_camMethod_2->currentText();
     this->currMatIndex_2 = ui->lineEdit_CAM_currIndex_2->text().toInt();
     // 判断索引值是否合法
     if(this->currMatIndex_2 < this->choicedMatIndexBegin_2 || this->currMatIndex_2 > this->choicedMatIndexEnd_2){
@@ -788,6 +791,7 @@ void ModelCAMPage::switchIndex_2(){
 void ModelCAMPage::nextIndex_2(){
     // 获取下一个索引值
     this->currMatIndex_2 += 1;
+    this->choicedCamMethod_2 = ui->comboBox_CAM_camMethod_2->currentText();
     // 判断索引值是否合法
     if(this->currMatIndex_2 < this->choicedMatIndexBegin_2 || this->currMatIndex_2 > this->choicedMatIndexEnd_2){
         QMessageBox::warning(NULL, "数据索引问题", "索引值超出所选数据范围！");

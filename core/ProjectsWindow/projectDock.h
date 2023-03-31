@@ -70,6 +70,7 @@ private slots:
     void onAction_Expand();
     void onAction_Collapse();
     void onAction_Delete();
+    void onAction_openInWindows();
 
 
 //     void onActionExtractFea();

@@ -332,6 +332,12 @@ void ModelVisPage::confirmData(){
 
 void ModelVisPage::switchIndex(){
     // 获取用户输入的索引值
+    if(ui->comboBox_mV_actOrGrad->currentText()=="神经元激活"){
+        this->actOrGrad = "feature";
+    }
+    else if(ui->comboBox_mV_actOrGrad->currentText()=="神经元梯度"){
+        this->actOrGrad = "gradient";
+    }
     this->currMatIndex = ui->lineEdit_mV_currIndex->text().toInt();
     // 判断索引值是否合法
     if(this->currMatIndex < this->choicedMatIndexBegin || this->currMatIndex > this->choicedMatIndexEnd){
@@ -363,6 +369,12 @@ void ModelVisPage::switchIndex(){
 
 
 void ModelVisPage::nextIndex(){
+    if(ui->comboBox_mV_actOrGrad->currentText()=="神经元激活"){
+        this->actOrGrad = "feature";
+    }
+    else if(ui->comboBox_mV_actOrGrad->currentText()=="神经元梯度"){
+        this->actOrGrad = "gradient";
+    }
     // 获取用户输入的索引值
     this->currMatIndex += 1;
     // 判断索引值是否合法
@@ -835,6 +847,12 @@ void ModelVisPage::confirmData_2(){
 
 void ModelVisPage::switchIndex_2(){
     // 获取用户输入的索引值
+    if(ui->comboBox_mV_actOrGrad_2->currentText()=="神经元激活"){
+        this->actOrGrad_2 = "feature";
+    }
+    else if(ui->comboBox_mV_actOrGrad_2->currentText()=="神经元梯度"){
+        this->actOrGrad_2 = "gradient";
+    }
     this->currMatIndex_2 = ui->lineEdit_mV_currIndex_2->text().toInt();
     // 判断索引值是否合法
     if(this->currMatIndex_2 < this->choicedMatIndexBegin_2 || this->currMatIndex_2 > this->choicedMatIndexEnd_2){
@@ -867,6 +885,12 @@ void ModelVisPage::switchIndex_2(){
 
 void ModelVisPage::nextIndex_2(){
     // 获取下一个索引值
+    if(ui->comboBox_mV_actOrGrad_2->currentText()=="神经元激活"){
+        this->actOrGrad_2 = "feature";
+    }
+    else if(ui->comboBox_mV_actOrGrad_2->currentText()=="神经元梯度"){
+        this->actOrGrad_2 = "gradient";
+    }
     this->currMatIndex_2 += 1;
     // 判断索引值是否合法
     if(this->currMatIndex_2 < this->choicedMatIndexBegin_2 || this->currMatIndex_2 > this->choicedMatIndexEnd_2){

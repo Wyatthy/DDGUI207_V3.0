@@ -98,6 +98,8 @@ void MainWindow::refreshPages(){
     this->monitorPage->refresh();
     this->modelTrainPage->refreshGlobalInfo();
     this->senseSetPage->refreshGlobalInfo();
+    this->modelVisPage->refreshGlobalInfo();
+    this->modelCAMPage->refreshGlobalInfo();
 }
 
 void MainWindow::fullScreen(){

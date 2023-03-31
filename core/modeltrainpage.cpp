@@ -344,6 +344,13 @@ void ModelTrainPage::monitorTrainProcess(){
                 projectsInfo->addProjectFromXML(xmlPath.toStdString());
                 projectsInfo->modifyAttri(trainingDataType, trainingProjectName, "Project_Path", trainingProjectPath);
                 projectsInfo->writeToXML(projectsInfo->defaultXmlPath);
+                // 更新工程信息到xml
+                // xml路径
+                if (QFile::remove(xmlPath))
+                    qDebug()<< "已经移除modelXml";
+                else
+                    qDebug()<< "modelXml删除失败";
+                this->projectsInfo->writePrjInfoToXML(xmlPath.toStdString(),projectsInfo->dataTypeOfSelectedProject,projectsInfo->nameOfSelectedProject);
                 showTrianResult();
                 if(processTrain->state()==QProcess::Running){
                     processTrain->close();

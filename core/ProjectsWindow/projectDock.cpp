@@ -131,7 +131,6 @@ void ProjectDock::makeProjectDock(QString projectName,QString projectPath){
     vector<string> allXmlNames;
     dirTools->getFilesplus(allXmlNames, ".xml",projectPath.toStdString());
     auto xmlIdx = std::find(allXmlNames.begin(), allXmlNames.end(), projectName.toStdString()+".xml");
-    qDebug()<< "xmlIdx:" << xmlIdx->c_str();
 
     if (xmlIdx == allXmlNames.end()){
         terminal->print("工程添加成功，但该工程没有说明文件.xml!");
@@ -162,11 +161,17 @@ void ProjectDock::makeProjectDock(QString projectName,QString projectPath){
     // 得到train文件夹下所有文件夹的个数作为类别数量
     int classNum = folders.size();
     
+    this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"ProjectType", rightSelType);
     this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"Project_Path", projectPath.toStdString());
     this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"Model_DataType", rightSelType);
-    this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"datasetClassNum", std::to_string(classNum));
-    this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"datasetClassName", classNames.toStdString());
-    this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"datasetNote", "-");
+    if(classNum>0){
+        this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"datasetClassNum", std::to_string(classNum));
+        this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"datasetClassName", classNames.toStdString());
+        this->projectsInfo->modifyAttri(rightSelType, projectName.toStdString(),"datasetNote", "-");
+    }
+    else{
+        QMessageBox::information(NULL, "添加工程", "当前工程下无数据集(train/val/test)!");
+    }
     this->reloadTreeView();
     qDebug()<<"import and writeToXML";
     this->projectsInfo->writeToXML(projectsInfo->defaultXmlPath);
@@ -270,6 +275,7 @@ void ProjectDock::onRequestMenu(const QPoint &pos){
         ++depth;
         parentIndex = parentIndex.parent();
     }
+    menu.addAction(transIcon, tr("在资源管理器打开"), this, &ProjectDock::onAction_openInWindows);
     if (depth == 0) {// 为第一级节点绑定一个菜单
         menu.addAction(transIcon, tr("设为活动工程"), this, &ProjectDock::onAction_ShotProject);
         menu.addAction(transIcon, tr("删除工程文件"), this, &ProjectDock::onAction_DeleteProject);
@@ -335,14 +341,13 @@ void ProjectDock::onAction_modifyProject(){
             // model.xml文件内容读取和改写
             std::string modelXmlPath = newProjectPath.toStdString() + "/"+ projectNaming.toStdString() + ".xml";
             qDebug()<<"modelXmlPath:"<<QString::fromStdString(modelXmlPath);
-            // updateXmlFile(QString::fromStdString(modelXmlPath),QString::fromStdString(rightSelName),projectNaming);
-
-            // 输出modelinfo的内容
-            // modelInfo[]
-
-            // modelInfo->writeToXML(modelXmlPath);
-            // ProjectDockMessage(projectNaming, newProjectPath);
-            // ProjectDockMessage(projectNaming,currentProjPath);
+            // 更新工程信息到xml
+            // xml路径
+            if (QFile::remove(QString::fromStdString(modelXmlPath)))
+                qDebug()<< "已经移除modelXml";
+            else
+                qDebug()<< "modelXml删除失败";
+            this->projectsInfo->writePrjInfoToXML(modelXmlPath, rightSelType, projectNaming.toStdString());
             updateDatasetInfo(projectNaming, newProjectPath);
 
             QMessageBox::information(NULL, "修改工程", "修改成功！");
@@ -429,6 +434,15 @@ void ProjectDock::renameFiles(const QString& path, const QString& oldName, const
     }
 }
 
+void ProjectDock::onAction_openOnWindows(){
+    const QString explorer = "explorer";
+    QStringList param;
+    if(!QFileInfo(rightSelPath).isDir()){
+        param<<QLatin1String("/select,");
+    }
+    param<<QDir::toNativeSeparators(rightSelPath);
+    QProcess::startDetached(explorer, param);
+}
 
 
 void ProjectDock::onAction_NewProject(){
@@ -653,14 +667,6 @@ void ProjectDock::onAction_ShotProject(){
     // qDebug()<<"更新工程名字："<<QString::fromStdString(rightSelName);
     // qDebug()<<"更新工程路径："<<QString::fromStdString(projectsInfo->pathOfSelectedProject);
     // updateDatasetInfo(QString::fromStdString(rightSelName),QString::fromStdString(projectsInfo->pathOfSelectedProject));
-
-    //更新工程信息到xml
-    // xml路径
-    std::string modelXmlPath = projectsInfo->pathOfSelectedProject + "/" + rightSelName + ".xml";
-    qDebug()<<"更新工程信息到xml："<<QString::fromStdString(modelXmlPath);
-    this->projectsInfo->writePrjInfoToXML(modelXmlPath,rightSelName);
-
-
     // 发送信号给MainWIndow，让其刷新各个界面，比如调用EvalPage的refreshGlobalInfo
     if(this->lastProjectPath != project_path){
         emit projectChanged();
