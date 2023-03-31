@@ -14,7 +14,7 @@ void MatDataProcess_rcs::oneNormalization(std::vector<float> &list){
 void MatDataProcess_rcs::getAllDataFromMat(std::string matPath,bool dataProcess,std::vector<std::vector<float>> &data,std::vector<int> &labels,int label,int inputLen){
     MATFile* pMatFile = NULL;
     mxArray* pMxArray = NULL;
-    int* matdata;
+    double* matdata;
     pMatFile = matOpen(matPath.c_str(), "r");
     if(!pMatFile){
         qDebug()<<"(MatDataProcess_rcs:getAllDataFromMat)文件指针空!!!";
@@ -25,7 +25,7 @@ void MatDataProcess_rcs::getAllDataFromMat(std::string matPath,bool dataProcess,
         qDebug()<<"(MatDataProcess:getAllDataFromMat).mat文件变量没找到!!!("<<QString::fromStdString(matPath);
         return;
     }
-    matdata = (int*)mxGetData(pMxArray);
+    matdata = (double*)mxGetData(pMxArray);
     int M = mxGetM(pMxArray);  //行数 RCS只有一行
     int N = mxGetN(pMxArray);  //列数 
     int allDataNum=(N-windowLen)/windowStep+1;

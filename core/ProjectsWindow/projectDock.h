@@ -89,6 +89,7 @@ private:
     QModelIndex findModelIndexByName(QStandardItem *item, const QString &name);
     std::string getPathByItemClicked(); 
     std::string getPathByRightClicked();
+    void minMatNum(int &minNum,QString matPath);
     void drawExample();
 
     //保存上一个活动工程在treemodel的index和工程路径，方便作判断

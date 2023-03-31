@@ -476,5 +476,5 @@ if __name__ == '__main__':
     pbPath = project_path + '/' + model_naming + '.pb'
     shutil.copy("../sources/modelIMG/"+model_name+".png",project_path + '/'+model_naming+'.png')
     generator_model_documents(args)
-    # convert_hdf5_to_trt(model_type, project_path, model_naming, '1')
+    convert_hdf5_to_trt(model_type, project_path, model_naming, '1')
     print("Train Ended:")

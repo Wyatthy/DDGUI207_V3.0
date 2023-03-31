@@ -71,6 +71,26 @@ ProjectDock::ProjectDock(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, Pr
 ProjectDock::~ProjectDock(){
 }
 
+void ProjectDock::minMatNum(int &minNum,QString matPath){
+    //下面这部分代码都是为了让randomIdx在合理的范围内（
+    MATFile* pMatFile = NULL;
+    mxArray* pMxArray = NULL;
+    pMatFile = matOpen(matPath.toStdString().c_str(), "r");
+    if(!pMatFile){qDebug()<<"(ModelEvalPage::randSample)文件指针空!!!!";return;}
+    pMxArray = matGetNextVariable(pMatFile, NULL);
+    if(!pMxArray){
+        qDebug()<<"(Chart::readHRRPmat)pMxArray变量没找到!!!!";
+        return;
+    }
+    int windowlen = 16;
+    int windowstep = 1;
+    int N = mxGetN(pMxArray);  //N 列数
+    if(projectsInfo->dataTypeOfSelectedProject == "RCS" || projectsInfo->dataTypeOfSelectedProject == "IMAGE"){
+        N = (N-windowlen)/windowstep+1;
+    }
+    if(N<minNum) minNum = N;
+}
+
 string ProjectDock::getPathByItemClicked(){
     string retPath="";
     // QModelIndex curIndex = projectTreeViewGroup[leftSelType]->currentIndex();
@@ -197,11 +217,24 @@ void ProjectDock::drawExample(){//TODO mat变量不合适和样本索引范围�
     }
     else examIdx = examIdx_str.toInt();
 
+    int maxIndex = 1000000;
+    minMatNum(maxIndex,selectedMatFilePath);
+    if (maxIndex > 0)
+        ui->label_dock_maxIdx->setText(QString::fromStdString(to_string(maxIndex-1)));
+    qDebug() << "maxIndex: " << maxIndex-1;
+    QIntValidator *validator = new QIntValidator(ui->projectDock_examIdx);
+    validator->setBottom(1);
+    validator->setTop(maxIndex-1);
+    ui->projectDock_examIdx->setValidator(validator);
+
     //绘图
     QString matFilePath = selectedMatFilePath;
     QString matFileName = selectedMatFilePath.split('/').last();
     ui->label_datasetDock_examChart->clear();
     Chart *previewChart = new Chart(ui->label_datasetDock_examChart,QString::fromStdString(leftSelType),matFilePath);
+    if(leftSelType == "RCS"){
+        previewChart->drawImage(ui->label_datasetDock_examChart,1,maxIndex-1,1);
+    }
     previewChart->drawImage(ui->label_datasetDock_examChart,examIdx);
     //ui->projectDock_examIdx->setText(std::to_string(examIdx));
 }
