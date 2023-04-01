@@ -1,4 +1,4 @@
-import os
+import os,sys
 import re,shutil
 import argparse
 import numpy as np
@@ -442,6 +442,9 @@ def save_params():
 
 
 if __name__ == '__main__':
+    pid = os.getpid()
+    print('pid$',pid,"pid$")
+    sys.stdout.flush()
     project_path = args.data_dir
     model_type = 'baseline'  # 网络类型
     model_naming = project_path.split('/')[-1]

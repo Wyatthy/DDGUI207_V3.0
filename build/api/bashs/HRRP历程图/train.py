@@ -434,6 +434,9 @@ def save_params():
 
 
 if __name__ == '__main__':
+    pid = os.getpid()
+    print('pid$',pid,"pid$")
+    sys.stdout.flush()
     # 超参数配置，包括训练集构成、测试集构成、模型文件、输出结果、网络类型等
     # 训练集数据
     project_path = args.data_dir  # 工程目录

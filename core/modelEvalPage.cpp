@@ -464,7 +464,7 @@ void ModelEvalPage::testAllSample(){
     else if(dataType == "IMAGE") {
         flag = "IMAGE_infer_param"+windowsLength+"_param"+windowsStep;
     }
-    else if(modelType == "CIL") {
+    else if(modelType == "Incremental") {
         dataProcess=false; //目前增量模型接受的数据是不做预处理的
         //TODO 这里可能要重新set trtInfer的classs2label
         QStringList CILclass = QString::fromStdString(projectsInfo->getAllAttri(dataType,projectsInfo->nameOfSelectedProject)["Model_ClassNames"]).split(";");
@@ -492,7 +492,7 @@ void ModelEvalPage::testAllSample(){
     //用tuple装起来传入python
     args_draw = PyTuple_New(2);
     std::string stringparm="";
-    if(modelType != "CIL") for(int i=0;i<classNum;i++) stringparm=stringparm+label2class[i]+"#";
+    if(modelType != "Incremental") for(int i=0;i<classNum;i++) stringparm=stringparm+label2class[i]+"#";
     else for(int i=0;i<classNum;i++) stringparm=stringparm+label2class_cil[i]+"#";
     PyTuple_SetItem(args_draw, 0, Py_BuildValue("s", stringparm.c_str()));
     PyTuple_SetItem(args_draw, 1, PyArray);
@@ -522,7 +522,7 @@ void ModelEvalPage::testAllSample(){
             ui->verticalLayout_22->removeItem(spaerItem);
         delete item;
     }
-    if(modelType != "CIL"){
+    if(modelType != "Incremental"){
         for(int i=0;i<label2class.size();i++){
             QLabel *imageLabel=new QLabel("数据集样本在"+QString::fromStdString(label2class[i])+"类上的隶属度曲线");
             QLabel *imageLabel_sig=new QLabel();

@@ -45,10 +45,32 @@
             <datasetClassNum>6</datasetClassNum>
             <datasetNote>-</datasetNote>
         </基于HRRP数据的ATEC网络>
+        <普通的卷积网络 nameID="3">
+            <Model_AccuracyOnTrain>-</Model_AccuracyOnTrain>
+            <Model_AccuracyOnVal>16.67</Model_AccuracyOnVal>
+            <Model_Algorithm>Baseline_CNN</Model_Algorithm>
+            <Model_AlgorithmType>传统深度学习模型</Model_AlgorithmType>
+            <Model_DataType>HRRP</Model_DataType>
+            <Model_Framework>Keras</Model_Framework>
+            <Model_Name>普通的卷积网络</Model_Name>
+            <Model_Note>-</Model_Note>
+            <Model_NumClassCategories>6</Model_NumClassCategories>
+            <Model_Path>N:\207\DDGUI207_V3.0\work_dirs\普通的卷积网络\普通的卷积网络.trt</Model_Path>
+            <Model_TrainBatchSize>64</Model_TrainBatchSize>
+            <Model_TrainDataset>普通的卷积网络</Model_TrainDataset>
+            <Model_TrainEpoch>10</Model_TrainEpoch>
+            <Model_TrainLR>0.001</Model_TrainLR>
+            <Model_Type>BASE</Model_Type>
+            <ProjectType>HRRP</ProjectType>
+            <Project_Path>N:/207/DDGUI207_V3.0/work_dirs/普通的卷积网络</Project_Path>
+            <datasetClassName>Big_ball,Cone,Cone_cylinder,DT,Small_ball,Spherical_cone</datasetClassName>
+            <datasetClassNum>6</datasetClassNum>
+            <datasetNote>-</datasetNote>
+        </普通的卷积网络>
     </HRRP>
     <IMAGE typeID="3" />
     <RCS typeID="4">
-        <基于RCS数据的Resnet50网络 nameID="3">
+        <基于RCS数据的Resnet50网络 nameID="4">
             <Model_AccuracyOnTrain>-</Model_AccuracyOnTrain>
             <Model_AccuracyOnVal>100.0</Model_AccuracyOnVal>
             <Model_Algorithm>TRAD_ResNet50V2</Model_Algorithm>

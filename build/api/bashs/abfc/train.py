@@ -204,7 +204,9 @@ def save_params():
 
 
 if __name__ == '__main__':
-
+    pid = os.getpid()
+    print('pid$',pid,"pid$")
+    sys.stdout.flush()
     project_path = args.data_dir  # 工程目录
     # 分割路径，获取文件名
     model_naming = project_path.split('/')[-1]

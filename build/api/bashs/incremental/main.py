@@ -106,6 +106,9 @@ def inference(args, oldclass_name):
 
 
 if __name__ == '__main__':
+    pid = os.getpid()
+    print('pid$',pid,"pid$")
+    sys.stdout.flush()
     project_path = args.work_dir
     projectName = args.work_dir.split('/')[-1];
     args.model_name = projectName;

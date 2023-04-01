@@ -249,7 +249,7 @@ void ModelTrainPage::startTrain(){
         if(shotModelType == "TRAD"){
             cmd="activate tf24 && python ./api/bashs/HRRP_Tr/train.py --data_dir "+projectPath+ \
                 " --batch_size "+batchSize+" --max_epochs "+epoch;
-        }else if(shotModelType == "BASE"){
+        }else if(shotModelType == "Baseline"){
             cmd="activate tf24 && python ./api/bashs/baseline/train.py --data_dir "+projectPath+ \
                 " --batch_size "+batchSize+" --max_epochs "+epoch;
         }else if(shotModelType == "ATEC"){
@@ -311,7 +311,12 @@ void ModelTrainPage::execuCmd(QString cmd){
 }
 
 void ModelTrainPage::stopTrain(){
-    QString cmd="\\x03";
+    if(currtPID!="")
+        QString cmd="taskkill /pid "+ currtPID +"-f";
+    else
+        QString cmd="\\x03";
+    qDebug()<<"currtPID="<<currtPID;
+
     processTrain->write(cmd.toLocal8Bit() + '\n');
     showLog=false;
     ui->startTrainButton->setEnabled(true);
@@ -332,7 +337,9 @@ void ModelTrainPage::monitorTrainProcess(){
         QStringList lines = logs.split("\n");
         int len=lines.length();
         for(int i=0;i<len;i++){
-            QStringList Infos = lines[i].simplified().split(" ");
+            if(lines[i].contains("pid$",Qt::CaseSensitive)){
+                currtPID = lines[i].split("pid$")[1];
+            }
             if(lines[i].contains("Train Ended",Qt::CaseSensitive)){
                 ui->textBrowser->append("===================Train Ended===================");
                 showLog=false;
@@ -350,7 +357,7 @@ void ModelTrainPage::monitorTrainProcess(){
                     qDebug()<< "已经移除modelXml";
                 else
                     qDebug()<< "modelXml删除失败";
-                this->projectsInfo->writePrjInfoToXML(xmlPath.toStdString(),projectsInfo->dataTypeOfSelectedProject,projectsInfo->nameOfSelectedProject);
+                this->projectsInfo->writePrjInfoToXML(xmlPath.toStdString(),projectsInfo->dataTypeOfSelectedProject);
                 showTrianResult();
                 if(processTrain->state()==QProcess::Running){
                     processTrain->close();
@@ -447,7 +454,7 @@ void ModelTrainPage::editModelFile(){
     else if (dataType == "HRRP"){
         if(shotModelType == "TRAD"){
             modelFilePath="./api/bashs/HRRP_Tr/train.py";
-        }else if(shotModelType == "BASE"){
+        }else if(shotModelType == "Baseline"){
             modelFilePath="./api/bashs/baseline/train.py";
         }else if(shotModelType == "ATEC"){
             modelFilePath="./api/bashs/ATEC/train.py";

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 8.0.1, 2023-03-29T00:53:13. -->
+<!-- Written by QtCreator 8.0.1, 2023-04-01T10:29:59. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -133,8 +133,8 @@
     <value type="int" key="Qt4ProjectManager.Qt4BuildConfiguration.BuildConfiguration">2</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.BuildConfiguration.1">
-    <value type="QString" key="ProjectExplorer.BuildConfiguration.BuildDirectory">N:\207\GUI207_V3.0\build</value>
-    <value type="QString" key="ProjectExplorer.BuildConfiguration.BuildDirectory.shadowDir">N:/207/GUI207_V3.0/build</value>
+    <value type="QString" key="ProjectExplorer.BuildConfiguration.BuildDirectory">N:\207\DDGUI207_V3.0\build</value>
+    <value type="QString" key="ProjectExplorer.BuildConfiguration.BuildDirectory.shadowDir">N:/207/DDGUI207_V3.0/build</value>
     <valuemap type="QVariantMap" key="ProjectExplorer.BuildConfiguration.BuildStepList.0">
      <valuemap type="QVariantMap" key="ProjectExplorer.BuildStepList.Step.0">
       <value type="bool" key="ProjectExplorer.BuildStep.Enabled">true</value>
@@ -235,8 +235,9 @@
     <valuelist type="QVariantList" key="CustomOutputParsers"/>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:N:/207/GUI207_V3.0/GUI_V3.0.pro</value>
-    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">N:/207/GUI207_V3.0/GUI_V3.0.pro</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">GUI_V3.02</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:N:/207/DDGUI207_V3.0/GUI_V3.0.pro</value>
+    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">N:/207/DDGUI207_V3.0/GUI_V3.0.pro</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseLibrarySearchPath">true</value>

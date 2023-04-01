@@ -96,6 +96,7 @@ private:
     std::string modelName = "";
     std::string dataType = "";
     SearchFolder *dirTools = new SearchFolder();
+    QString currtPID = "";
 };
 
 

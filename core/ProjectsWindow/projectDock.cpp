@@ -235,7 +235,7 @@ void ProjectDock::drawExample(){//TODO mat变量不合适和样本索引范围�
     if(leftSelType == "RCS"){
         previewChart->drawImage(ui->label_datasetDock_examChart,1,maxIndex-1,1);
     }
-    previewChart->drawImage(ui->label_datasetDock_examChart,examIdx);
+    else previewChart->drawImage(ui->label_datasetDock_examChart,examIdx);
     //ui->projectDock_examIdx->setText(std::to_string(examIdx));
 }
 
@@ -380,7 +380,7 @@ void ProjectDock::onAction_modifyProject(){
                 qDebug()<< "已经移除modelXml";
             else
                 qDebug()<< "modelXml删除失败";
-            this->projectsInfo->writePrjInfoToXML(modelXmlPath, rightSelType, projectNaming.toStdString());
+            this->projectsInfo->writePrjInfoToXML(modelXmlPath, rightSelType);
             updateDatasetInfo(projectNaming, newProjectPath);
 
             QMessageBox::information(NULL, "修改工程", "修改成功！");
@@ -467,7 +467,7 @@ void ProjectDock::renameFiles(const QString& path, const QString& oldName, const
     }
 }
 
-void ProjectDock::onAction_openOnWindows(){
+void ProjectDock::onAction_openInWindows(){
     const QString explorer = "explorer";
     QStringList param;
     if(!QFileInfo(rightSelPath).isDir()){
