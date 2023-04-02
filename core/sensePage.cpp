@@ -136,7 +136,7 @@ void SenseSetPage::saveDatasetNote()
         if(customAttriValue.empty()){
             customAttriValue = "未定义";
         }
-        this->projectsInfo->modifyAttri(type, name, "Dataset_Note", customAttriValue);
+        this->projectsInfo->modifyAttri(type, name, "datasetNote", customAttriValue);
         // 保存至.xml,并更新
         this->projectsInfo->writeToXML(projectsInfo->defaultXmlPath);
 
@@ -289,7 +289,7 @@ void SenseSetPage::updateAttriLabel(){
         currAttriWidget.second->setText(QString::fromStdString(attriContents[currAttriWidget.first]));
     }
    ui->lineEdit_datasetNote->setText(QString::fromStdString(attriContents["datasetNote"]));
-   ui->lineEdit_modelNote->setText(QString::fromStdString(attriContents["modelNote"]));
+   ui->lineEdit_modelNote->setText(QString::fromStdString(attriContents["Model_Note"]));
 }
 
 

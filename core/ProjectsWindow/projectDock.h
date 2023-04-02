@@ -7,7 +7,7 @@
 #include <QStandardItemModel>
 #include <QFileSystemModel>
 #include "ui_MainWindow.h"
-#include "./uis/DialogNewProject.h"
+#include "./core/DialogNewProject.h"
 #include "ui_DialogNewProject.h"
 #include "./lib/guiLogic/bashTerminal.h"
 #include "./lib/guiLogic/projectsInfo.h"
@@ -109,6 +109,7 @@ private:
     bool confirmProjectType(QString projectPath);
     void renameFiles(const QString& path, const QString& oldName, const QString& newName);
     void updateXmlFile(QString filePath, QString oldName, QString newName);
+    bool isFileLocked(QString fpath);
 };
 
 #endif // DATASETDOCK_H

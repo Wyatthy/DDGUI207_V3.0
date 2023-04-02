@@ -86,43 +86,51 @@ void Chart::drawHRRPimage(QLabel* chartLabel, int emIdx, int windowlen, int wind
     matdata = (double*)mxGetData(pMxArray);
     int M = mxGetM(pMxArray);  //行数
     int N = mxGetN(pMxArray);  //列数
-    int allDataNum=(N-windowlen)/windowstep+1;
-    emIdx = emIdx>allDataNum?allDataNum:emIdx;//说明是随机数
 
-    cv::Mat mat(windowlen, M, CV_64FC1);
+    // int allDataNum=(N-windowlen)/windowstep+1;
+    // emIdx = emIdx>allDataNum?allDataNum:emIdx;//说明是随机数
 
-    for(int i=0;i<windowlen;i++){
+    // int allDataNum=N;
+    // emIdx = emIdx>=allDataNum?allDataNum-1:emIdx;//说明是随机数
+
+
+    // cv::Mat mat(windowlen, M, CV_64FC1);
+    cv::Mat mat(M, N, CV_64FC1);
+    // 不用滑动窗口，显示全部数据
+    for(int i=0;i<N;i++){
         for(int j=0;j<M;j++){
-            mat.at<double>(i, j) = matdata[((emIdx-1)*windowstep+i)*M+j];
+            mat.at<double>(j, i) = matdata[i*M+j];
         }
     }
+
     cv::Mat mat8bit;
-    cv::normalize(mat, mat8bit, 0, 255, cv::NORM_MINMAX, CV_8UC1);
+    // cv::normalize(mat, mat8bit, 0, 255, cv::NORM_MINMAX, CV_8UC1);
     // 调用applyColorMap函数将灰度图转换为热图
-    // cv::Mat heatmap;
-    // cv::applyColorMap(mat8bit, heatmap, cv::COLORMAP_JET);
-    QImage qImage = matToQImage(mat8bit);
+    cv::Mat heatmap;
+    cv::applyColorMap(mat8bit, heatmap, cv::COLORMAP_JET);
+    QImage qImage = matToQImage(heatmap);
+    // QImage qImage = matToQImage(mat8bit);
     // 将图像缩放以适合QLabel大小
     QPixmap pixmap = QPixmap::fromImage(qImage).scaled(chartLabel->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation);
     // 在QLabel中显示QPixmap
-    // chartLabel->setPixmap(pixmap);
-    QLabel *label = new QLabel(chartLabel);
-    label->setPixmap(pixmap);
+    chartLabel->setPixmap(pixmap);
+    // QLabel *label = new QLabel(chartLabel);
+    // label->setPixmap(pixmap);
     
-    QHBoxLayout *pHLayout = (QHBoxLayout *)chartLabel->layout();
-    if(!chartLabel->layout()){
-        pHLayout = new QHBoxLayout(chartLabel);
-    }
-    else{
-        QLayoutItem *child;
-        while ((child = pHLayout->takeAt(0)) != 0){
-            if(child->widget()){
-                child->widget()->setParent(NULL);
-            }
-            delete child;
-         }
-    }
-    pHLayout->addWidget(label);
+    // QHBoxLayout *pHLayout = (QHBoxLayout *)chartLabel->layout();
+    // if(!chartLabel->layout()){
+    //     pHLayout = new QHBoxLayout(chartLabel);
+    // }
+    // else{
+    //     QLayoutItem *child;
+    //     while ((child = pHLayout->takeAt(0)) != 0){
+    //         if(child->widget()){
+    //             child->widget()->setParent(NULL);
+    //         }
+    //         delete child;
+    //      }
+    // }
+    // pHLayout->addWidget(label);
 }
 
 void Chart::drawImage(QLabel* chartLabel, int examIdx, int windowlen, int windowstep){

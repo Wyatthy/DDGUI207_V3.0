@@ -45,13 +45,12 @@ HEADERS += \
     build/lib/guiLogic/tinyXml/tinystr.h \
     build/lib/guiLogic/tinyXml/tinyxml.h \
     build/lib/guiLogic/tools/convertTools.h \
-    build/lib/guiLogic/tools/searchFolder.h \
     build/lib/guiLogic/tools/guithreadrun.h \
     build/lib/guiLogic/tools/searchFolder.h \
     build/lib/TRANSFER/ToHrrp.h \
     build/lib/guiLogic/tools/socketclient.h \
     build/lib/guiLogic/tools/socketserver.h \
-    uis/DialogNewProject.h
+    core/DialogNewProject.h
 
 SOURCES += \
     build/lib/dataprocess/matdataprocess_atecfea.cpp \
@@ -87,7 +86,7 @@ SOURCES += \
     build/lib/guiLogic/tinyXml/tinyxmlerror.cpp \
     build/lib/guiLogic/tinyXml/tinyxmlparser.cpp \
     build/lib/guiLogic/tools/searchFolder.cpp \
-    uis/DialogNewProject.cpp
+    core/DialogNewProject.cpp
 
 FORMS += \
     ./build/conf/QRibbon/qribbon.ui \

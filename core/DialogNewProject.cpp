@@ -1,6 +1,9 @@
 #include "DialogNewProject.h"
 #include "ui_DialogNewProject.h"
 
+// #include "./lib/guiLogic/tools/searchFolder.h"
+
+
 DialogNewProject::DialogNewProject(QString *projectName,QMap<QString,QString> *projectPath , bool newflag, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::DialogNewProject),
@@ -10,6 +13,7 @@ DialogNewProject::DialogNewProject(QString *projectName,QMap<QString,QString> *p
 {
     ui->setupUi(this);
     // 界面名称
+    
     if (newflag){
         this->setWindowTitle("新建工程文件");
     }else{
@@ -62,7 +66,11 @@ void DialogNewProject::accept()
                 {
                     QMessageBox::warning(this, tr("Warning"), tr("工程文件夹已存在!修改工程名称！"));
                 }else{
-                    QDialog::accept();
+                    if (!checkClass(projectPath)){
+                        QMessageBox::warning(this, tr("Warning"), tr("训练集、测试集、验证集类别不一致!"));
+                    }else{
+                        QDialog::accept();
+                    }
                 }
             }else{
                 // 如果工程名字路径已存在，则弹窗提示
@@ -74,7 +82,11 @@ void DialogNewProject::accept()
                 {
                     QMessageBox::warning(this, tr("Warning"), tr("工程文件夹已存在!修改工程名称！"));
                 }else{
-                    QDialog::accept();
+                    if (!checkClass(projectPath)){
+                        QMessageBox::warning(this, tr("Warning"), tr("训练集、测试集、验证集类别不一致!"));
+                    }else{
+                        QDialog::accept();
+                    }
                 }
             }
 
@@ -149,4 +161,31 @@ void DialogNewProject::on_pushButton_unknown_clicked()
     }
     // qDebug() << "unknownPathin: " << (*projectPath)["unknown"];
     connect(ui->pushButton_unknown, &QPushButton::clicked, this, &DialogNewProject::on_pushButton_unknown_clicked);
+}
+
+bool DialogNewProject::checkClass(QMap<QString,QString> *projectPath){
+    // 获取三个文件夹的子文件夹名称
+    std::string trainPath = (*projectPath)["train_path"].toStdString();
+    std::string testPath = (*projectPath)["test_path"].toStdString();
+    std::string valPath = (*projectPath)["val_path"].toStdString();
+    qDebug() << "trainPath: " << trainPath.c_str();
+    qDebug() << "testPath: " << testPath.c_str();
+    qDebug() << "valPath: " << valPath.c_str();
+    std::vector<std::string> trainDirs = {};
+    std::vector<std::string> testDirs = {};
+    std::vector<std::string> valDirs = {};
+    bool trainClss = dirTools->getDirsplus(trainDirs, trainPath);
+    bool testClass = dirTools->getDirsplus(testDirs, testPath);
+    bool valClass = dirTools->getDirsplus(valDirs, valPath);
+    qDebug() << "trainDirs: " << trainDirs.size();
+    qDebug() << "testDirs: " << testDirs.size();
+    qDebug() << "valDirs: " << valDirs.size();
+    // 判断三个文件夹子文件夹名称是否相同
+    bool sameDirs = false;
+    if (trainClss && testClass && valClass) {
+        if (trainDirs == testDirs && testDirs == valDirs) {
+            sameDirs = true;
+        }
+    }
+    return sameDirs;
 }
