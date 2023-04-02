@@ -387,7 +387,7 @@ void ProjectDock::onAction_modifyProject(){
                 qDebug()<< "已经移除modelXml";
             else
                 qDebug()<< "modelXml删除失败";
-            this->projectsInfo->writePrjInfoToXML(modelXmlPath, rightSelType);
+            this->projectsInfo->writePrjInfoToXML(modelXmlPath, rightSelType, projectNaming.toStdString());
             updateDatasetInfo(projectNaming, newProjectPath);
 
             QMessageBox::information(NULL, "修改工程", "修改成功！");

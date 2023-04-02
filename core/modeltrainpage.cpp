@@ -357,7 +357,7 @@ void ModelTrainPage::monitorTrainProcess(){
                     qDebug()<< "已经移除modelXml";
                 else
                     qDebug()<< "modelXml删除失败";
-                this->projectsInfo->writePrjInfoToXML(xmlPath.toStdString(),projectsInfo->dataTypeOfSelectedProject);
+                this->projectsInfo->writePrjInfoToXML(xmlPath.toStdString(),projectsInfo->dataTypeOfSelectedProject,projectsInfo->nameOfSelectedProject);
                 showTrianResult();
                 if(processTrain->state()==QProcess::Running){
                     processTrain->close();
