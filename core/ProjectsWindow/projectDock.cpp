@@ -308,7 +308,6 @@ void ProjectDock::onRequestMenu(const QPoint &pos){
         ++depth;
         parentIndex = parentIndex.parent();
     }
-    menu.addAction(transIcon, tr("在资源管理器打开"), this, &ProjectDock::onAction_openInWindows);
     if (depth == 0) {// 为第一级节点绑定一个菜单
         menu.addAction(transIcon, tr("设为活动工程"), this, &ProjectDock::onAction_ShotProject);
         menu.addAction(transIcon, tr("删除工程文件"), this, &ProjectDock::onAction_DeleteProject);
@@ -317,6 +316,7 @@ void ProjectDock::onRequestMenu(const QPoint &pos){
         menu.addAction(transIcon, tr("折叠"), this, &ProjectDock::onAction_Collapse);
         menu.addAction(transIcon,tr("删除"),this, &ProjectDock::onAction_Delete);
     }
+    menu.addAction(transIcon, tr("在资源管理器打开"), this, &ProjectDock::onAction_openInWindows);
     // 显示右键菜单
     menu.exec(treeView->viewport()->mapToGlobal(pos));
     
@@ -351,6 +351,13 @@ void ProjectDock::onAction_modifyProject(){
         // QDir dir(rightSelPath);
         // dir.rename(rightSelPath,projectNaming);
         QString newProjectPath = workDir + "/" + projectNaming;
+
+        // 判断旧工程文件夹是否有文件在占用
+        if(isFileLocked(rightSelPath)){
+            QMessageBox::warning(NULL, "警告", "文件/文件夹被占用，无法修改！");
+            qDebug() << "文件/文件夹被占用，无法删除";
+            return;
+        }
 
 
         if(newProjectPath != rightSelPath){
@@ -467,7 +474,7 @@ void ProjectDock::renameFiles(const QString& path, const QString& oldName, const
     }
 }
 
-void ProjectDock::onAction_openOnWindows(){
+void ProjectDock::onAction_openInWindows(){
     const QString explorer = "explorer";
     QStringList param;
     if(!QFileInfo(rightSelPath).isDir()){
@@ -533,10 +540,17 @@ QString ProjectDock::makeNewProject(QString name, QMap<QString, QString> path){
 // TODO:还有个判断当前路径下文件是否有被使用，优先级不高
 bool ProjectDock::deleteDir(const QString &strPath)//要删除的文件夹或文件的路径
 {
-	if (strPath.isEmpty() || !QDir().exists(strPath))//是否传入了空的路径||路径是否存在
+	if (strPath.isEmpty() || !QDir().exists(strPath)){//是否传入了空的路径||路径是否存在
+        QMessageBox::warning(NULL, "警告", "文件/文件夹不存在，无法删除");
+        qDebug() << "文件/文件夹不存在，无法删除";
 		return false;
-		
+    }
 	QFileInfo FileInfo(strPath);
+    if (isFileLocked(strPath)) {
+        QMessageBox::warning(NULL, "警告", "文件/文件夹被锁定，无法删除");
+        qDebug() << "文件/文件夹被占用，无法删除";
+        return false;
+    }
 
 	if (FileInfo.isFile())//如果是文件
 		QFile::remove(strPath);
@@ -545,7 +559,50 @@ bool ProjectDock::deleteDir(const QString &strPath)//要删除的文件夹或文
 		QDir qDir(strPath);
 		qDir.removeRecursively();
 	}
+    QMessageBox::information(NULL, "提示", "删除成功");
+    qDebug() << "删除成功";
 	return true;
+}
+
+bool ProjectDock::isFileLocked(QString fpath){
+    QFileInfo fileInfo(fpath);
+    if (fileInfo.isFile()){
+        bool isUsed = false;
+
+        QString fpathx = fpath + "x";
+
+        QFile file(fpath);
+        bool isExist = file.exists();
+        if(isExist == true)
+        {
+            bool isCanRename = file.rename(fpath,fpathx);
+            if(isCanRename == false)
+            {
+                isUsed = true;
+            }
+            else
+            {
+                file.rename(fpathx,fpath);
+            }
+        }
+        file.close();
+        return isUsed;
+    }else if(fileInfo.isDir()){
+        QDir dir(fpath);
+        foreach(const QFileInfo& file, dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries)) {
+            if (file.isFile()) {
+                if (isFileLocked(file.filePath())) {
+                    return true;
+                }
+            } else if (file.isDir()) {
+                if (isFileLocked(file.filePath())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 }
 
 void ProjectDock::copyDir(QString src, QString dst)
@@ -571,12 +628,13 @@ void ProjectDock::onAction_Delete(){
     confirmMsg.setStandardButtons(QMessageBox::No | QMessageBox::Yes);
     if(confirmMsg.exec() == QMessageBox::Yes){
         qDebug()<<"DeleterightSelPath:"<<rightSelPath;
-        if (!deleteDir(rightSelPath)){
-            QMessageBox::information(NULL, "删除工程", "无法删除！");
-            return;
-        }else{
-            QMessageBox::information(NULL, "删除工程", "删除成功！");
-        }
+        // if (!deleteDir(rightSelPath)){
+        //     QMessageBox::information(NULL, "删除工程", "无法删除！");
+        //     return;
+        // }else{
+        //     QMessageBox::information(NULL, "删除工程", "删除成功！");
+        // }
+        deleteDir(rightSelPath);
         this->reloadTreeView();
         this->projectsInfo->writeToXML(projectsInfo->defaultXmlPath);
         qDebug()<<"delete and writeToXML";
@@ -867,13 +925,18 @@ void ProjectDock::onAction_DeleteProject(){
     confirmMsg.setText(QString::fromStdString("确认要删除工程文件吗"+rightSelName));
     confirmMsg.setStandardButtons(QMessageBox::No | QMessageBox::Yes);
     if(confirmMsg.exec() == QMessageBox::Yes){
-        if (!deleteDir(rightSelPath)){
+        // if (!deleteDir(rightSelPath)){
             
-            QMessageBox::information(NULL, "删除工程", "无法删除！");
-            return;
-        }else{
+        //     QMessageBox::information(NULL, "删除工程", "无法删除！");
+        //     return;
+        // }else{
+        //     this->projectsInfo->deleteProject(rightSelType,rightSelName);
+        //     QMessageBox::information(NULL, "删除工程", "删除成功！");
+        // }
+        
+        if (deleteDir(rightSelPath))
+        {
             this->projectsInfo->deleteProject(rightSelType,rightSelName);
-            QMessageBox::information(NULL, "删除工程", "删除成功！");
         }
         this->reloadTreeView();
         this->projectsInfo->writeToXML(projectsInfo->defaultXmlPath);

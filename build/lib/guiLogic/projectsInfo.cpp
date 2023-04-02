@@ -98,7 +98,7 @@ int ProjectsInfo::writeToXML(string xmlPath){
 }
 
 //projectInfo写入工程文件夹下的xml
-int ProjectsInfo::writePrjInfoToXML(string xmlPath, string prjFolderName) {
+int ProjectsInfo::writePrjInfoToXML(string xmlPath,string prjType, string prjFolderName) {
     TiXmlDocument *writeDoc = new TiXmlDocument; //xml文档指针
     TiXmlDeclaration *decl = new TiXmlDeclaration("1.0", "UTF-8", "yes");       //文档格式声明
     writeDoc->LinkEndChild(decl); //写入文档
@@ -115,29 +115,31 @@ int ProjectsInfo::writePrjInfoToXML(string xmlPath, string prjFolderName) {
         TiXmlElement *currTypeEle = new TiXmlElement(datasetType.first.c_str());
         currTypeEle->SetAttribute("typeID",typeID);         //设置节点属性
         RootElement->LinkEndChild(currTypeEle);             //父节点根节点
+        if (datasetType.first == prjType)
+        {
+            for(auto &datasetName: datasetType.second){
+                /* 对每个数据集建立节点 */
+                nameID += 1;
+                TiXmlElement *currNameEle = new TiXmlElement(datasetName.first.c_str());
+                currTypeEle->LinkEndChild(currNameEle);
+                currNameEle->SetAttribute("nameID",nameID);
 
-        //子元素
-        for(auto &datasetName: datasetType.second){
-            /* 对每个数据集建立节点 */
-            nameID += 1;
-            TiXmlElement *currNameEle = new TiXmlElement(datasetName.first.c_str());
-            currTypeEle->LinkEndChild(currNameEle);
-            currNameEle->SetAttribute("nameID",nameID);
+                // qDebug() << "prjFolderName: " << QString::fromStdString(prjFolderName);
+                // 如果工程文件名字等于prjFolderName，说明是当前工程，需要将其属性写入
+                if (datasetName.first == prjFolderName) {
+                    qDebug() << "datasetName.first: " << QString::fromStdString(datasetName.first);
+                    for(auto &datasetAttr: datasetName.second){
+                        /* 对每个属性建立节点 */
+                        TiXmlElement *currAttrEle = new TiXmlElement(datasetAttr.first.c_str());
+                        currNameEle->LinkEndChild(currAttrEle);
 
-            // qDebug() << "prjFolderName: " << QString::fromStdString(prjFolderName);
-            // 如果工程文件名字等于prjFolderName，说明是当前工程，需要将其属性写入
-            if (datasetName.first == prjFolderName) {
-                qDebug() << "datasetName.first: " << QString::fromStdString(datasetName.first);
-                for(auto &datasetAttr: datasetName.second){
-                    /* 对每个属性建立节点 */
-                    TiXmlElement *currAttrEle = new TiXmlElement(datasetAttr.first.c_str());
-                    currNameEle->LinkEndChild(currAttrEle);
-
-                    TiXmlText *attrContent = new TiXmlText(datasetAttr.second.c_str());
-                    currAttrEle->LinkEndChild(attrContent);
+                        TiXmlText *attrContent = new TiXmlText(datasetAttr.second.c_str());
+                        currAttrEle->LinkEndChild(attrContent);
+                    }
                 }
             }
         }
+        //子元素
     }
     // 判断xmlpath是否存在
     
