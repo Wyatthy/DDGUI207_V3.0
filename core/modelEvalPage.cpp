@@ -175,6 +175,7 @@ void ModelEvalPage::refreshGlobalInfo(){
         }
         selectedCategoriesA.clear();
         selectedCategoriesB.clear();
+        // qDebug()<<"（）selectedCategoriesA"<< "[" + selectedCategoriesA.join(", ") + "]";
         for (int i = 0; i < 3; i++) {//赋默认勾选
             if(i+1>categoriesList.size()) break;
             QListWidgetItem *itemA = testListWidgetA->item(i);
@@ -183,9 +184,10 @@ void ModelEvalPage::refreshGlobalInfo(){
             QCheckBox *checkboxB = static_cast<QCheckBox *>(testListWidgetB->itemWidget(itemB));
             checkboxA->setChecked(true);
             checkboxB->setChecked(true);
-            selectedCategoriesA.append(checkboxA->text());
-            selectedCategoriesB.append(checkboxB->text());
+            // qDebug()<<"selectedCategoriesA"<< "[" + selectedCategoriesA.join(", ") + "]";
+
         }
+        // qDebug()<<"selectedCategoriesA"<< "[" + selectedCategoriesA.join(", ") + "]";
 
         vector<string> comboBoxContents = projectsInfo->classNamesOfSelectedDataset;
         ui->comboBox_sense_A_up->clear();
@@ -646,8 +648,6 @@ void ModelEvalPage::testAllSample(){
     ui->label_testAllAcc->setText(QString("%1").arg(acc*100));
 
     //显示整体样本隶属度
-    classA = class2label["DT"];
-    classB = class2label["Big_ball"];
     ui->comboBox_sense_A_up->setCurrentIndex(0);
     ui->comboBox_sense_B_up->setCurrentIndex(0);
     // QList<QString> selClasses = {"DT","Big_ball","Small_ball"};

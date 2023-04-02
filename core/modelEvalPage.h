@@ -117,8 +117,8 @@ private:
     QLineEdit *cliLineEdit = new QLineEdit;
     QStringList selectedCategoriesA{};
     QStringList selectedCategoriesB{};
-    int classA;
-    int classB;
+    int classA = 0;
+    int classB = 0;
     std::vector<std::vector<std::vector<float>>> degrees_matrix_copy;//[c,c,n]
 
 
