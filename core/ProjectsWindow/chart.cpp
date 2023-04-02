@@ -7,6 +7,7 @@
 #include <QBarSeries>
 #include <QBarSet>
 #include <QBarCategoryAxis>
+#include <QLegendMarker>
 #include <mat.h>
 #include <opencv2/opencv.hpp>
 
@@ -201,8 +202,8 @@ void Chart::drawImageWithSingleSignal(QLabel* chartLabel, QVector<float>& dataFr
     showChart(chartLabel);
 }
 
-void Chart::drawImageWithMultipleVector(QLabel* chartLabel, QVector<QVector<float>> dataFrames, QString mesg){
-    multipleSeries = true ;
+void Chart::drawImageWithTwoVector(QLabel* chartLabel, QVector<QVector<float>> dataFrames, QString mesg){
+    twoSeries = true ;
     points_mapfea.clear();
     points_tradfea.clear();
     float y_min = FLT_MAX, y_max = -FLT_MAX;
@@ -435,6 +436,51 @@ QWidget* Chart::drawDisDegreeChart(QString &classGT, std::vector<float> &degrees
     return view;
 }
 
+void Chart::drawImageWithMultipleVector(QLabel* chartLabel, QVector<QVector<float>> dataFrames, QString mesg){
+    
+    multipleSeries = true ;
+    points_list.clear();
+    float y_min = FLT_MAX, y_max = -FLT_MAX;
+    
+    for(int i=0;i<dataFrames.size();i++){
+        QList<QPointF> pointsI;
+        for (int j = 0; j < dataFrames[i].size(); j++) {
+            float y = dataFrames[i][j];
+            y_min = fmin(y_min, y);
+            y_max = fmax(y_max, y);
+            pointsI.append(QPointF(j, y));
+        }
+        points_list.push_back(pointsI);
+    }
+    chartTitle = mesg;
+    xmin = -1;
+    xmax = dataFrames[0].size() + 1;
+    ymin = y_min - 0.2;
+    ymax = y_max + 0.2;
+    setAxis("Sample Index", xmin, xmax, 10, "Degrees", ymin, ymax, (ymax - ymin) / 10);
+    buildChartWithMutipleList();
+    showChart(chartLabel);
+}
+
+void Chart::buildChartWithMutipleList(){
+    series_list.clear();
+    QColor colors[] = {Qt::blue, Qt::red, Qt::yellow, Qt::black}; 
+    // points_list.clear();
+    int numOfList = points_list.size();
+    for(int i=0;i<numOfList;i++){
+        QSplineSeries *seriesI = new QSplineSeries(this);
+        seriesI->setPen(QPen(colors[i % 4],0.5,Qt::SolidLine));
+        series_list.push_back(seriesI);
+        QList<QPointF> pointsI;
+        for(int j=0;j<points_list.at(i).size();j++){
+            seriesI->append(points_list.at(i).at(j).x(), points_list.at(i).at(j).y());
+            // pointsI.append(QPointF(points_list.at(i).at(j).x(), points_list.at(i).at(j).y()));
+        }
+        qchart->addSeries(seriesI);//输入数据
+        qchart->setAxisX(axisX, seriesI);
+        qchart->setAxisY(axisY, seriesI);
+    }
+}
 
 void Chart::setAxis(QString _xname, qreal _xmin, qreal _xmax, int _xtickc, \
              QString _yname, qreal _ymin, qreal _ymax, int _ytickc){
@@ -611,7 +657,7 @@ void Chart::Show_Save(){
     newchart->setContentsMargins(0, 0, 0, 0);  //设置外边界全部为0
     newchart->setMargins(QMargins(0, 0, 0, 0));
     // newchart->setAnimationOptions(QChart::SeriesAnimations);//设置曲线动画模式
-    if(dataSetType=="FEATURE"){
+    if(dataSetType=="FEATURE"){//数据类型如果是特征就绘制散点图
         QScatterSeries *newseries = new QScatterSeries();
         newseries->setPen(QPen(Qt::blue,1));
         newseries->clear();
@@ -623,18 +669,26 @@ void Chart::Show_Save(){
         newchart->setAxisX(newaxisX, newseries);
         newchart->setAxisY(newaxisY, newseries);
     }
-    else if(!multipleSeries){
-        QSplineSeries *newseries = new QSplineSeries();
-        newseries->setPen(QPen(Qt::blue,1,Qt::SolidLine));
-        newseries->clear();
-        for(int i=0; i<points.size();i++)
-            newseries->append(points.at(i).x(), points.at(i).y());
+    else if(multipleSeries){
+        QColor colors[] = {Qt::blue, Qt::red, Qt::yellow, Qt::black}; 
+        // QString legendTexts[] = {"Series 1", "Series 2", "Series 3", "Series 4"};  // 定义图例文本数组
+        QLegend *legend = newchart->legend();  // 获取图表对象的图例
+        for(int i = 0;i<series_list.size();i++){
+            QSplineSeries *newseriesI = new QSplineSeries();
+            newseriesI->clear();
+            newseriesI->setPen(QPen(colors[i % 4], 1, Qt::SolidLine)); 
+            for(int j=0; j<points_list[i].size();j++)
+                newseriesI->append(points_list[i].at(j).x(), points_list[i].at(j).y());
+            newchart->addSeries(newseriesI);//输入数据
+            newchart->setAxisX(newaxisX, newseriesI);
+            newchart->setAxisY(newaxisY, newseriesI);
+            QLegendMarker *marker = legend->markers(newseriesI).first();  // 获取该 series 对应的图例标记
+            marker->setVisible(true);  // 显示该图例标记
+            marker->setLabel(legendList[i % 4]);  // 使用模运算符取模获取对应的图例文本
+        }
         newchart->setTitle(chartTitle);
-        newchart->legend()->hide(); //隐藏图例
-        newchart->addSeries(newseries);//输入数据
-        newchart->setAxisX(newaxisX, newseries);
-        newchart->setAxisY(newaxisY, newseries);
-    }else{
+        
+    }else if(twoSeries){
         QSplineSeries *newseriesA = new QSplineSeries();
         newseriesA->setPen(QPen(Qt::red,1,Qt::SolidLine));
         newseriesA->clear();
@@ -647,16 +701,27 @@ void Chart::Show_Save(){
             newseriesB->append(points_tradfea.at(i).x(), points_tradfea.at(i).y());
         newchart->setTitle(chartTitle);
         // newchart->legend()->hide(); //隐藏图例
-//        QLegendMarker *markerA = newchart->legend()->markers().at(0);
-//        markerA->setLabel("mapping_feature");
-//        QLegendMarker *markerB = newchart->legend()->markers().at(1);
-//        markerB->setLabel("traditional_feature");
+        // QLegendMarker *markerA = newchart->legend()->markers().at(0);
+        // markerA->setLabel("mapping_feature");
+        // QLegendMarker *markerB = newchart->legend()->markers().at(1);
+        // markerB->setLabel("traditional_feature");
         newchart->addSeries(newseriesA);//输入数据
         newchart->addSeries(newseriesB);
         newchart->setAxisX(newaxisX, newseriesA);
         newchart->setAxisY(newaxisY, newseriesA);
         newchart->setAxisX(newaxisX, newseriesB);
         newchart->setAxisY(newaxisY, newseriesB);
+    }else{
+        QSplineSeries *newseries = new QSplineSeries();
+        newseries->setPen(QPen(Qt::blue,1,Qt::SolidLine));
+        newseries->clear();
+        for(int i=0; i<points.size();i++)
+            newseries->append(points.at(i).x(), points.at(i).y());
+        newchart->setTitle(chartTitle);
+        newchart->legend()->hide(); //隐藏图例
+        newchart->addSeries(newseries);//输入数据
+        newchart->setAxisX(newaxisX, newseries);
+        newchart->setAxisY(newaxisY, newseries);
     }
 
 
@@ -682,4 +747,8 @@ void Chart::Show_Save(){
             }
         }
     }
-};
+}
+
+void Chart::setLegend(QStringList legendlist){
+    legendList = legendlist;
+}

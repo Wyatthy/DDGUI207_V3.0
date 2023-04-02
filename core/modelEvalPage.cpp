@@ -7,6 +7,7 @@
 #include <QBarCategoryAxis>
 #include <thread>
 #include "./lib/guiLogic/tools/guithreadrun.h"
+#include "qcheckbox.h"
 #include<cuda_runtime.h>
 
 #include<Windows.h>  //for Sleep func
@@ -28,6 +29,11 @@ ModelEvalPage::ModelEvalPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal
     // 测试按钮
     connect(ui->pushButton_testOneSample, &QPushButton::clicked, this, &ModelEvalPage::testOneSample);
     connect(ui->pushButton_testAllSample, &QPushButton::clicked, this, &ModelEvalPage::testAllSample);
+    //绘制多样本隶属度对比
+    connect(ui->pushButton_sense_B, &QPushButton::clicked, this, &ModelEvalPage::slot_showDegreesChartB);
+    connect(ui->pushButton_sense_A, &QPushButton::clicked, this, &ModelEvalPage::slot_showDegreesChartA);
+    connect(ui->comboBox_sense_A_up, SIGNAL(textActivated(QString)), this, SLOT(slot_setClassA(QString)));
+    connect(ui->comboBox_sense_B_up, SIGNAL(textActivated(QString)), this, SLOT(slot_setClassB(QString)));
 
     // 多线程的信号槽绑定
     processDatasetInfer = new QProcess();
@@ -96,6 +102,11 @@ void ModelEvalPage::refreshGlobalInfo(){
         for(int i=0;i<comboBoxContents.size();i++)   label2class[i]=comboBoxContents[i];
         for(auto &item: label2class)   class2label[item.second] = item.first;
     }
+    if(projectsInfo->modelTypeOfSelectedProject == "Incremental"){
+        QStringList CILclass = QString::fromStdString(projectsInfo->getAllAttri(projectsInfo->dataTypeOfSelectedProject,projectsInfo->nameOfSelectedProject)["Model_ClassNames"]).split(";");
+        for(int i=0;i<CILclass.size()-1;i++)   label2class[i]=CILclass[i].toStdString();
+        for(auto &item: label2class)   class2label[item.second] = item.first;
+    }
     // 基本信息更新
     ui->label_mE_dataset->setText(QString::fromStdString(projectsInfo->nameOfSelectedDataset));
     ui->label_mE_model->setText(QString::fromStdString(projectsInfo->nameOfSelectedModel_forInfer));
@@ -105,12 +116,131 @@ void ModelEvalPage::refreshGlobalInfo(){
         trtInfer = new TrtInfer(class2label);
         choicedDatasetPATH = projectsInfo->pathOfSelectedDataset;
         choicedModelPATH = projectsInfo->pathOfSelectedModel_forInfer;
-        //TODO 
         this->choicedClass = "";
         this->choicedFileInClass = "";
         ui->comboBox_chosFile->clear();
         // ui->comboBox_sampleType->clear();
+        QStringList categoriesList;
+        for (const auto& pair : class2label) {
+            QString key = QString::fromStdString(pair.first);
+            categoriesList.append(key);
+            
+        }
+
+        while (testListWidgetA->count() > 0){
+            QListWidgetItem *item = testListWidgetA->takeItem(0);
+            delete item;
+        }
+        while (testListWidgetB->count() > 0){
+            QListWidgetItem *item = testListWidgetB->takeItem(0);
+            delete item;
+        }
+
+        for (int i = 0; i<categoriesList.size(); i++) {
+            QListWidgetItem *pItemA = new QListWidgetItem(testListWidgetA);
+            QListWidgetItem *pItemB = new QListWidgetItem(testListWidgetB);
+
+            testListWidgetA->addItem(pItemA);
+            testListWidgetB->addItem(pItemB);
+            pItemA->setData(Qt::UserRole, i);
+            pItemB->setData(Qt::UserRole, i);
+
+            QCheckBox *pCheckBoxA = new QCheckBox();
+            QCheckBox *pCheckBoxB = new QCheckBox();
+            connect(pCheckBoxA, &QCheckBox::stateChanged, this, &ModelEvalPage::slot_updateSelectedCategoriesA);
+            connect(pCheckBoxB, &QCheckBox::stateChanged, this, &ModelEvalPage::slot_updateSelectedCategoriesB);
+
+            pCheckBoxA->setText(categoriesList[i]);
+            pCheckBoxB->setText(categoriesList[i]);
+
+            testListWidgetA->addItem(pItemA);
+            testListWidgetB->addItem(pItemB);
+            testListWidgetA->setItemWidget(pItemA, pCheckBoxA);
+            testListWidgetB->setItemWidget(pItemB, pCheckBoxB);
+        }
+
+        if (ui->comboBox_sense_A_dw->model() != testListWidgetA->model()){
+            ui->comboBox_sense_A_dw->setModel(testListWidgetA->model());
+            ui->comboBox_sense_A_dw->setView(testListWidgetA);
+            ui->comboBox_sense_A_dw->setLineEdit(cliLineEdit);
+            ui->comboBox_sense_A_dw->setMinimumWidth(100);
+            cliLineEdit->setReadOnly(true);
+        }
+        if (ui->comboBox_sense_B_dw->model() != testListWidgetB->model()){
+            ui->comboBox_sense_B_dw->setModel(testListWidgetB->model());
+            ui->comboBox_sense_B_dw->setView(testListWidgetB);
+            ui->comboBox_sense_B_dw->setLineEdit(cliLineEdit);
+            ui->comboBox_sense_B_dw->setMinimumWidth(100);
+            cliLineEdit->setReadOnly(true);
+        }
+        selectedCategoriesA.clear();
+        selectedCategoriesB.clear();
+        for (int i = 0; i < 3; i++) {//赋默认勾选
+            if(i+1>categoriesList.size()) break;
+            QListWidgetItem *itemA = testListWidgetA->item(i);
+            QListWidgetItem *itemB = testListWidgetB->item(i);
+            QCheckBox *checkboxA = static_cast<QCheckBox *>(testListWidgetA->itemWidget(itemA));
+            QCheckBox *checkboxB = static_cast<QCheckBox *>(testListWidgetB->itemWidget(itemB));
+            checkboxA->setChecked(true);
+            checkboxB->setChecked(true);
+            selectedCategoriesA.append(checkboxA->text());
+            selectedCategoriesB.append(checkboxB->text());
+        }
+
+        vector<string> comboBoxContents = projectsInfo->classNamesOfSelectedDataset;
+        ui->comboBox_sense_A_up->clear();
+        ui->comboBox_sense_B_up->clear();
+        for(auto &item: comboBoxContents){
+            ui->comboBox_sense_A_up->addItem(QString::fromStdString(item));
+            ui->comboBox_sense_B_up->addItem(QString::fromStdString(item));
+        }
+        // connect(testListWidgetA, &QListWidget::itemClicked, [this]() {
+        //     // 重新设置 selectedCategories
+        //     selectedCategoriesA.clear();
+        //     for (int i = 0; i < testListWidgetA->count() - 1; i++) {
+        //         QListWidgetItem *item = testListWidgetA->item(i);
+        //         QCheckBox *checkbox = qobject_cast<QCheckBox *>(testListWidgetA->itemWidget(item));
+        //         if (checkbox->isChecked()) {
+        //             selectedCategoriesA.append(checkbox->text());
+
+        //         }
+        //     }
+        //     qDebug()<<"selectedCategoriesA="<<selectedCategoriesA;
+        // });
     }
+}
+
+void ModelEvalPage::slot_updateSelectedCategoriesA() {
+    selectedCategoriesA.clear();
+    for (int i = 0; i < testListWidgetA->count(); i++) {
+        QListWidgetItem *item = testListWidgetA->item(i);
+        QCheckBox *checkbox = static_cast<QCheckBox *>(testListWidgetA->itemWidget(item));
+        if (checkbox->isChecked()) {
+            selectedCategoriesA.append(checkbox->text());
+        }
+    }
+    if(selectedCategoriesA.size()>4){
+        QMessageBox::warning(NULL, "隶属度对比", "建议选取少于四个特征");
+        return;
+    }
+    qDebug()<<"selectedCategoriesA.size()=="<<selectedCategoriesA.size();
+
+}
+
+void ModelEvalPage::slot_updateSelectedCategoriesB() {
+    selectedCategoriesB.clear();
+    for (int i = 0; i < testListWidgetB->count(); i++) {
+        QListWidgetItem *item = testListWidgetB->item(i);
+        QCheckBox *checkbox = static_cast<QCheckBox *>(testListWidgetB->itemWidget(item));
+        if (checkbox->isChecked()) {
+            selectedCategoriesB.append(checkbox->text());
+        }
+    }
+    if(selectedCategoriesB.size()>4){
+        QMessageBox::warning(NULL, "隶属度对比", "建议选取少于四个特征");
+        return;
+    }
+    qDebug()<<"selectedCategoriesB.size()=="<<selectedCategoriesB.size();
 }
 
 void ModelEvalPage::takeSample(){
@@ -308,7 +438,7 @@ void  ModelEvalPage::testOneSample(){
     else if(dataType == "IMAGE") {
         flag = "IMAGE_infer_param"+windowsLength+"_param"+windowsStep;
     }
-    else if(modelType == "CIL") {
+    else if(modelType == "Incremental") {
         dataProcess=false; //目前增量模型接受的数据是不做预处理的
         //TODO 这里可能要重新set trtInfer的classs2label
         QStringList CILclass = QString::fromStdString(projectsInfo->getAllAttri(dataType,projectsInfo->nameOfSelectedProject)["Model_ClassNames"]).split(";");
@@ -453,7 +583,8 @@ void ModelEvalPage::testAllSample(){
     float acc = 0.96;
     int classNum = label2class.size();
     std::vector<std::vector<int>> confusion_matrix(classNum, std::vector<int>(classNum, 0));
-    std::vector<std::vector<float>> degrees_matrix(classNum, std::vector<float>(0, 0));
+    std::vector<std::vector<std::vector<float>>> degrees_matrix(classNum,std::vector<std::vector<float>>(classNum));
+
     bool dataProcess = true;
     QString flag = "";
     //下面判断一些数据处理的情况
@@ -515,48 +646,61 @@ void ModelEvalPage::testAllSample(){
     ui->label_testAllAcc->setText(QString("%1").arg(acc*100));
 
     //显示整体样本隶属度
-    while (QLayoutItem* item = ui->verticalLayout_22->takeAt(0)){
-        if (QWidget* widget = item->widget())
-            widget->deleteLater();
-        if (QSpacerItem* spaerItem = item->spacerItem())
-            ui->verticalLayout_22->removeItem(spaerItem);
-        delete item;
-    }
-    if(modelType != "Incremental"){
-        for(int i=0;i<label2class.size();i++){
-            QLabel *imageLabel=new QLabel("数据集样本在"+QString::fromStdString(label2class[i])+"类上的隶属度曲线");
-            QLabel *imageLabel_sig=new QLabel();
-            imageLabel_sig->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred); 
-            imageLabel_sig->setStyleSheet("border: 3px black");
-            QVector<float> meaninglessCiQ = QVector<float>(degrees_matrix[i].begin(), degrees_matrix[i].end());
-            Chart *previewChart = new Chart(imageLabel_sig,"usualData","");
-            previewChart->drawImageWithSingleSignal(imageLabel_sig,meaninglessCiQ);
-            imageLabel_sig->setMinimumHeight(120);
-            ui->verticalLayout_22->addWidget(imageLabel);
-            ui->verticalLayout_22->addWidget(imageLabel_sig);
-        }
-    }else{
-        for(int i=0;i<label2class_cil.size();i++){
-            QLabel *imageLabel=new QLabel("数据集样本在"+QString::fromStdString(label2class_cil[i])+"类上的隶属度曲线");
-            QLabel *imageLabel_sig=new QLabel();
-            imageLabel_sig->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred); 
-            imageLabel_sig->setStyleSheet("border: 3px black");
-            QVector<float> meaninglessCiQ = QVector<float>(degrees_matrix[i].begin(), degrees_matrix[i].end());
-            Chart *previewChart = new Chart(imageLabel_sig,"usualData","");
-            previewChart->drawImageWithSingleSignal(imageLabel_sig,meaninglessCiQ);
-            imageLabel_sig->setMinimumHeight(120);
-            ui->verticalLayout_22->addWidget(imageLabel);
-            ui->verticalLayout_22->addWidget(imageLabel_sig);
-        }
-    }
-
+    classA = class2label["DT"];
+    classB = class2label["Big_ball"];
+    ui->comboBox_sense_A_up->setCurrentIndex(0);
+    ui->comboBox_sense_B_up->setCurrentIndex(0);
+    // QList<QString> selClasses = {"DT","Big_ball","Small_ball"};
+    // for (int i = 0; i < classNum; i++) {
+    //     for (int j = 0; j < classNum; j++) {
+    //             degrees_matrix[i][j].clear();
+    //         }
+    //         degrees_matrix_copy[i].clear();
+    // }
+    degrees_matrix_copy.assign(degrees_matrix.begin(), degrees_matrix.end());
     
-    // qDebug()<<"ModelEvalPage::testall degrees_matrix.size()"<<degrees_matrix.size()<<" degrees_matrix[0].size()=="<<degrees_matrix[0].size();
-
+    slot_showDegreesChartA();
+    slot_showDegreesChartB();
+    
     QMessageBox::information(NULL, "所有样本测试", "识别结果已输出！");
 
-    
+}
 
+void ModelEvalPage::slot_showDegreesChartA(){
+    if(selectedCategoriesA.size()>4) return;
+    if(degrees_matrix_copy.size()==0) return;
+    QVector<QVector<float>> dataFrames;
+    for(int i=0;i<selectedCategoriesA.size();i++){
+        int c = class2label[selectedCategoriesA.at(i).toStdString()];
+        QVector<float> meaninglessCiQ = QVector<float>(degrees_matrix_copy[classA][c].begin(), degrees_matrix_copy[classA][c].end());
+        dataFrames.push_back(meaninglessCiQ);
+    }
+    QString chartTitle = "类别x样本在各类上的隶属度";
+    Chart *previewChart = new Chart(ui->test_labelA,"","");
+    previewChart->setLegend(selectedCategoriesA);
+    previewChart->drawImageWithMultipleVector(ui->test_labelA,dataFrames,chartTitle);
+}
+
+void ModelEvalPage::slot_showDegreesChartB(){
+    if(selectedCategoriesB.size()>4) return;
+    if(degrees_matrix_copy.size()==0) return;
+    QVector<QVector<float>> dataFrames;
+    for(int i=0;i<selectedCategoriesB.size();i++){
+        int c = class2label[selectedCategoriesB.at(i).toStdString()];
+        QVector<float> meaninglessCiQ = QVector<float>(degrees_matrix_copy[classB][c].begin(), degrees_matrix_copy[classB][c].end());
+        dataFrames.push_back(meaninglessCiQ);
+    }
+    QString chartTitle = "类别x样本在各类上的隶属度";
+    Chart *previewChart = new Chart(ui->test_labelB,"","");
+    previewChart->setLegend(selectedCategoriesB);
+    previewChart->drawImageWithMultipleVector(ui->test_labelB,dataFrames,chartTitle);
+}
+
+void ModelEvalPage::slot_setClassA(QString s){
+    classA = class2label[s.toStdString()];
+}
+void ModelEvalPage::slot_setClassB(QString s){
+    classB = class2label[s.toStdString()];
 }
 
 void ModelEvalPage::disDegreeChart(QString &classGT, std::vector<float> &degrees, std::map<int, std::string> &classNames){

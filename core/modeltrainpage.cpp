@@ -433,8 +433,8 @@ void ModelTrainPage::showATECfeatrend(){
         imageLabel_sig->setStyleSheet("border: 3px black");
 
         Chart *previewChart = new Chart(imageLabel_sig,"","");
-        // previewChart->drawImageWithSingleSignal(imageLabel_sig,dataFrame[0]);
         previewChart->drawImageWithMultipleVector(imageLabel_sig,dataFrame,"fea"+QString::number(i));
+        // previewChart->drawImageWithTwoVector(imageLabel_sig,dataFrame,"fea"+QString::number(i));
         imageLabel_sig->setMinimumHeight(120);
         ui->featureVerticalLayout->addWidget(imageLabel);
         ui->featureVerticalLayout->addWidget(imageLabel_sig);

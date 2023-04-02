@@ -2,7 +2,15 @@
 <globalProjectInfo dataTypeNum="4">
     <FEATURE typeID="1" />
     <HRRP typeID="2">
-        <HRRP_ATEC_big nameID="1">
+        <HRRP_ATEC nameID="1">
+            <Model_DataType>HRRP</Model_DataType>
+            <ProjectType>HRRP</ProjectType>
+            <Project_Path>N:/207/DDGUI207_V3.0/work_dirs/HRRP_ATEC</Project_Path>
+            <datasetClassName>Big_ball,Cone,Cone_cylinder,DT,Small_ball,Spherical_cone</datasetClassName>
+            <datasetClassNum>6</datasetClassNum>
+            <datasetNote>-</datasetNote>
+        </HRRP_ATEC>
+        <HRRP_ATEC_big nameID="2">
             <Model_AccuracyOnTrain>-</Model_AccuracyOnTrain>
             <Model_AccuracyOnVal>47.33</Model_AccuracyOnVal>
             <Model_Algorithm>ATEC</Model_Algorithm>
@@ -23,7 +31,7 @@
             <datasetClassNum>6</datasetClassNum>
             <datasetNote>-</datasetNote>
         </HRRP_ATEC_big>
-        <基于HRRP数据的ATEC网络 nameID="2">
+        <基于HRRP数据的ATEC网络 nameID="3">
             <Model_AccuracyOnTrain>-</Model_AccuracyOnTrain>
             <Model_AccuracyOnVal>46.5</Model_AccuracyOnVal>
             <Model_Algorithm>ATEC</Model_Algorithm>
@@ -45,7 +53,7 @@
             <datasetClassNum>6</datasetClassNum>
             <datasetNote>-</datasetNote>
         </基于HRRP数据的ATEC网络>
-        <普通的卷积网络 nameID="3">
+        <普通的卷积网络 nameID="4">
             <Model_AccuracyOnTrain>-</Model_AccuracyOnTrain>
             <Model_AccuracyOnVal>16.67</Model_AccuracyOnVal>
             <Model_Algorithm>Baseline_CNN</Model_Algorithm>
@@ -70,7 +78,7 @@
     </HRRP>
     <IMAGE typeID="3" />
     <RCS typeID="4">
-        <基于RCS数据的Resnet50网络 nameID="4">
+        <基于RCS数据的Resnet50网络 nameID="5">
             <Model_AccuracyOnTrain>-</Model_AccuracyOnTrain>
             <Model_AccuracyOnVal>100.0</Model_AccuracyOnVal>
             <Model_Algorithm>TRAD_ResNet50V2</Model_Algorithm>

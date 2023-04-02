@@ -8,6 +8,7 @@
 #include <QObject>
 #include <QThread>
 #include <QGraphicsView>
+#include "qlistwidget.h"
 #include "ui_MainWindow.h"
 #include "./lib/guiLogic/bashTerminal.h"
 
@@ -56,6 +57,14 @@ public slots:
     void takeSample();
     void testOneSample();
 
+    void slot_showDegreesChartA();
+    void slot_showDegreesChartB();
+    void slot_setClassA(QString);
+    void slot_setClassB(QString);
+
+    void slot_updateSelectedCategoriesA();
+    void slot_updateSelectedCategoriesB();
+
 
 signals:
     void stating(std::string choicedsamplePATH,std::string choicedmodelPATH,std::vector<float> &degrees);
@@ -102,6 +111,17 @@ private:
     QString condaPath;
     QString condaEnvName;
     QString pythonApiPath;
+
+    QListWidget *testListWidgetB = new QListWidget;
+    QListWidget *testListWidgetA = new QListWidget;
+    QLineEdit *cliLineEdit = new QLineEdit;
+    QStringList selectedCategoriesA{};
+    QStringList selectedCategoriesB{};
+    int classA;
+    int classB;
+    std::vector<std::vector<std::vector<float>>> degrees_matrix_copy;//[c,c,n]
+
+
 
 };
 

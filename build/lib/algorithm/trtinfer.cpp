@@ -147,7 +147,7 @@ QString TrtInfer::testOneSample(
 
 bool TrtInfer::testAllSample(
         std::string dataset_path,std::string modelPath,int inferBatch, bool dataProcess,
-        float &Acc,std::vector<std::vector<int>> &confusion_matrix,QString flag,std::vector<std::vector<float>> &degrees_matrix){
+        float &Acc,std::vector<std::vector<int>> &confusion_matrix,QString flag,std::vector<std::vector<std::vector<float>>> &degrees_matrix){
     qDebug()<< "(TrtInfer::testAllSample) modelPath old = " << QString::fromStdString(modelPath);
 
     if (readTrtFile(modelPath,modelStream, engine)) qDebug()<< "(TrtInfer::testAllSample)tensorRT engine created successfully.";
@@ -231,8 +231,8 @@ bool TrtInfer::testAllSample(
             temp.push_back(outdata[i-1]);
             if(i%outputLen==0){
                 output_vec.push_back(temp);
-                for(int j=0;j<outputLen;j++)
-                    degrees_matrix[j].push_back(temp[j]);
+                // for(int j=0;j<outputLen;j++)
+                //     degrees_matrix[j].push_back(temp[j]);
                 temp.clear();
             }
         }//std::cout<<std::endl;
@@ -245,6 +245,8 @@ bool TrtInfer::testAllSample(
             int real=test_dataset.labels[beginIdx+i];
             if(guess==real) correct ++;
             confusion_matrix[real][guess]++;
+            for(int j=0;j<output_vec[i].size();j++)
+                degrees_matrix[real][j].push_back(output_vec[i][j]);
             //std::cout<<"confusion_matrix["<<real<<"]["<<guess<<"]++"<<std::endl;
         }
     }

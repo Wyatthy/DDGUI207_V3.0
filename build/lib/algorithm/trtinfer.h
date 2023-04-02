@@ -57,7 +57,7 @@ public slots:
     QString testOneSample(std::string targetPath, int emIndex, std::string modelPath, bool dataProcess, int *predIdx,std::vector<float> &degrees,QString flag);
 
     bool testAllSample(std::string dataset_path,std::string model_path,int inferBatch, bool dataProcess,
-                       float &Acc,std::vector<std::vector<int>> &confusion_matrix, QString flag, std::vector<std::vector<float>> &degrees_matrix);
+                       float &Acc,std::vector<std::vector<int>> &confusion_matrix, QString flag, std::vector<std::vector<std::vector<float>>> &degrees_matrix);
 
     void realTimeInfer(std::vector<float> data_vec,std::string modelPath, bool dataProcess, int *predIdx, std::vector<float> &degrees);
 

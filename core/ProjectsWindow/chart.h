@@ -48,7 +48,6 @@ class Chart : public QWidget{
         QPushButton *download_btn;
         int ShoworSave = 1;
 
-        bool multipleSeries = false;//是否多个曲线
     public:
         Chart(QWidget* parent, QString dataSetType_, QString filename);
         ~Chart();
@@ -62,14 +61,18 @@ class Chart : public QWidget{
         void readRCSmat(int emIndex, int windowlen=16, int windowstep=1);
         void buildChart(QList<QPointF> pointlist);
         void buildChartAsScatter(QList<QPointF> pointlist);
-        void buildChartWithNiceColor(QList<QPointF> pointlist1,QList<QPointF> pointlist2);
-        void buildChartWithNiceColor2(QList<QPointF> pointlist1,QList<QPointF> pointlist2);
         void drawImage(QLabel* chartLabel, int examIdx=0, int windowlen=16, int windowstep=1);
         void drawImageWithSingleSignal(QLabel* chartLabel, QVector<float>& dataFrameQ);
+
+        void drawImageWithTwoVector(QLabel* chartLabel, QVector<QVector<float>> dataFrames, QString mesg);
+        void buildChartWithNiceColor(QList<QPointF> pointlist1,QList<QPointF> pointlist2);
+
         void drawImageWithMultipleVector(QLabel* chartLabel, QVector<QVector<float>> dataFrames, QString mesg);
+        void buildChartWithMutipleList();
         QWidget* drawDisDegreeChart(QString &classGT, std::vector<float> &degrees, std::map<int, std::string> &classNames);
         void showChart(QLabel* imagelabel);
         void Show_Save();
+        void setLegend(QStringList legendList);
 
     private slots:
         void ShowBigPic();
@@ -77,7 +80,14 @@ class Chart : public QWidget{
         void Show_infor();
     
     private:
+        bool twoSeries = false;
+        bool multipleSeries = false;//是否多个曲线
+
         QString dataSetType = "";
+        QList<QSplineSeries*> series_list;
+        QList<QList<QPointF>> points_list;
+        QStringList legendList;
+
 };
 
 #endif // CHART_H
