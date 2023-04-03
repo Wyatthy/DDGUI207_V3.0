@@ -17,8 +17,10 @@ DEFINES += _CRT_SECURE_NO_WARNINGS #avoid monitorPage.cpp's localtime waring
 
 HEADERS += \
     build/conf/QRibbon/QRibbon.h \
+    build/lib/dataprocess/matdataprocess_atec.h \
     build/lib/dataprocess/matdataprocess_atecfea.h \
     build/lib/dataprocess/matdataprocess_image.h \
+    build/lib/guiLogic/tools/atecresultparser.h \
     core/MainWindow.h \
     core/projectsWindow/chart.h \
     core/projectsWindow/projectDock.h \
@@ -53,8 +55,10 @@ HEADERS += \
     core/DialogNewProject.h
 
 SOURCES += \
+    build/lib/dataprocess/matdataprocess_atec.cpp \
     build/lib/dataprocess/matdataprocess_atecfea.cpp \
     build/lib/dataprocess/matdataprocess_image.cpp \
+    build/lib/guiLogic/tools/atecresultparser.cpp \
     core/modelCAMPage.cpp \
     core/modelVisPage.cpp \
     build/lib/guiLogic/customWidget/imagewidget.cpp \

@@ -465,6 +465,9 @@ void Chart::drawImageWithMultipleVector(QLabel* chartLabel, QVector<QVector<floa
     xmax = dataFrames[0].size() + 1;
     ymin = y_min - 0.2;
     ymax = y_max + 0.2;
+    if(mesg=="RTI"){
+        xmin=0;xmax=128;
+    }
     setAxis(xname, xmin, xmax, 10, yname, ymin, ymax, (ymax - ymin) / 10);
     buildChartWithMutipleList();
     showChart(chartLabel);

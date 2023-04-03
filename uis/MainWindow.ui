@@ -33,7 +33,7 @@
        </sizepolicy>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>3</number>
       </property>
       <widget class="QWidget" name="page_senseSet">
        <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -2593,7 +2593,7 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>735</width>
+               <width>368</width>
                <height>1004</height>
               </rect>
              </property>
@@ -3076,8 +3076,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>756</width>
-               <height>825</height>
+               <width>699</width>
+               <height>620</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -3464,8 +3464,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>353</width>
-             <height>307</height>
+             <width>1529</width>
+             <height>835</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_57">
@@ -3701,8 +3701,8 @@
                        <rect>
                         <x>0</x>
                         <y>0</y>
-                        <width>98</width>
-                        <height>48</height>
+                        <width>731</width>
+                        <height>613</height>
                        </rect>
                       </property>
                       <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -6488,7 +6488,7 @@
         <enum>QTabWidget::Rounded</enum>
        </property>
        <property name="currentIndex">
-        <number>3</number>
+        <number>0</number>
        </property>
        <property name="elideMode">
         <enum>Qt::ElideNone</enum>
