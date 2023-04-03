@@ -17,6 +17,8 @@ public:
     void getFeaNumFromFolder(std::string folder);
 
     int feaNum;
+    bool ifSucc = false;
+
     QVector<QVector<QVector<float>>> dataFrames;
 private:
     SearchFolder *dirTools = new SearchFolder();

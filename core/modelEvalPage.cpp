@@ -675,10 +675,10 @@ void ModelEvalPage::slot_showDegreesChartA(){
         QVector<float> meaninglessCiQ = QVector<float>(degrees_matrix_copy[classA][c].begin(), degrees_matrix_copy[classA][c].end());
         dataFrames.push_back(meaninglessCiQ);
     }
-    QString chartTitle = "类别x样本在各类上的隶属度";
+    QString chartTitle = QString::fromStdString(label2class[classA])+"样本在各类上的隶属度";
     Chart *previewChart = new Chart(ui->test_labelA,"","");
-    previewChart->setLegend(selectedCategoriesA);
-    previewChart->drawImageWithMultipleVector(ui->test_labelA,dataFrames,chartTitle);
+    previewChart->diyParams(chartTitle,"Sample Index","Value",selectedCategoriesA);
+    previewChart->drawImageWithMultipleVector(ui->test_labelA,dataFrames,"");
 }
 
 void ModelEvalPage::slot_showDegreesChartB(){
@@ -690,10 +690,10 @@ void ModelEvalPage::slot_showDegreesChartB(){
         QVector<float> meaninglessCiQ = QVector<float>(degrees_matrix_copy[classB][c].begin(), degrees_matrix_copy[classB][c].end());
         dataFrames.push_back(meaninglessCiQ);
     }
-    QString chartTitle = "类别x样本在各类上的隶属度";
+    QString chartTitle = QString::fromStdString(label2class[classB])+"样本在各类上的隶属度";
     Chart *previewChart = new Chart(ui->test_labelB,"","");
-    previewChart->setLegend(selectedCategoriesB);
-    previewChart->drawImageWithMultipleVector(ui->test_labelB,dataFrames,chartTitle);
+    previewChart->diyParams(chartTitle,"Sample Index","Value",selectedCategoriesB);
+    previewChart->drawImageWithMultipleVector(ui->test_labelB,dataFrames,"");
 }
 
 void ModelEvalPage::slot_setClassA(QString s){

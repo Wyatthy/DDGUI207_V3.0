@@ -2592,7 +2592,7 @@
              <property name="geometry">
               <rect>
                <x>0</x>
-               <y>-146</y>
+               <y>0</y>
                <width>735</width>
                <height>1004</height>
               </rect>
@@ -6528,11 +6528,6 @@
           <widget class="QTreeView" name="treeView_FEATURE"/>
          </item>
         </layout>
-       </widget>
-       <widget class="QWidget" name="tab">
-        <attribute name="title">
-         <string>页</string>
-        </attribute>
        </widget>
        <widget class="QWidget" name="tab_IMAGE">
         <attribute name="title">

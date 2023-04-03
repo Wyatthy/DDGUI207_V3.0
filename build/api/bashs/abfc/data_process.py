@@ -1,4 +1,5 @@
 import os
+import shutil
 import numpy as np
 import scipy.io as sio
 import matplotlib.pyplot as plt
@@ -174,7 +175,7 @@ def show_confusion_matrix(classes, confusion_matrix, path_name):
 
 # 绘制features_Accuracy
 def show_feature_selection(ac_score_list, feature_start, feature_end, feature_interval, path):
-    plt.figure(figsize=(11, 5))
+    plt.figure()
     x_interval = [i for i in range(feature_start, feature_end+1, feature_interval)]
     plt.plot(x_interval, ac_score_list)
     plt.scatter(x_interval, ac_score_list)
@@ -182,14 +183,63 @@ def show_feature_selection(ac_score_list, feature_start, feature_end, feature_in
     plt.xticks(x_interval)
     plt.xlabel("Number of features used")
     plt.ylabel("Accuracy")
-    plt.savefig(path + '/features_Accuracy.jpg', dpi=775)
+    plt.savefig(path + '/features_Accuracy.jpg', dpi=1000)
+
 
 # 绘制特征权重展示图
-def show_feature_weights(feature_weights, path):
+def show_feature_weights(feature_weights, path, feature_select_num):
+    plt.figure()
     pic_x = np.arange(len(feature_weights)) + 1
     for i in range(0, len(feature_weights)):
-        plt.bar(pic_x[i], feature_weights[i])
+        if i in feature_select_num and i != max(feature_select_num):
+            plt.bar(pic_x[i], feature_weights[i], color='r')
+        elif i == max(feature_select_num):
+            plt.bar(pic_x[i], feature_weights[i], color='r', label='选择特征')
+        else:
+            plt.bar(pic_x[i], feature_weights[i], color='b')
     plt.title("特征权重展示")
     plt.xlabel("特征")
     plt.ylabel("权重")
+    plt.legend(loc='upper right', prop={'size': 6})
     plt.savefig(path + '/features_weights.jpg', dpi=1000)
+
+
+# 训练过程中准确率曲线
+def train_acc(epoch, acc, work_dir, fea_num):
+    save_path = work_dir + '/train_acc_save/'
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    x = np.arange(epoch+1)[1:]
+    plt.figure()
+    plt.plot(x, acc)
+    plt.scatter(x, acc)
+    plt.grid()
+    plt.title('Training accuracy', fontsize=16)
+    plt.ylabel('Accuracy', fontsize=16)
+    plt.xlabel('Epoch', fontsize=16)
+    plt.tight_layout()
+    plt.savefig(save_path+'/training_accuracy_' + str(fea_num) + '.jpg', dpi=1000)
+
+
+# 验证准确率曲线
+def val_acc(v_acc, work_dir, fea_num):
+    save_path = work_dir + '/val_acc_save/'
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    x = np.arange(len(v_acc)+1)[1:]
+    plt.figure()
+    plt.plot(x, v_acc)
+    plt.scatter(x, v_acc)
+    plt.grid()
+    plt.title('Verification accuracy', fontsize=16)
+    plt.ylabel('Accuracy', fontsize=16)
+    plt.xlabel('Epoch', fontsize=16)
+    plt.tight_layout()
+    plt.savefig(save_path+'/verification_accuracy_' + str(fea_num) + '.jpg', dpi=1000)
+
+
+def mycopyfile(srcfile, dstpath, new_name):  # 复制函数
+    fpath, fname = os.path.split(srcfile)  # 分离文件名和路径
+    if not os.path.exists(dstpath):
+        os.makedirs(dstpath)  # 创建路径
+    shutil.copy(srcfile, dstpath + '/' + new_name)  # 复制文件

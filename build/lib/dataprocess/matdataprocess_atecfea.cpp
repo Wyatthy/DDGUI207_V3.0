@@ -56,7 +56,11 @@ void MatDataProcess_ATECfea::loadAllFeaNFromFolder(std::string folder, std::vect
 
 MatDataProcess_ATECfea::MatDataProcess_ATECfea(std::string rootPath){
     std::string mapping_feature_path = rootPath+"/feature_save/mapping_feature";
-    std::string traditional_feature_path = rootPath+"/feature_save/traditional_feature";
+    // std::string traditional_feature_path = rootPath+"/feature_save/traditional_feature";
+    std::string traditional_feature_path = rootPath+"/train_feature";
+    if(!dirTools->isExist(traditional_feature_path) || !dirTools->isExist(mapping_feature_path)){
+        return;
+    }ifSucc=true;
 
     std::vector<std::string> subDirs;
     dirTools->getDirsplus(subDirs, mapping_feature_path);

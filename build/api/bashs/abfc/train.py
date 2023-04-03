@@ -11,8 +11,8 @@ import tensorflow.compat.v1 as tfv1
 from functools import reduce
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import classification_report
-from data_process import show_feature_selection, show_confusion_matrix, read_project, show_feature_weights
-from data_process import storage_characteristic_matrix, data_normalization, data_norm_hrrp
+from data_process import show_feature_selection, show_confusion_matrix, read_project, train_acc, val_acc, mycopyfile
+from data_process import storage_characteristic_matrix, data_normalization, data_norm_hrrp, show_feature_weights
 from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
 import shutil
 import argparse
@@ -47,8 +47,10 @@ def test(train_X, train_Y, val_X, val_Y, output_size, fea_num, work_dir):
                                                  save_best_only=True, mode='max')
     callbacks_list = [checkpoint, learn_rate_reduction]
     h = train_model.fit(train_X, train_Y, batch_size=batch_size, epochs=max_epochs, shuffle=True,
-                   validation_data=(val_X, val_Y), callbacks=callbacks_list, verbose=0, validation_freq=1)
+                        validation_data=(val_X, val_Y), callbacks=callbacks_list, verbose=0, validation_freq=1)
     h_parameter = h.history
+    train_acc(max_epochs, h_parameter['accuracy'], work_dir, fea_num)
+    val_acc(h_parameter['val_accuracy'], work_dir, fea_num)
     val_model = keras.models.load_model(save_model_path)
     Y_val = np.argmax(val_Y, axis=1)
     Y_pred = np.argmax(val_model.predict(val_X), axis=1)
@@ -119,7 +121,7 @@ def inference(train_step, batchsize, f_start, f_end, f_interval, work_dir, data_
     for i in range(0, len(at)):
         feature_weights.write(str(at[i])+'\n')
     feature_weights.close()
-    show_feature_weights(at, work_dir)
+    # show_feature_weights(at, work_dir)
     A_wight_rank = list(np.argsort(at))[::-1]
     save_A_path = work_dir + '/'+'attention_weight_rank.txt'
     attention_weights = open(save_A_path, 'w', encoding='utf-8')
@@ -131,6 +133,12 @@ def inference(train_step, batchsize, f_start, f_end, f_interval, work_dir, data_
     show_feature_selection(ac_score_list, f_start, f_end, f_interval, work_dir)
     optimal_result = ac_score_list.index(max(ac_score_list))
     optimal_classification_report = predicted_label_list[optimal_result]
+    use_fea_num = f_start + f_interval*optimal_result
+    show_feature_weights(at, work_dir, A_wight_rank[:use_fea_num])
+    mycopyfile(work_dir+'/train_acc_save/training_accuracy_'+str(use_fea_num)+'.jpg', work_dir, 'training_accuracy.jpg')
+    shutil.rmtree(work_dir+'/train_acc_save/')
+    mycopyfile(work_dir +'/val_acc_save/verification_accuracy_'+str(use_fea_num)+'.jpg', work_dir, 'verification_accuracy.jpg')
+    shutil.rmtree(work_dir +'/val_acc_save/')
     show_confusion_matrix(class_label, characteristic_matrix_summary[optimal_result], work_dir+'/verification_confusion_matrix.jpg')
     classification_report_txt = open(work_dir+'/verification_classification_report.txt', 'w')
     classification_report_txt.write(classification_report(optimal_classification_report[1], optimal_classification_report[0], digits=4))

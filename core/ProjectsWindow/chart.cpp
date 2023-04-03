@@ -465,7 +465,7 @@ void Chart::drawImageWithMultipleVector(QLabel* chartLabel, QVector<QVector<floa
     xmax = dataFrames[0].size() + 1;
     ymin = y_min - 0.2;
     ymax = y_max + 0.2;
-    setAxis("Sample Index", xmin, xmax, 10, "Degrees", ymin, ymax, (ymax - ymin) / 10);
+    setAxis(xname, xmin, xmax, 10, yname, ymin, ymax, (ymax - ymin) / 10);
     buildChartWithMutipleList();
     showChart(chartLabel);
 }
@@ -690,9 +690,11 @@ void Chart::Show_Save(){
             newchart->addSeries(newseriesI);//输入数据
             newchart->setAxisX(newaxisX, newseriesI);
             newchart->setAxisY(newaxisY, newseriesI);
-            QLegendMarker *marker = legend->markers(newseriesI).first();  // 获取该 series 对应的图例标记
-            marker->setVisible(true);  // 显示该图例标记
-            marker->setLabel(legendList[i % 4]);  // 使用模运算符取模获取对应的图例文本
+            if(legendList.size()!=0){
+                QLegendMarker *marker = legend->markers(newseriesI).first();  // 获取该 series 对应的图例标记
+                marker->setVisible(true);  // 显示该图例标记
+                marker->setLabel(legendList[i % legendList.size()]);  // 使用模运算符取模获取对应的图例文本
+            }
         }
         newchart->setTitle(chartTitle);
         
@@ -760,3 +762,10 @@ void Chart::Show_Save(){
 void Chart::setLegend(QStringList legendlist){
     legendList = legendlist;
 }
+
+void Chart::diyParams(QString chartTitle, QString xAxisName, QString yAxisName, QStringList legendlist){
+    xname = xAxisName;
+    yname = yAxisName;
+    legendList = legendlist;
+}
+

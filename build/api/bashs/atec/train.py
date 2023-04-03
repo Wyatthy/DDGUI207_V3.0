@@ -17,11 +17,12 @@ import tensorflow as tf
 from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
 import shutil
 import argparse
+from expert_knowledge import read_project_knowledge
 
 parser = argparse.ArgumentParser(description='Train a detector')
-parser.add_argument('--data_dir', help='the directory of the training data',default="N:/207/GUI207_V3.0/db/projects/基于HRRP数据的ATEC网络")
 parser.add_argument('--batch_size', type=int, help='the number of batch size',default=32)
 parser.add_argument('--max_epochs', type=int, help='the number of epochs',default=5)
+parser.add_argument('--data_dir', help='the directory of the training data ya',default="N:/207/GUI207_V3.0/db/projects/基于HRRP数据的ATEC网络")
 parser.add_argument('--class_number', type=int, help="class_number", default="6")
 args = parser.parse_args()
 
@@ -51,21 +52,36 @@ def read_project(read_path):
         if os.path.isdir(folder_path+'/'+file_name[i]):
             folder_name.append(file_name[i])
     folder_name.sort()  # 按文件夹名进行排序
+    if not os.path.exists(read_path + '/train_feature') or not os.path.exists(read_path + '/val_feature'):
+        print("提取手工特征中...")
+        print("read_path=",read_path)
+        read_project_knowledge(read_path)
+        print("手工特征提取完成")
+
     for i in range(0, len(folder_name)):
         if folder_name[i].casefold() == 'train':
             train_path = read_path + '/train/'
-            train_data, train_label, train_class_data_num, train_classname, train_folder_file_name, train_file_class_num = read_mat(train_path)
+            train_data, train_label, train_class_data_num, train_classname, train_folder_file_name, train_file_class_num = read_hrrp_mat(train_path)
         if folder_name[i].casefold() == 'val':
             val_path = read_path + '/val/'
-            val_data, val_label, val_class_data_num, val_classname, val_folder_file_name, val_file_class_num = read_mat(val_path)
+            val_data, val_label, val_class_data_num, val_classname, val_folder_file_name, val_file_class_num = read_hrrp_mat(val_path)
+        if folder_name[i].casefold() == 'train_feature':
+            train_feature_path = read_path + '/train_feature/'
+            train_feature_data, train_feature_label, train_feature_class_data_num, train_feature_classname, train_feature_folder_file_name, train_feature_file_class_num = read_fea_mat(train_feature_path)
+        if folder_name[i].casefold() == 'val_feature':
+            val_feature_path = read_path + '/val_feature/'
+            val_feature_data, val_feature_label, val_feature_class_data_num, val_feature_classname, val_feature_folder_file_name, val_feature_file_class_num = read_fea_mat(val_feature_path)
+
     if len(train_classname) != len(val_classname):
-        print('训练集类别数与验证集类别数不一致！！！')
+        print('DEBUG训练集类别数与验证集类别数不一致！！！')
+    if len(train_data) != len(train_feature_data):
+        print('DEBUG训练数据样本量与特征数据样本量不一致！！！')
     
-    return train_data, train_label, val_data, val_label, train_classname, train_folder_file_name, train_file_class_num
+    return train_data, train_label, val_data, val_label, train_feature_data, val_feature_data, train_classname, train_folder_file_name, train_file_class_num
 
 
 # 从.mat文件读取数据并预处理
-def read_mat(read_path):
+def read_hrrp_mat(read_path):
     # 读取路径下所有文件夹的名称并保存
     folder_path = read_path  # 所有文件夹所在路径
     file_name = os.listdir(folder_path)  # 读取所有文件夹，将文件夹名存在列表中
@@ -114,6 +130,62 @@ def read_mat(read_path):
             all_label = label
         else:
             all_class_data = np.concatenate((all_class_data, all_mat_data_norm))
+            all_label = np.concatenate((all_label, label))
+
+    return all_class_data, all_label, class_data_num, folder_name, folder_file_name, file_class_num
+
+
+# 从.mat文件读取数据并预处理
+def read_fea_mat(read_path):
+    # 读取路径下所有文件夹的名称并保存
+    folder_path = read_path  # 所有文件夹所在路径
+    file_name = os.listdir(folder_path)  # 读取所有文件夹，将文件夹名存在列表中
+    folder_name = []
+    for i in range(0, len(file_name)):
+        # 判断文件夹与文件
+        if os.path.isdir(folder_path+'/'+file_name[i]):
+            folder_name.append(file_name[i])
+    folder_name.sort()  # 按文件夹名进行排序
+
+    # 将指定类别放到首位
+    for i in range(0, len(folder_name)):
+        if folder_name[i] == 'DT':
+            folder_name.insert(0, folder_name.pop(i))
+
+    folder_file_name = {}
+    file_class_num = {}
+
+    # 读取单个文件夹下的内容
+    class_data_num = []
+    for i in range(0, len(folder_name)):
+        class_mat_name = os.listdir(folder_path + '/' + folder_name[i])  # 获取类别文件夹下的所有.mat文件名称
+        folder_file_name[folder_name[i]] = class_mat_name  # 存储文件夹名称及其包含的.mat文件名称
+        folder_num = []  # 存储.mat文件包含样本的数目
+        for j in range(0, len(class_mat_name)):
+            one_mat_path = folder_path + '/' + folder_name[i] + '/' + class_mat_name[j]
+            one_mat_data = sio.loadmat(one_mat_path)
+            one_mat_data = one_mat_data[list(one_mat_data.keys())[-1]]
+            one_mat_data_norm = data_normalization(one_mat_data)
+            one_mat_data = one_mat_data_norm.T
+            folder_num.append(len(one_mat_data))
+            if j == 0:
+                all_mat_data = one_mat_data
+            else:
+                all_mat_data = np.concatenate((all_mat_data, one_mat_data))
+
+        file_class_num[folder_name[i]] = folder_num
+
+        # 设置标签
+        label = np.zeros((len(all_mat_data), len(folder_name)))
+        label[:, i] = 1
+
+        class_data_num.append(len(all_mat_data))
+
+        if i == 0:
+            all_class_data = all_mat_data
+            all_label = label
+        else:
+            all_class_data = np.concatenate((all_class_data, all_mat_data))
             all_label = np.concatenate((all_label, label))
 
     return all_class_data, all_label, class_data_num, folder_name, folder_file_name, file_class_num
@@ -192,9 +264,9 @@ def rcn_model(train_x, train_y, val_x, val_y, epoch, batch_size, work_dir):
 
 
 # 特征交融
-def run_mapping(train_x, train_y, val_x, val_y, epoch, batch_size, work_dir):
-    train_Y, val_Y = run_mechanism(train_x), run_mechanism(val_x)
-    data_save(train_Y, folder_file_name, file_class_num, work_dir, 'traditional_feature')
+def run_mapping(train_x, train_y, val_x, val_y, train_fea, val_fea, epoch, batch_size, work_dir):
+    train_Y, val_Y = train_fea, val_fea
+    # data_save(train_Y, folder_file_name, file_class_num, work_dir, 'traditional_feature')
     train_x, val_x = trans_norm(train_x), trans_norm(val_x)
     train_x = np.expand_dims(train_x, axis=-1)
     val_x = np.expand_dims(val_x, axis=-1)
@@ -219,8 +291,8 @@ def run_mapping(train_x, train_y, val_x, val_y, epoch, batch_size, work_dir):
     return train_new, val_new
 
 
-def inference(train_x, train_y, val_x, val_y, batch_size, max_epochs, folder_name, work_dir):
-    train_new, val_new = run_mapping(train_x, train_y, val_x, val_y, max_epochs, batch_size, work_dir)
+def inference(train_x, train_y, val_x, val_y, train_fea, val_fea, batch_size, max_epochs, folder_name, work_dir):
+    train_new, val_new = run_mapping(train_x, train_y, val_x, val_y, train_fea, val_fea, max_epochs, batch_size, work_dir)
     len_train = len(train_new)
     len_val = len(val_new)
     train_shuffle = np.arange(len_train)
@@ -430,8 +502,8 @@ if __name__ == '__main__':
     args.class_number=len(folder_name)
 
     save_params()
-    train_x, train_y, val_x, val_y, folder_name, folder_file_name, file_class_num = read_project(project_path)
-    inference(train_x, train_y, val_x, val_y, batch_size, max_epochs, folder_name, project_path)
+    train_x, train_y, val_x, val_y, train_fea, val_fea, folder_name, folder_file_name, file_class_num = read_project(project_path)
+    inference(train_x, train_y, val_x, val_y, train_fea, val_fea, batch_size, max_epochs, folder_name, project_path)
     shutil.copy("../sources/modelIMG/ATEC.png",project_path + '/'+model_naming+'.png')
     generator_model_documents(args)
     # convert_hdf5_to_trt(model_name, project_path, model_naming, '1')

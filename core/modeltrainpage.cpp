@@ -96,6 +96,9 @@ void ModelTrainPage::refreshGlobalInfo(){
 }
 
 void ModelTrainPage::refreshTrainResult(){
+    
+    //TODO 删除各个tab上的图片
+
     QString currtTrainAccPic = QString::fromStdString(projectsInfo->pathOfSelectedProject + "/training_accuracy.jpg");
     QString currtValAccPic = QString::fromStdString(projectsInfo->pathOfSelectedProject + "/verification_accuracy.jpg");
     QString currtConfusionPic = QString::fromStdString(projectsInfo->pathOfSelectedProject + "/verification_confusion_matrix.jpg");
@@ -389,6 +392,8 @@ void ModelTrainPage::showTrianResult(){
     ui->trainProgressBar->setMaximum(100);
     ui->trainProgressBar->setValue(100);
     if(trainningModelType=="ABFC"){
+        recvShowPicSignal(QPixmap(projectPath+"/training_accuracy.jpg"), ui->graphicsView_train_trainacc);
+        recvShowPicSignal(QPixmap(projectPath+"/verification_accuracy.jpg"), ui->graphicsView_train_valacc);
         recvShowPicSignal(QPixmap(projectPath+"/features_Accuracy.jpg"), ui->graphicsView_train_fearel);
         recvShowPicSignal(QPixmap(projectPath+"/verification_confusion_matrix.jpg"), ui->graphicsView_train_confusion);
         recvShowPicSignal(QPixmap(projectPath+"/features_weights.jpg"), ui->graphicsView_train_feaw);
@@ -412,6 +417,12 @@ void ModelTrainPage::showTrianResult(){
 
 void ModelTrainPage::showATECfeatrend(){
     MatDataProcess_ATECfea *matDataPrcs_atecfea = new MatDataProcess_ATECfea(projectPath.toStdString());
+    if(!matDataPrcs_atecfea->ifSucc){
+        qDebug()<<"(TrainPage:MatDataProcess_ATECfea) 当前atec工程mapping_feature或者traditional_feature路径还不存在";
+        return;
+    }
+    qDebug()<<"(ModelTrainPage::showATECfeatrend)MatDataProcess_ATECfea正常读到数据";
+
     int feaNum = matDataPrcs_atecfea->feaNum;
     // for(int i=0;i<3;i++){
     //     qDebug()<<matDataPrcs_atecfea->dataFrames[0][0][i];
@@ -433,7 +444,8 @@ void ModelTrainPage::showATECfeatrend(){
         imageLabel_sig->setStyleSheet("border: 3px black");
 
         Chart *previewChart = new Chart(imageLabel_sig,"","");
-        previewChart->drawImageWithMultipleVector(imageLabel_sig,dataFrame,"fea"+QString::number(i));
+        previewChart->diyParams("fea"+QString::number(i),"Sample Index","Value",{"mapping feature","traditional feature"});
+        previewChart->drawImageWithMultipleVector(imageLabel_sig,dataFrame,"");
         // previewChart->drawImageWithTwoVector(imageLabel_sig,dataFrame,"fea"+QString::number(i));
         imageLabel_sig->setMinimumHeight(120);
         ui->featureVerticalLayout->addWidget(imageLabel);

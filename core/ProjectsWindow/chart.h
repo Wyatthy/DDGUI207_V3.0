@@ -31,11 +31,11 @@ class Chart : public QWidget{
         QString filefullpath;
         int examIdx;
         //坐标轴参数
-        QString xname;
+        QString xname = "x";
         qreal xmin;
         qreal xmax;
         int xtickc;
-        QString yname;
+        QString yname = "y";
         qreal ymin;
         qreal ymax;
         int ytickc;
@@ -73,6 +73,7 @@ class Chart : public QWidget{
         void showChart(QLabel* imagelabel);
         void Show_Save();
         void setLegend(QStringList legendList);
+        void diyParams(QString chartTitle, QString xAxisName, QString yAxisName, QStringList legendList);
 
     private slots:
         void ShowBigPic();
