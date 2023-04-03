@@ -26,10 +26,18 @@ ModelTrainPage::ModelTrainPage(Ui_MainWindow *main_ui, BashTerminal *bash_termin
     // connect(ui->trainpage_modelTypeBox, &QComboBox::currentIndexChanged, this, &ModelTrainPage::changeTrainType);
     connect(ui->trainpage_modelTypeBox, SIGNAL(textActivated(QString)), this, SLOT(changeTrainType()));
 
+    connect(ui->pushButton_selectNewData, &QPushButton::clicked, this, &ModelTrainPage::selectNewData);
+
+    connect(ui->pushButton_oldTrain, &QPushButton::clicked, this, &ModelTrainPage::oldClassTrain);
+
+    connect(ui->pushButton_newTrain, &QPushButton::clicked, this, &ModelTrainPage::newClassTrain);
+
 
     cliListWidget = new QListWidget;
     cliLineEdit = new QLineEdit;
 }
+
+
 
 
 void ModelTrainPage::refreshGlobalInfo(){
@@ -489,3 +497,76 @@ void ModelTrainPage::recvShowPicSignal(QPixmap image, QGraphicsView *graphicsVie
     graphicsView->setScene(qgraphicsScene); //Sets the current scene to scene. If scene is already being viewed, this function does nothing.
     graphicsView->setFocus();               //将界面的焦点设置到当前Graphics View控件
 }
+
+// 选择新类数据集并且把路径赋值给LineEdit显示
+void ModelTrainPage::selectNewData(){
+    QString path = QFileDialog::getExistingDirectory(NULL, tr("Open Directory"),
+                                                    QDir::currentPath(),
+                                                    QFileDialog::ShowDirsOnly
+                                                    | QFileDialog::DontResolveSymlinks);
+    // 确定选择了非空路径
+    if(path == ""){
+        return;
+    }
+    ui->lineEdit_newDataPath->setText(path);
+    this->newClassDatasetPATH = path;
+}
+
+void ModelTrainPage::oldClassTrain(){
+    // if(shotModelType == ""){
+    //     QMessageBox::information(NULL, "模型训练", "请先从下拉框中选择欲训练模型");
+    //     return;
+    // }
+    this->trainingProjectName = projectsInfo->nameOfSelectedProject;
+    this->trainingProjectPath = projectsInfo->pathOfSelectedProject;
+    this->trainingDataType = projectsInfo->dataTypeOfSelectedProject;
+    qDebug()<<"shotModelType===="<<QString::fromStdString(shotModelType);
+    if(shotModelType == "OPTI" || shotModelType == "OPTI_CAM"){
+        QMessageBox::information(NULL, "模型训练", "优化模型暂不支持训练");
+        return;
+    }
+    QString datasetPath=this->choicedDatasetPATH;
+    QDateTime dateTime(QDateTime::currentDateTime());
+    time = dateTime.toString("yyyy-MM-dd-hh-mm-ss");
+    //Common parm
+    batchSize = ui->trainBatchEdit->text();
+    epoch = ui->trainEpochEdit->text();
+    //below for CIL
+    reduce_sample = ui->dataNumPercentEdit->text();
+    pretrain_epoch = ui->preTrainEpochEdit->text();
+    cil_data_dimension = ui->cil_data_dimension_box->currentText();
+    selectedCategories = "";
+    for (int i = 0; i < cliListWidget->count(); i++) {
+        QListWidgetItem *item = cliListWidget->item(i);
+        //将QWidget 转化为QCheckBox  获取第i个item 的控件
+        QCheckBox *checkbox = static_cast<QCheckBox *>(cliListWidget->itemWidget(item));
+        if(checkbox->isChecked()){
+            QString checkboxStr = checkbox->text();
+            selectedCategories = selectedCategories + checkboxStr + ";";
+        }
+    }
+
+    uiInitial();
+    //下面根据各种凭据判断当前活动工程使用哪种模型训练
+        if(shotModelType == "Incremental"){
+            reduce_sample=reduce_sample==""?"1.0":reduce_sample;
+            // old_class_num=old_class_num==""?"5":old_class_num;
+            pretrain_epoch=pretrain_epoch==""?"1":pretrain_epoch;
+            saveModelName=saveModelName==""?"model":saveModelName;
+
+            cmd="activate PT && python ./api/bashs/incremental_403/old_train.py --work_dir "+projectPath+ \
+            " --time "              + time + \
+            " --reduce_sample "     + reduce_sample + \
+            " --pretrain_epoch "    + pretrain_epoch + \
+            " --model_name "        + saveModelName + \
+            " --data_dimension "    + cil_data_dimension;
+        }
+    qDebug()<<"(ModelTrainPage::startTrain) cmd="<<cmd;
+    execuCmd(cmd);
+    trainningModelType = shotModelType;
+}
+
+void ModelTrainPage::newClassTrain(){
+
+}
+

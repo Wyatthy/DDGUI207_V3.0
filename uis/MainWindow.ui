@@ -33,7 +33,7 @@
        </sizepolicy>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="page_senseSet">
        <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -1432,8 +1432,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>859</width>
-             <height>479</height>
+             <width>1529</width>
+             <height>864</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_51">
@@ -1655,6 +1655,35 @@
                      <widget class="QComboBox" name="comboBoxasdf"/>
                     </item>
                     <item>
+                     <widget class="QPushButton" name="pushButton_selectNewData">
+                      <property name="minimumSize">
+                       <size>
+                        <width>120</width>
+                        <height>20</height>
+                       </size>
+                      </property>
+                      <property name="maximumSize">
+                       <size>
+                        <width>120</width>
+                        <height>20</height>
+                       </size>
+                      </property>
+                      <property name="text">
+                       <string>选择新类数据集</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLineEdit" name="lineEdit_newDataPath">
+                      <property name="maximumSize">
+                       <size>
+                        <width>300</width>
+                        <height>30</height>
+                       </size>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
                      <widget class="QLabel" name="label_93">
                       <property name="text">
                        <string/>
@@ -1759,6 +1788,34 @@
                      <widget class="QLabel" name="label_133">
                       <property name="text">
                        <string/>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="pushButton_oldTrain">
+                      <property name="text">
+                       <string>旧类训练</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="pushButton_stopOldTrain">
+                      <property name="text">
+                       <string>中断训练</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="pushButton_newTrain">
+                      <property name="text">
+                       <string>新类训练</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="pushButton_stopNewTrain">
+                      <property name="text">
+                       <string>中断训练</string>
                       </property>
                      </widget>
                     </item>
@@ -2430,8 +2487,8 @@
                            <rect>
                             <x>0</x>
                             <y>0</y>
-                            <width>98</width>
-                            <height>28</height>
+                            <width>695</width>
+                            <height>471</height>
                            </rect>
                           </property>
                           <layout class="QVBoxLayout" name="verticalLayout_72">
@@ -3701,8 +3758,8 @@
                        <rect>
                         <x>0</x>
                         <y>0</y>
-                        <width>98</width>
-                        <height>48</height>
+                        <width>143</width>
+                        <height>85</height>
                        </rect>
                       </property>
                       <layout class="QVBoxLayout" name="verticalLayout_2">

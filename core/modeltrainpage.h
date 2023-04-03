@@ -51,6 +51,7 @@ public:
     QString pretrain_epoch = "";
     QString cil_data_dimension = "";
     QString selectedCategories = "";
+    QString newClassDatasetPATH = "";
     ModelTrainPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, DatasetInfo *globalDatasetInfo,
                    ModelInfo *globalModelInfo,ProjectsInfo *globalProjectInfo);
     void refreshGlobalInfo();
@@ -76,8 +77,9 @@ public slots:
     void changeTrainType();
     void editModelFile();
 //    void chooseOldClass();
-
-
+    void selectNewData();
+    void oldClassTrain();
+    void newClassTrain();
 
 private:
     // 缩放图像组件
