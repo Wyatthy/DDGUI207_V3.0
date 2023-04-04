@@ -520,7 +520,10 @@ void ModelEvalPage::testAllSample(){
                 " --windows_length "+ windowsLength+" --windows_step "+ windowsStep;
         }
         else if(dataType == "FEATURE"){
-            command="activate tf24 && python ./api/bashs/ABFC/unknown_test.py --data_dir "+projectPath;
+            if(modelType == "ABFC")
+                command="activate tf24 && python ./api/bashs/ABFC/unknown_test.py --data_dir "+projectPath;
+            else if(modelType == "ATEC")
+                command="activate tf24 && python ./api/bashs/ATEC/unknown_test.py --data_dir "+projectPath;
         }
         else if (dataType == "HRRP"){
             if(modelType == "TRAD"){
@@ -553,7 +556,7 @@ void ModelEvalPage::testAllSample(){
     //如果是ATEC模型,则调python测
     else if(modelType=="ATEC"){
         if(dataType != "HRRP" && dataType != "FEATURE"){
-            QMessageBox::warning(NULL, "提示", "ABFC仅支持HRRP或特征数据");
+            QMessageBox::warning(NULL, "提示", "ATEC仅支持HRRP或特征数据");
             return;
         }
         QString command="activate tf24 && python ./api/bashs/ATEC/test.py --choicedProjectPATH "+ projectPath + \

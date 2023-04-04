@@ -73,8 +73,8 @@ void ModelTrainPage::refreshGlobalInfo(){
     //根据工程的数据类型更新ModelTypeCombobox
     ui->trainpage_modelTypeBox->clear();
     if(projectsInfo->dataTypeOfSelectedProject == "HRRP"){
-        ui->trainpage_modelTypeBox->addItem("ATEC");
-        ui->trainpage_modelTypeBox->addItem("ABFC");
+        // ui->trainpage_modelTypeBox->addItem("ATEC");
+        // ui->trainpage_modelTypeBox->addItem("ABFC");
         ui->trainpage_modelTypeBox->addItem("Baseline_CNN");
         ui->trainpage_modelTypeBox->addItem("Baseline_DNN");
         ui->trainpage_modelTypeBox->addItem("TRAD_Densenet");
@@ -91,14 +91,46 @@ void ModelTrainPage::refreshGlobalInfo(){
         ui->trainpage_modelTypeBox->addItem("TRAD_Efficientnet");
     }else if(projectsInfo->dataTypeOfSelectedProject == "FEATURE"){
         ui->trainpage_modelTypeBox->addItem("ABFC");
+        ui->trainpage_modelTypeBox->addItem("ATEC");
     }
     refreshTrainResult();
 }
 
 void ModelTrainPage::refreshTrainResult(){
-    
-    //TODO 删除各个tab上的图片
-
+    // 删除各个tab上的图片
+    QString backImgPath = "./backImg.png";
+    if(this->dirTools->isExist(backImgPath.toStdString())){
+        recvShowPicSignal(QPixmap(backImgPath), ui->graphicsView_train_trainacc);
+        recvShowPicSignal(QPixmap(backImgPath), ui->graphicsView_train_valacc);
+        recvShowPicSignal(QPixmap(backImgPath), ui->graphicsView_train_confusion);
+        recvShowPicSignal(QPixmap(backImgPath), ui->graphicsView_train_fearel);
+        recvShowPicSignal(QPixmap(backImgPath), ui->graphicsView_train_feaw);
+    }
+    //根据modelType显示该出现的tab
+    for(int i=0;i<10;i++){
+        ui->tabWidget->removeTab(0);
+    }
+    if(modelTypeOfCurrtProject=="ABFC"){
+        ui->widget_abfcRelate->setVisible(true);
+        ui->tabWidget->addTab(ui->trainpage_fearel,"特征关联性能");
+        ui->tabWidget->addTab(ui->trainpage_feaw,"特征权重");
+        ui->tabWidget->addTab(ui->trainpage_trainAcc,"训练集准确率");
+        ui->tabWidget->addTab(ui->trainpage_valAcc,"验证集准确率");
+        ui->tabWidget->addTab(ui->trainpage_confusion,"混淆矩阵");
+    }else if(modelTypeOfCurrtProject=="ATEC"){
+        ui->tabWidget->addTab(ui->trainpage_featrend,"特征趋势");
+        ui->tabWidget->addTab(ui->trainpage_trainAcc,"训练集准确率");
+        ui->tabWidget->addTab(ui->trainpage_valAcc,"验证集准确率");
+        ui->tabWidget->addTab(ui->trainpage_confusion,"混淆矩阵");
+    }else if(modelTypeOfCurrtProject=="Incremental"){
+        ui->tabWidget->addTab(ui->trainpage_valAcc,"验证集准确率");
+        ui->tabWidget->addTab(ui->trainpage_confusion,"混淆矩阵");
+    }
+    else {
+        ui->tabWidget->addTab(ui->trainpage_trainAcc,"训练集准确率");
+        ui->tabWidget->addTab(ui->trainpage_valAcc,"验证集准确率");
+        ui->tabWidget->addTab(ui->trainpage_confusion,"混淆矩阵");
+    }
     QString currtTrainAccPic = QString::fromStdString(projectsInfo->pathOfSelectedProject + "/training_accuracy.jpg");
     QString currtValAccPic = QString::fromStdString(projectsInfo->pathOfSelectedProject + "/verification_accuracy.jpg");
     QString currtConfusionPic = QString::fromStdString(projectsInfo->pathOfSelectedProject + "/verification_confusion_matrix.jpg");
@@ -126,6 +158,16 @@ void ModelTrainPage::refreshTrainResult(){
 }
 
 void ModelTrainPage::changeTrainType(){
+    // 删除各个tab上的图片
+    QString backImgPath = "./backImg.png";
+    if(this->dirTools->isExist(backImgPath.toStdString())){
+        recvShowPicSignal(QPixmap(backImgPath), ui->graphicsView_train_trainacc);
+        recvShowPicSignal(QPixmap(backImgPath), ui->graphicsView_train_valacc);
+        recvShowPicSignal(QPixmap(backImgPath), ui->graphicsView_train_confusion);
+        recvShowPicSignal(QPixmap(backImgPath), ui->graphicsView_train_fearel);
+        recvShowPicSignal(QPixmap(backImgPath), ui->graphicsView_train_feaw);
+    }
+
     ui->widget_cilRelate->setVisible(false);
     ui->widget_windowRelate->setVisible(false);
     ui->widget_abfcRelate->setVisible(false);
@@ -141,13 +183,14 @@ void ModelTrainPage::changeTrainType(){
         ui->widget_abfcRelate->setVisible(true);
         ui->tabWidget->addTab(ui->trainpage_fearel,"特征关联性能");
         ui->tabWidget->addTab(ui->trainpage_feaw,"特征权重");
-        ui->tabWidget->addTab(ui->trainpage_confusion,"混淆矩阵");
-    }else if(shotModelType=="ATEC"){
         ui->tabWidget->addTab(ui->trainpage_trainAcc,"训练集准确率");
         ui->tabWidget->addTab(ui->trainpage_valAcc,"验证集准确率");
         ui->tabWidget->addTab(ui->trainpage_confusion,"混淆矩阵");
+    }else if(shotModelType=="ATEC"){
         ui->tabWidget->addTab(ui->trainpage_featrend,"特征趋势");
-
+        ui->tabWidget->addTab(ui->trainpage_trainAcc,"训练集准确率");
+        ui->tabWidget->addTab(ui->trainpage_valAcc,"验证集准确率");
+        ui->tabWidget->addTab(ui->trainpage_confusion,"混淆矩阵");
     }else if(shotModelType=="Incremental"){
         ui->widget_cilRelate->setVisible(true);
         while (cliListWidget->count() > 0){
@@ -244,9 +287,13 @@ void ModelTrainPage::startTrain(){
             " --batch_size "+batchSize+" --max_epochs "+epoch+" --windows_length "+ windowsLength+" --windows_step "+ windowsStep;
     }
     else if(dataType == "FEATURE"){
-        cmd="activate tf24 && python ./api/bashs/ABFC/train.py --data_dir "+projectPath+ \
-            " --batch_size "+batchSize+" --max_epochs "+epoch+" --fea_num "+ fea_num+ \
-            " --fea_start "+ fea_start + " --data_type FEATURE";
+        if(shotModelType == "ABFC")
+            cmd="activate tf24 && python ./api/bashs/ABFC/train.py --data_dir "+projectPath+ \
+                " --batch_size "+batchSize+" --max_epochs "+epoch+" --fea_num "+ fea_num+ \
+                " --fea_start "+ fea_start + " --data_type FEATURE";
+        else if(shotModelType == "ATEC")
+            cmd="activate tf24 && python ./api/bashs/ATEC/train.py --data_dir "+projectPath+ \
+                " --batch_size "+batchSize+" --max_epochs "+epoch;
     }
     else if (dataType == "HRRP"){
         if(shotModelType == "TRAD"){

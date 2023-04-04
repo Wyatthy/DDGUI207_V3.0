@@ -57,6 +57,7 @@ def read_project(read_path):
         print("read_path=",read_path)
         read_project_knowledge(read_path)
         print("手工特征提取完成")
+        sys.stdout.flush()
 
     for i in range(0, len(folder_name)):
         if folder_name[i].casefold() == 'train':
@@ -223,6 +224,7 @@ def train_acc(epoch, acc, work_dir):
 def val_acc(v_acc, work_dir):
     x = np.arange(len(v_acc)+1)[1:]
     plt.figure()
+    plt.ticklabel_format(style='plain')
     plt.plot(x, v_acc, linewidth=0.7)
     plt.scatter(x, v_acc, s=0.7)
     plt.grid()

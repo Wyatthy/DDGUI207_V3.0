@@ -6,7 +6,7 @@ ATECResultParser::ATECResultParser()
 }
 
 void ATECResultParser::run(){
-    int featureIdx = 0;//暂时先取第一个特征
+    int featureIdx = 2;//暂时先取第一个特征
     int mydataset_size=hrrpDataset->labels.size();
     QVector<float> singleMapFeaFrame;
     QVector<float> singleTradFeaFrame;
