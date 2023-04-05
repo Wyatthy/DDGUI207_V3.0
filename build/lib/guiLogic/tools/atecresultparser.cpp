@@ -26,17 +26,9 @@ void ATECResultParser::run(){
         int realIdx = mapFeaDataset->realLabelIdx[i];
         // std::vector<float> degrees={0.1,0.2,0.3,0.1,0.2,0.1};
         std::vector<float> degrees;
-        // degrees.clear();
         for(int j=0;j<mapFeaDataset->degreeData[i].size();j++){
             degrees.push_back(mapFeaDataset->degreeData[i][j]);
         }
-        // qDebug()<<"mapFeaDataset->degreeData[i].size()==="<<mapFeaDataset->degreeData[i].size();
-        // if(i==0){
-        //     for(int j=0;j<mapFeaDataset->degreeData[i].size();j++){
-        //         qDebug()<<"mapFeaDataset->degreeData[i][j]="<<mapFeaDataset->degreeData[i][j];
-        //     }
-        // }
-        // QVariant degreesQV;degreesQV.setValue(mapFeaDataset->degreeData[i]);
         QVariant degreesQV;degreesQV.setValue(degrees);
 
         emit sigATECResult(featureFrames,singleHRRPFrame,preIdx,realIdx,degreesQV);
@@ -60,8 +52,8 @@ void ATECResultParser::setMapFeaDataset(MatDataProcess_atec *dataset){
 
 void ATECResultParser::startOrstop_slot(bool startorstop){
     startOrstop=startorstop;
-    qDebug()<<"startOrstop="<<startOrstop;
-    qDebug()<<"startOrstop_slot function is in thread:"<<QThread::currentThreadId();
+    // qDebug()<<"startOrstop="<<startOrstop;
+    // qDebug()<<"startOrstop_slot function is in thread:"<<QThread::currentThreadId();
 }
 void ATECResultParser::stopThread(){
     startorstop_flag = !startorstop_flag;

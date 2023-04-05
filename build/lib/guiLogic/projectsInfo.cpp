@@ -214,12 +214,19 @@ int ProjectsInfo::addProjectFromXML(string xmlpath){
                     pAttr=pAttr->Next();
                 }
             }
-            for(auto &item:datasetAttrMap){
-                qDebug()<<"datasetAttrMap["+QString::fromStdString(item.first)+"]=="<<QString::fromStdString(item.second);
+            for(const auto &item:datasetAttrMap){
+                // qDebug()<<"datasetAttrMap["+QString::fromStdString(item.first)+"]=="<<QString::fromStdString(item.second);
+                this->infoMap[currTypeEle->Value()][currNameEle->Value()][item.first] = item.second;
+                // qDebug()<<"infoMap["+QString::fromStdString(currTypeEle->Value())+"]["
+                //     +QString::fromStdString(currNameEle->Value())+"]["
+                //     +QString::fromStdString(item.first)+"]=="<<QString::fromStdString(item.second);
             }
-            this->infoMap[currTypeEle->Value()][currNameEle->Value()].insert(datasetAttrMap.begin(),datasetAttrMap.end());
+            // this->infoMap[currTypeEle->Value()][currNameEle->Value()].insert(datasetAttrMap.begin(),datasetAttrMap.end());
         }
     }
+    // for(auto &item:infoMap["RCS"]["基于RCS数据的Resnet50网络"]){
+    //     qDebug()<<"infoMap["+QString::fromStdString(item.first)+"]=="<<QString::fromStdString(item.second);
+    // }
     fclose(xmlFile);
     return 1;
 }

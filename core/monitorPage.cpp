@@ -290,7 +290,7 @@ void MonitorPage::slotShowATECResult(QVector<QVector<float>> feaFrames, QVector<
     QLabel *imageLabel_fea=new QLabel(ui->scrollArea_7);
     // qDebug()<<"dataFrameQ.size() === "<<dataFrameQ.size()<<"currtDataType = "<<QString::fromStdString(currtDataType);
     imageLabel_fea->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-    Chart *previewChart = new Chart(imageLabel_fea,QString::fromStdString(currtDataType),"");
+    Chart *previewChart = new Chart(imageLabel_fea,"","");
     previewChart->diyParams("特征对比","Sample Index","Value",{"mapping feature","traditional feature"});
     previewChart->drawImageWithMultipleVector(imageLabel_fea,feaFrames,"RTI");
 
@@ -302,7 +302,7 @@ void MonitorPage::slotShowATECResult(QVector<QVector<float>> feaFrames, QVector<
     QLabel *imageLabel_sig=new QLabel(ui->scrollArea_7);
     // qDebug()<<"dataFrameQ.size() === "<<dataFrameQ.size()<<"currtDataType = "<<QString::fromStdString(currtDataType);
     imageLabel_sig->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-    Chart *previewChartB = new Chart(imageLabel_sig,QString::fromStdString(currtDataType),"");
+    Chart *previewChartB = new Chart(imageLabel_sig,"HRRP","");
     previewChartB->drawImageWithSingleSignal(imageLabel_sig, hrrpFrame);
 
     imageLabel_sig->setMinimumHeight(300);

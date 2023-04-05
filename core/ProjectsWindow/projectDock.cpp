@@ -196,11 +196,18 @@ void ProjectDock::makeProjectDock(QString projectName,QString projectPath){
     qDebug()<<"import and writeToXML";
     this->projectsInfo->writeToXML(projectsInfo->defaultXmlPath);
 }
-void ProjectDock::drawExample(){//TODO mat变量不合适和样本索引范围不合适要不要提醒的问题
-    /*相关控件：
-        QLineEdit样本索引号：ui->projectDock_examIdx
-        QLabel数据文件名：ui->projectDock_matfilename
-    */
+void ProjectDock::drawExample(){
+    //绘图时数据类型优先根据cache中ProjectType来，因为训练时会赋最新的数据类型到此键，其次根据dock的四个栏。
+    QString dataType_draw = QString::fromStdString(leftSelType);
+    std::string temps = projectsInfo->getAllAttri(
+            leftSelType,
+            leftSelRootName
+        )["ProjectType"];
+    // qDebug()<<"temps===="<<QString::fromStdString(temps);
+    // qDebug()<<"leftSelType == "<<QString::fromStdString(leftSelType);
+    // qDebug()<<"leftSelRootName == "<<QString::fromStdString(leftSelRootName);
+    dataType_draw=temps==""?dataType_draw:QString::fromStdString(temps);
+
     srand((unsigned)time(NULL));
     int randomIdx = 1 + rand() % 100;
     QString examIdx_str = ui->projectDock_examIdx->text();
@@ -231,9 +238,9 @@ void ProjectDock::drawExample(){//TODO mat变量不合适和样本索引范围�
     QString matFilePath = selectedMatFilePath;
     QString matFileName = selectedMatFilePath.split('/').last();
     ui->label_datasetDock_examChart->clear();
-    Chart *previewChart = new Chart(ui->label_datasetDock_examChart,QString::fromStdString(leftSelType),matFilePath);
-    if(leftSelType == "RCS"){
-        previewChart->drawImage(ui->label_datasetDock_examChart,1,maxIndex-1,1);
+    Chart *previewChart = new Chart(ui->label_datasetDock_examChart,dataType_draw,matFilePath);
+    if(dataType_draw == "RCS" || dataType_draw == "IMAGE"){
+        previewChart->drawImage(ui->label_datasetDock_examChart,-1,1,1);//-1表示取全部数据，而不用窗口
     }
     else previewChart->drawImage(ui->label_datasetDock_examChart,examIdx);
     //ui->projectDock_examIdx->setText(std::to_string(examIdx));
@@ -245,10 +252,14 @@ void ProjectDock::treeItemClicked(const QModelIndex &index){
     this->leftMsIndex = index;
     int depth = 0;
     QModelIndex parentIndex = index.parent();
+    QModelIndex rootIndex = index;
     while (parentIndex.isValid()) {
         ++depth;
-        parentIndex = parentIndex.parent();
+        rootIndex = parentIndex;
+        parentIndex = parentIndex.parent();  
     }
+    this->leftSelRootName = projectTreeViewGroup[this->leftSelType]->model()->itemData(rootIndex).values()[0].toString().toStdString();
+    qDebug()<<"leftSelRootName=="<<QString::fromStdString(leftSelRootName);
     QString itemPath = QString::fromStdString(getPathByItemClicked());
     QString dataFileFormat = itemPath.split('.').last();
     if(depth == 0){     //选中了第一层,下面刷新工程信息
@@ -689,18 +700,18 @@ void ProjectDock::onAction_ShotProject(){
     else if(tempProjectName.find("abfc") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "ABFC";
     else if(tempProjectName.find("cam") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "OPTI_CAM";
     else if(tempProjectName.find("优化") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "OPTI";
-    else if(tempProjectName.find("增量") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "CIL";
+    else if(tempProjectName.find("增量") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "Incremental";
     else if(tempProjectName.find("baseline") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "BASE";
     else projectsInfo->modelTypeOfSelectedProject = "TRAD";
 
-    //根据工程xml中的ProjectType键值更新projectsInfo->modelTypeOfSelectedProject
-    std::string tempProjectTye = projectsInfo->getAttri(rightSelType,rightSelName,"Model_Type");
-    if(tempProjectTye!="") projectsInfo->modelTypeOfSelectedProject = tempProjectTye;
+    //根据工程xml中的Model_Type键值更新projectsInfo->modelTypeOfSelectedProject
+    std::string tempModelType = projectsInfo->getAttri(rightSelType,rightSelName,"Model_Type");
+    if(tempModelType!="") projectsInfo->modelTypeOfSelectedProject = tempModelType;
 
 
     //根据project类型设置projectsInfo中的pathOfSelectedModel_forInfer和pathOfSelectedModel_forVis
-    string tempModelType = projectsInfo->modelTypeOfSelectedProject;
     QString project_path = QString::fromStdString(projectsInfo->getAttri(rightSelType,rightSelName,"Project_Path"));
+    qDebug()<<"(ShotProject)project_path=="<<project_path;
     QStringList filters;
     QStringList files;
     if(projectsInfo->modelTypeOfSelectedProject == "OPTI" || projectsInfo->modelTypeOfSelectedProject == "OPTI_CAM"){     //优化的模型测试用的是pth,其他都是trt
@@ -716,6 +727,7 @@ void ProjectDock::onAction_ShotProject(){
     foreach(QString filename, files) {
         if (filename.contains(QString::fromStdString(rightSelName))) {
             projectsInfo->pathOfSelectedModel_forInfer = project_path.toStdString() + "/" + filename.toStdString();
+            qDebug()<<"(shotProject)projectsInfo->pathOfSelectedModel_forInfer="<<QString::fromStdString(projectsInfo->pathOfSelectedModel_forInfer);
         }
     }
     //OPTI最特殊 直接找最后一个hdf5作为推理模型

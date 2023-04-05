@@ -98,7 +98,7 @@ void ModelTrainPage::refreshGlobalInfo(){
 
 void ModelTrainPage::refreshTrainResult(){
     // 删除各个tab上的图片
-    QString backImgPath = "./backImg.png";
+    QString backImgPath = "../sources/backImg.png";
     if(this->dirTools->isExist(backImgPath.toStdString())){
         recvShowPicSignal(QPixmap(backImgPath), ui->graphicsView_train_trainacc);
         recvShowPicSignal(QPixmap(backImgPath), ui->graphicsView_train_valacc);
@@ -159,7 +159,7 @@ void ModelTrainPage::refreshTrainResult(){
 
 void ModelTrainPage::changeTrainType(){
     // 删除各个tab上的图片
-    QString backImgPath = "./backImg.png";
+    QString backImgPath = "../sources/backImg.png";
     if(this->dirTools->isExist(backImgPath.toStdString())){
         recvShowPicSignal(QPixmap(backImgPath), ui->graphicsView_train_trainacc);
         recvShowPicSignal(QPixmap(backImgPath), ui->graphicsView_train_valacc);

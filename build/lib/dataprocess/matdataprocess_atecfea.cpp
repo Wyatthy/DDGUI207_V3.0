@@ -47,7 +47,7 @@ void MatDataProcess_ATECfea::loadAllFeaNFromFolder(std::string folder, std::vect
         std::string subDirPath = folder+"/"+subDir.toStdString();
         dirTools->getFilesplus(fileNames, "mat", subDirPath);
         for(auto &fileName: fileNames){
-            qDebug()<<QString::fromStdString(subDirPath)<<"/"<<QString::fromStdString(fileName);
+            // qDebug()<<QString::fromStdString(subDirPath)<<"/"<<QString::fromStdString(fileName);
             getFeaNFromMat(subDirPath + "/" + fileName, data);
         }
     }

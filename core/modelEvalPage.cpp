@@ -225,7 +225,7 @@ void ModelEvalPage::slot_updateSelectedCategoriesA() {
         QMessageBox::warning(NULL, "隶属度对比", "建议选取少于四个特征");
         return;
     }
-    qDebug()<<"selectedCategoriesA.size()=="<<selectedCategoriesA.size();
+    // qDebug()<<"selectedCategoriesA.size()=="<<selectedCategoriesA.size();
 
 }
 
@@ -242,7 +242,7 @@ void ModelEvalPage::slot_updateSelectedCategoriesB() {
         QMessageBox::warning(NULL, "隶属度对比", "建议选取少于四个特征");
         return;
     }
-    qDebug()<<"selectedCategoriesB.size()=="<<selectedCategoriesB.size();
+    // qDebug()<<"selectedCategoriesB.size()=="<<selectedCategoriesB.size();
 }
 
 void ModelEvalPage::takeSample(){

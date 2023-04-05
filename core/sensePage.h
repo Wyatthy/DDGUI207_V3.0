@@ -54,6 +54,7 @@ private:
     ProjectsInfo *projectsInfo;
 
     int sampleIndex = 0;
+    int maxIndex = 1000000;
 
     // 不同平台下文件夹搜索工具
     SearchFolder *dirTools = new SearchFolder();
