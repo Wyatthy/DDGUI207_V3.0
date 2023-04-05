@@ -40,6 +40,7 @@ public:
     std::string leftSelName;
     std::string rightSelType;
     std::string rightSelName;
+    std::string leftSelRootName;
 
     QString rightSelPath;
     // 新建工程文件路径名称

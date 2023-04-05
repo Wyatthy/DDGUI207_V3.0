@@ -11,7 +11,9 @@
 #include "./lib/guiLogic/projectsInfo.h"
 #include "./lib/guiLogic/tools/socketserver.h"
 #include "./lib/guiLogic/tools/socketclient.h"
-#include "lib/algorithm/inferthread.h"
+#include "./lib/guiLogic/tools/atecresultparser.h"
+#include "./lib/algorithm/inferthread.h"
+#include "./lib/dataprocess/MatDataProcess_atec.h"
 #include "./lib/dataprocess/customdataset.h"
 
 
@@ -26,6 +28,7 @@ public:
     SocketServer* server;
     InferThread* inferThread=nullptr;
     SocketClient* client;
+    ATECResultParser* atecPerformer;
     void paintLabel();
     std::queue<std::vector<float>> sharedQue;
     TrtInfer* trtInfer;
@@ -35,13 +38,16 @@ public:
     int rightNum =0;
     int inferedNum =0;
     CustomDataset myDataset ;
+    // CustomDataset mapFeaDataset;
+    MatDataProcess_atec *mapFeaDataset;
+    CustomDataset tradFeaDataset;
 
-
-public 
+public
 slots:
     void slotEnableSimulateSignal();
     void slotShowInferResult(QVector<float>,int,QVariant);
     void slotShowRealClass(int);
+    void slotShowATECResult(QVector<QVector<float>>, QVector<float>, int, int, QVariant);
 signals:
     void startOrstop_sig(bool);
 
@@ -63,6 +69,8 @@ private:
     int fallBackValue = 0;
     int num_fallBackValueUsed = 0;
     bool getSigFromInfer = false;
+    std::string currtDataType;
+    std::string currtModelType;
 };
 
 #endif // MONITORPAGE_H

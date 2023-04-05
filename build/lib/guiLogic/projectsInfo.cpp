@@ -55,6 +55,12 @@ map<string,string> ProjectsInfo::getAllAttri(string type, string projectName){
 
 //infoMap写回XML
 int ProjectsInfo::writeToXML(string xmlPath){
+    std::wstring wpath = QString::fromStdString(xmlPath).toStdWString();
+    const wchar_t* wstr = wpath.c_str();
+    size_t len = (wcslen(wstr)+1) * sizeof(wchar_t);
+    char* str = new char[len];
+    size_t converted;
+    wcstombs_s(&converted, str, len, wstr, len); 
     TiXmlDocument *writeDoc = new TiXmlDocument; //xml文档指针
     TiXmlDeclaration *decl = new TiXmlDeclaration("1.0", "UTF-8", "yes");       //文档格式声明
     writeDoc->LinkEndChild(decl); //写入文档
@@ -91,14 +97,24 @@ int ProjectsInfo::writeToXML(string xmlPath){
         }
     }
 
-    writeDoc->SaveFile(xmlPath.c_str());
+    if (writeDoc->SaveFile(str))
+        qDebug() << "writeToXML success";
+    else
+        qDebug() << "writeToXML failed";
     delete writeDoc;
+    delete[] str;
 
     return 1;
 }
 
 //projectInfo写入工程文件夹下的xml
 int ProjectsInfo::writePrjInfoToXML(string xmlPath,string prjType, string prjFolderName) {
+    std::wstring wpath = QString::fromStdString(xmlPath).toStdWString();
+    const wchar_t* wstr = wpath.c_str();
+    size_t len = (wcslen(wstr)+1) * sizeof(wchar_t);
+    char* str = new char[len];
+    size_t converted;
+    wcstombs_s(&converted, str, len, wstr, len); 
     TiXmlDocument *writeDoc = new TiXmlDocument; //xml文档指针
     TiXmlDeclaration *decl = new TiXmlDeclaration("1.0", "UTF-8", "yes");       //文档格式声明
     writeDoc->LinkEndChild(decl); //写入文档
@@ -143,12 +159,12 @@ int ProjectsInfo::writePrjInfoToXML(string xmlPath,string prjType, string prjFol
     }
     // 判断xmlpath是否存在
     
-    if (writeDoc->SaveFile(xmlPath.c_str()))
+    if (writeDoc->SaveFile(str))
         qDebug() << "writePrjInfoToXML success";
     else
         qDebug() << "writePrjInfoToXML failed";
     delete writeDoc;
-
+    delete[] str;
     return 1;
 }
 
@@ -182,7 +198,7 @@ int ProjectsInfo::addProjectFromXML(string xmlpath){
         //遍历projectName节点
         for(TiXmlElement *currNameEle=currTypeEle->FirstChildElement(); currNameEle != NULL; currNameEle=currNameEle->NextSiblingElement()){
             auto asdf2=currNameEle->Value();
-            qDebug()<<"(ProjectsInfo::addProjectFromXML) currTypeEle->value()="<<asdf2;
+            qDebug()<<"(ProjectsInfo::addProjectFromXML) currNameEle->value()="<<asdf2;
             map<string,string> datasetAttrMap;
             // 遍历节点属性
             TiXmlAttribute *pAttr=currNameEle->FirstAttribute();
@@ -198,9 +214,19 @@ int ProjectsInfo::addProjectFromXML(string xmlpath){
                     pAttr=pAttr->Next();
                 }
             }
-            this->infoMap[currTypeEle->Value()][currNameEle->Value()].insert(datasetAttrMap.begin(),datasetAttrMap.end());
+            for(const auto &item:datasetAttrMap){
+                // qDebug()<<"datasetAttrMap["+QString::fromStdString(item.first)+"]=="<<QString::fromStdString(item.second);
+                this->infoMap[currTypeEle->Value()][currNameEle->Value()][item.first] = item.second;
+                // qDebug()<<"infoMap["+QString::fromStdString(currTypeEle->Value())+"]["
+                //     +QString::fromStdString(currNameEle->Value())+"]["
+                //     +QString::fromStdString(item.first)+"]=="<<QString::fromStdString(item.second);
+            }
+            // this->infoMap[currTypeEle->Value()][currNameEle->Value()].insert(datasetAttrMap.begin(),datasetAttrMap.end());
         }
     }
+    // for(auto &item:infoMap["RCS"]["基于RCS数据的Resnet50网络"]){
+    //     qDebug()<<"infoMap["+QString::fromStdString(item.first)+"]=="<<QString::fromStdString(item.second);
+    // }
     fclose(xmlFile);
     return 1;
 }

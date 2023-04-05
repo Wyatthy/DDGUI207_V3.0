@@ -43,6 +43,11 @@ def data_normalization(data):
 
 # 从工程文件路径中制作训练集、验证集、测试集
 def read_project(read_path):
+    if not os.path.exists(read_path + '/train_feature') or not os.path.exists(read_path + '/val_feature'):
+        print("提取手工特征中...")
+        read_project_knowledge(read_path)
+        print("手工特征提取完成")
+        sys.stdout.flush()
     # 读取路径下所有文件夹的名称并保存
     folder_path = read_path  # 所有文件夹所在路径
     file_name = os.listdir(folder_path)  # 读取所有文件夹，将文件夹名存在列表中
@@ -52,11 +57,6 @@ def read_project(read_path):
         if os.path.isdir(folder_path+'/'+file_name[i]):
             folder_name.append(file_name[i])
     folder_name.sort()  # 按文件夹名进行排序
-    if not os.path.exists(read_path + '/train_feature') or not os.path.exists(read_path + '/val_feature'):
-        print("提取手工特征中...")
-        print("read_path=",read_path)
-        read_project_knowledge(read_path)
-        print("手工特征提取完成")
 
     for i in range(0, len(folder_name)):
         if folder_name[i].casefold() == 'train':
@@ -223,6 +223,7 @@ def train_acc(epoch, acc, work_dir):
 def val_acc(v_acc, work_dir):
     x = np.arange(len(v_acc)+1)[1:]
     plt.figure()
+    plt.ticklabel_format(style='plain')
     plt.plot(x, v_acc, linewidth=0.7)
     plt.scatter(x, v_acc, s=0.7)
     plt.grid()
@@ -375,7 +376,7 @@ def generator_model_documents(args):
     root = doc.createElement('ModelInfo') #创建根元素
     doc.appendChild(root)
     
-    model_type = doc.createElement('HRRP')
+    model_type = doc.createElement('FEATURE') #ATEC只能处理HRRP，本该属于HRRP栏，这是为了强行满足甲方需求
     #model_type.setAttribute('typeID','1')
     root.appendChild(model_type)
 
@@ -504,6 +505,7 @@ if __name__ == '__main__':
     save_params()
     train_x, train_y, val_x, val_y, train_fea, val_fea, folder_name, folder_file_name, file_class_num = read_project(project_path)
     inference(train_x, train_y, val_x, val_y, train_fea, val_fea, batch_size, max_epochs, folder_name, project_path)
+    shutil.copy(project_path+"/HRRP_ATEC_fea_ada_trans.hdf5",project_path + '/'+model_naming+'.hdf5')
     shutil.copy("../sources/modelIMG/ATEC.png",project_path + '/'+model_naming+'.png')
     generator_model_documents(args)
     # convert_hdf5_to_trt(model_name, project_path, model_naming, '1')

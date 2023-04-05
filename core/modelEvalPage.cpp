@@ -226,7 +226,7 @@ void ModelEvalPage::slot_updateSelectedCategoriesA() {
         QMessageBox::warning(NULL, "隶属度对比", "建议选取少于四个特征");
         return;
     }
-    qDebug()<<"selectedCategoriesA.size()=="<<selectedCategoriesA.size();
+    // qDebug()<<"selectedCategoriesA.size()=="<<selectedCategoriesA.size();
 
 }
 
@@ -243,7 +243,7 @@ void ModelEvalPage::slot_updateSelectedCategoriesB() {
         QMessageBox::warning(NULL, "隶属度对比", "建议选取少于四个特征");
         return;
     }
-    qDebug()<<"selectedCategoriesB.size()=="<<selectedCategoriesB.size();
+    // qDebug()<<"selectedCategoriesB.size()=="<<selectedCategoriesB.size();
 }
 
 void ModelEvalPage::takeSample(){
@@ -521,7 +521,10 @@ void ModelEvalPage::testAllSample(){
                 " --windows_length "+ windowsLength+" --windows_step "+ windowsStep;
         }
         else if(dataType == "FEATURE"){
-            command="activate tf24 && python ./api/bashs/ABFC/unknown_test.py --data_dir "+projectPath;
+            if(modelType == "ABFC")
+                command="activate tf24 && python ./api/bashs/ABFC/unknown_test.py --data_dir "+projectPath;
+            else if(modelType == "ATEC")
+                command="activate tf24 && python ./api/bashs/ATEC/unknown_test.py --data_dir "+projectPath;
         }
         else if (dataType == "HRRP"){
             if(modelType == "TRAD"){
@@ -554,7 +557,7 @@ void ModelEvalPage::testAllSample(){
     //如果是ATEC模型,则调python测
     else if(modelType=="ATEC"){
         if(dataType != "HRRP" && dataType != "FEATURE"){
-            QMessageBox::warning(NULL, "提示", "ABFC仅支持HRRP或特征数据");
+            QMessageBox::warning(NULL, "提示", "ATEC仅支持HRRP或特征数据");
             return;
         }
         QString command="activate tf24 && python ./api/bashs/ATEC/test.py --choicedProjectPATH "+ projectPath + \

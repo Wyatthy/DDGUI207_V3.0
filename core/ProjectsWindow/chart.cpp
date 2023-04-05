@@ -84,53 +84,46 @@ void Chart::drawHRRPimage(QLabel* chartLabel, int emIdx, int windowlen, int wind
         return;
     }
     matdata = (double*)mxGetData(pMxArray);
-    int M = mxGetM(pMxArray);  //行数
-    int N = mxGetN(pMxArray);  //列数
+    int M = mxGetM(pMxArray);  //行数 样本长度
+    int N = mxGetN(pMxArray);  //列数 样本个数
+    int allDataNum=(N-windowlen)/windowstep+1;
+    emIdx = emIdx>allDataNum?allDataNum:emIdx;//说明是随机数
 
-    // int allDataNum=(N-windowlen)/windowstep+1;
-    // emIdx = emIdx>allDataNum?allDataNum:emIdx;//说明是随机数
+    cv::Mat mat(windowlen, M, CV_64FC1);
 
-    // int allDataNum=N;
-    // emIdx = emIdx>=allDataNum?allDataNum-1:emIdx;//说明是随机数
-
-
-    // cv::Mat mat(windowlen, M, CV_64FC1);
-    cv::Mat mat(M, N, CV_64FC1);
-    // 不用滑动窗口，显示全部数据
-    for(int i=0;i<N;i++){
+    for(int i=0;i<windowlen;i++){
         for(int j=0;j<M;j++){
-            mat.at<double>(j, i) = matdata[i*M+j];
+            mat.at<double>(i, j) = matdata[((emIdx-1)*windowstep+i)*M+j];
         }
     }
 
     cv::Mat mat8bit;
-    // cv::normalize(mat, mat8bit, 0, 255, cv::NORM_MINMAX, CV_8UC1);
+    cv::normalize(mat, mat8bit, 0, 255, cv::NORM_MINMAX, CV_8UC1);
     // 调用applyColorMap函数将灰度图转换为热图
     cv::Mat heatmap;
     cv::applyColorMap(mat8bit, heatmap, cv::COLORMAP_JET);
     QImage qImage = matToQImage(heatmap);
-    // QImage qImage = matToQImage(mat8bit);
     // 将图像缩放以适合QLabel大小
     QPixmap pixmap = QPixmap::fromImage(qImage).scaled(chartLabel->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation);
     // 在QLabel中显示QPixmap
-    chartLabel->setPixmap(pixmap);
-    // QLabel *label = new QLabel(chartLabel);
-    // label->setPixmap(pixmap);
+    // chartLabel->setPixmap(pixmap);
+    QLabel *label = new QLabel(chartLabel);
+    label->setPixmap(pixmap);
     
-    // QHBoxLayout *pHLayout = (QHBoxLayout *)chartLabel->layout();
-    // if(!chartLabel->layout()){
-    //     pHLayout = new QHBoxLayout(chartLabel);
-    // }
-    // else{
-    //     QLayoutItem *child;
-    //     while ((child = pHLayout->takeAt(0)) != 0){
-    //         if(child->widget()){
-    //             child->widget()->setParent(NULL);
-    //         }
-    //         delete child;
-    //      }
-    // }
-    // pHLayout->addWidget(label);
+    QHBoxLayout *pHLayout = (QHBoxLayout *)chartLabel->layout();
+    if(!chartLabel->layout()){
+        pHLayout = new QHBoxLayout(chartLabel);
+    }
+    else{
+        QLayoutItem *child;
+        while ((child = pHLayout->takeAt(0)) != 0){
+            if(child->widget()){
+                child->widget()->setParent(NULL);
+            }
+            delete child;
+         }
+    }
+    pHLayout->addWidget(label);
 }
 
 void Chart::drawImage(QLabel* chartLabel, int examIdx, int windowlen, int windowstep){
@@ -175,8 +168,8 @@ void Chart::drawImageWithSingleSignal(QLabel* chartLabel, QVector<float>& dataFr
             y_max = fmax(y_max,y);
             points.append(QPointF(i,y));
         }
-        xmin = 0; xmax = dataFrameQ.size()+4;
-        ymin = y_min-3; ymax = y_max+3;
+        xmin = 0; xmax = dataFrameQ.size();
+        ymin = y_min; ymax = y_max;
         setAxis("Range/cm",xmin,xmax,10, "dB(V/m)",ymin,ymax,10);  
     }else if(dataSetType=="FEATURE"){
         points.clear();
@@ -187,11 +180,22 @@ void Chart::drawImageWithSingleSignal(QLabel* chartLabel, QVector<float>& dataFr
             y_max = fmax(y_max,y);
             points.append(QPointF(i,y));
         }
-        xmin = 0; xmax = dataFrameQ.size()+4;
-        ymin = y_min-3; ymax = y_max+3;
+        xmin = 0; xmax = dataFrameQ.size();
+        ymin = y_min; ymax = y_max;
+        setAxis("Time/mm",xmin,xmax, 10, "dB(V/m)",ymin,ymax,10);
+    }else if(dataSetType=="RCS"){
+        points.clear();
+        float y_min = 200000,y_max = -200000;
+        for(int i=0;i<dataFrameQ.size();i++){
+            float y=dataFrameQ[i];
+            y_min = fmin(y_min,y);
+            y_max = fmax(y_max,y);
+            points.append(QPointF(i,y));
+        }
+        xmin = 0; xmax = dataFrameQ.size();
+        ymin = y_min; ymax = y_max;
         setAxis("Time/mm",xmin,xmax,10, "dB(V/m)",ymin,ymax,10);
-    }
-    else if(dataSetType=="usualData"){
+    }else if(dataSetType=="usualData"){
         points.clear();
         float y_min = FLT_MAX, y_max = -FLT_MAX;
         for (int i = 0; i < dataFrameQ.size(); i++) {
@@ -200,10 +204,10 @@ void Chart::drawImageWithSingleSignal(QLabel* chartLabel, QVector<float>& dataFr
             y_max = fmax(y_max, y);
             points.append(QPointF(i, y));
         }
-        xmin = -1;
-        xmax = dataFrameQ.size() + 1;
-        ymin = y_min - 1;
-        ymax = y_max + 1;
+        xmin = 0;
+        xmax = dataFrameQ.size();
+        ymin = y_min;
+        ymax = y_max;
         setAxis("Sample Index", xmin, xmax, 10, "Degree of sample", ymin, ymax, (ymax - ymin) / 10);
     }
     buildChart(points);
@@ -268,8 +272,8 @@ void Chart::readRadiomat(int emIdx){
         points.append(QPointF(i,y));
     }
     //qDebug()<<"(Chart::readHRRPmat)M:"<<M<<"      N:"<<N;
-    xmin = 0; xmax = M+4;
-    ymin = y_min-3; ymax = y_max+3;
+    xmin = 0; xmax = M;
+    ymin = y_min; ymax = y_max;
     //qDebug()<<"(Chart::readHRRPmat)ymin:"<<ymin<<"      ymax:"<<ymax;
 //    mxFree(pMxArray);
 //    matClose(pMatFile);//不注释这两个善后代码就会crashed，可能是冲突了
@@ -301,8 +305,8 @@ void Chart::readHRRPmat(int emIdx){
         y_max = fmax(y_max,y);
         points.append(QPointF(i,y));
     }
-    xmin = -1; xmax = M+1;
-    ymin = y_min-3; ymax = y_max+3;
+    xmin = 0; xmax = M;
+    ymin = y_min; ymax = y_max;
 }
 
 void Chart::readFeaturemat(int emIdx){
@@ -333,8 +337,8 @@ void Chart::readFeaturemat(int emIdx){
         points.append(QPointF(i,y));
     }
 
-    xmin = -1; xmax = M+1;
-    ymin = y_min-3; ymax = y_max+3;
+    xmin = 0; xmax = M;
+    ymin = y_min; ymax = y_max;
 
 }
 
@@ -359,14 +363,18 @@ void Chart::readRCSmat(int emIdx, int windowlen, int windowstep){
     int M = mxGetM(pMxArray);  // 行数
     int N = mxGetN(pMxArray);  // 列数
     if(emIdx>(N-windowlen)/windowstep+1) emIdx=(N-windowlen)/windowstep+1;  
+    if(emIdx==-1){
+        windowlen=N;
+        emIdx=1;
+    }
     for(int i=0;i<windowlen;i++){
         float y = matdata[(emIdx-1)*windowstep+i];
         y_min = fmin(y_min,y);
         y_max = fmax(y_max,y);
         points.append(QPointF(i,y));
     }
-    xmin = -1; xmax = windowlen + 1;
-    ymin = y_min-3; ymax = y_max+3;
+    xmin = 0; xmax = windowlen;
+    ymin = y_min; ymax = y_max;
 
 }
 
@@ -396,8 +404,8 @@ void Chart::readHRRPtxt(){
                 y_max = fmax(y_max,y);
             }
         }
-        xmin = x_min-3; xmax = x_max+3;
-        ymin = y_min-3; ymax = y_max+3;
+        xmin = x_min; xmax = x_max;
+        ymin = y_min; ymax = y_max;
     }
     else{
         qDebug() << "txt files open filed! ";
@@ -461,10 +469,13 @@ void Chart::drawImageWithMultipleVector(QLabel* chartLabel, QVector<QVector<floa
         points_list.push_back(pointsI);
     }
     chartTitle = mesg;
-    xmin = -1;
-    xmax = dataFrames[0].size() + 1;
+    xmin = 0;
+    xmax = dataFrames[0].size();
     ymin = y_min - 0.2;
     ymax = y_max + 0.2;
+    if(mesg=="RTI"){
+        xmin=0;xmax=128;
+    }
     setAxis(xname, xmin, xmax, 10, yname, ymin, ymax, (ymax - ymin) / 10);
     buildChartWithMutipleList();
     showChart(chartLabel);
@@ -518,6 +529,7 @@ void Chart::setAxis(QString _xname, qreal _xmin, qreal _xmax, int _xtickc, \
 
 void Chart::buildChart(QList<QPointF> pointlist){
     //创建数据源
+    qDebug()<<"AAAAAAAAAAAAAAAAAAApointlist.size()=="<<pointlist.size();
     series->setPen(QPen(Qt::blue,0.5,Qt::SolidLine));
     series->clear();
     points.clear();

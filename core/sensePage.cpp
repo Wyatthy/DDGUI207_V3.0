@@ -236,15 +236,13 @@ void SenseSetPage::confirmDataset(bool notDialog = false){
     }
 
     //搜索最大索引和样本数量
-
-    int maxIndex = 1000000;
     minMatNum(maxIndex);
     if (maxIndex > 0)
-        ui->label_sense_allIndex->setText(QString::fromStdString(to_string(maxIndex-1)));
-    qDebug() << "maxIndex: " << maxIndex-1;
+        ui->label_sense_allIndex->setText(QString::fromStdString(to_string(maxIndex)));
+    qDebug() << "maxIndex: " << maxIndex;
     QIntValidator *validator = new QIntValidator(ui->lineEdit_sense_sampleIndex);
     validator->setBottom(1);
-    validator->setTop(maxIndex-1);
+    validator->setTop(maxIndex);
     ui->lineEdit_sense_sampleIndex->setValidator(validator);
 
     // 绘制类别图
@@ -318,6 +316,14 @@ void SenseSetPage::drawClassImage(){
 
 // 如果传入的参数是""，那么就随机取索引显示图片，如果不是空，则转为int，用这个作为索引
 void SenseSetPage::sampleBatchChart(){
+    //绘图时数据类型优先根据cache中ProjectType来，因为训练时会赋最新的数据类型到此键，其次根据dock的四个栏。
+    QString dataType = QString::fromStdString(projectsInfo->dataTypeOfSelectedProject);
+    std::string temps = projectsInfo->getAllAttri(
+            projectsInfo->dataTypeOfSelectedProject,
+            projectsInfo->nameOfSelectedProject
+        )["ProjectType"];
+    dataType=temps==""?dataType:QString::fromStdString(temps);
+    // qDebug()<<"AAAAAAAAAAAAAAAAAAAAAAAAAAAdataType ==="<<dataType;
     QString exampleIdx = ui->lineEdit_sense_sampleIndex->text();
     string rootPath = projectsInfo->pathOfSelectedDataset;
     vector<string> subDirNames = projectsInfo->classNamesOfSelectedDataset;
@@ -329,31 +335,22 @@ void SenseSetPage::sampleBatchChart(){
         string choicedClass = subDirNames[i];
         string classPath = rootPath +"/"+ choicedClass;
         Chart *previewChart;
-
         // 选取Mat
         vector<string> allMatFile;
         if(dirTools->getFilesplus(allMatFile, ".mat", classPath)){
             QString matFilePath = QString::fromStdString(classPath + "/" + allMatFile[0]);
-            //下面这部分代码都是为了让randomIdx在合理的范围内
-            int randomIdx = 0;
-            MATFile* pMatFile = NULL;
-            mxArray* pMxArray = NULL;
-            pMatFile = matOpen(matFilePath.toStdString().c_str(), "r");
-            if(!pMatFile){qDebug()<<"(ModelEvalPage::randSample)文件指针空!!!!";return;}
-            pMxArray = matGetNextVariable(pMatFile, NULL);
-            if(!pMxArray){
-                qDebug()<<"(Chart::readHRRPmat)pMxArray变量没找到!!!!";
-                return;
-            }
-            int N = mxGetN(pMxArray);  //N 列数
+            int randomIdx = 1;
             if(exampleIdx==""){
-                randomIdx = N-(rand())%N;
+                randomIdx = maxIndex-(rand())%maxIndex;
             }else{
                 randomIdx = exampleIdx.toInt();
             }
-            if(randomIdx > 0 && randomIdx <= N){
-                previewChart = new Chart(ui->label_mE_chartGT,QString::fromStdString(projectsInfo->dataTypeOfSelectedProject),matFilePath);
-                previewChart->drawImage(chartGroup[i],randomIdx);
+            if(randomIdx > 0 && randomIdx <= maxIndex){
+                previewChart = new Chart(ui->label_mE_chartGT,dataType,matFilePath);
+                if(dataType == "RCS" || dataType == "IMAGE"){
+                    previewChart->drawImage(chartGroup[i],-1,1,1);//-1表示取全部数据，而不用窗口
+                }
+                else previewChart->drawImage(chartGroup[i],randomIdx);
                 this->sampleIndex = randomIdx;
                 ui->lineEdit_sense_sampleIndex->setText(QString::number(this->sampleIndex));
             }else{
@@ -366,6 +363,13 @@ void SenseSetPage::sampleBatchChart(){
 
 
 void SenseSetPage::nextBatchChart(){
+    //绘图时数据类型优先根据cache中ProjectType来，因为训练时会赋最新的数据类型到此键，其次根据dock的四个栏。
+    QString dataType = QString::fromStdString(projectsInfo->dataTypeOfSelectedProject);
+    std::string temps = projectsInfo->getAllAttri(
+            projectsInfo->dataTypeOfSelectedProject,
+            projectsInfo->nameOfSelectedProject
+        )["ProjectType"];
+    dataType=temps==""?dataType:QString::fromStdString(temps);
     this->sampleIndex += 1;
     string rootPath = projectsInfo->pathOfSelectedDataset;
     vector<string> subDirNames = projectsInfo->classNamesOfSelectedDataset;
@@ -373,28 +377,21 @@ void SenseSetPage::nextBatchChart(){
     // 按类别显示
     for(int i=0; i<subDirNames.size(); i++){
         srand((unsigned)time(NULL));
+        Chart *previewChart;
         // 选取类别
         string choicedClass = subDirNames[i];
         string classPath = rootPath +"/"+ choicedClass;
-        Chart *previewChart;
-
         // 选取Mat
         vector<string> allMatFile;
         if(dirTools->getFilesplus(allMatFile, ".mat", classPath)){
             QString matFilePath = QString::fromStdString(classPath + "/" + allMatFile[0]);
-            MATFile* pMatFile = NULL;
-            mxArray* pMxArray = NULL;
-            pMatFile = matOpen(matFilePath.toStdString().c_str(), "r");
-            if(!pMatFile){qDebug()<<"(ModelEvalPage::randSample)文件指针空!!!!";return;}
-            pMxArray = matGetNextVariable(pMatFile, NULL);
-            if(!pMxArray){
-                qDebug()<<"(Chart::readHRRPmat)pMxArray变量没找到!!!!";
-                return;
-            }
-            int N = mxGetN(pMxArray);  //N 列数
-            if(this->sampleIndex > 0 && this->sampleIndex <= N){
-                previewChart = new Chart(ui->label_mE_chartGT,QString::fromStdString(projectsInfo->dataTypeOfSelectedProject),matFilePath);
-                previewChart->drawImage(chartGroup[i],this->sampleIndex);
+            if(this->sampleIndex > 0 && this->sampleIndex <= maxIndex){
+                previewChart = new Chart(ui->label_mE_chartGT,dataType,matFilePath);
+                if(dataType == "RCS" || dataType == "IMAGE" ){
+                    previewChart->drawImage(chartGroup[i],1,maxIndex,1);
+                }
+                else previewChart->drawImage(chartGroup[i],sampleIndex);
+
                 ui->lineEdit_sense_sampleIndex->setText(QString::number(this->sampleIndex));
             }else{
                 QMessageBox::information(NULL, "错误", "索引超出范围");
@@ -425,9 +422,9 @@ void SenseSetPage::minMatNum(int &minNum)
                 qDebug()<<"(Chart::readHRRPmat)pMxArray变量没找到!!!!";
                 return;
             }
-            int windowlen = 16;
-            int windowstep = 1;
             int N = mxGetN(pMxArray);  //N 列数
+            int windowlen = N;
+            int windowstep = 1;
             if(projectsInfo->dataTypeOfSelectedProject == "RCS" || projectsInfo->dataTypeOfSelectedProject == "IMAGE"){
                 N = (N-windowlen)/windowstep+1;
             }

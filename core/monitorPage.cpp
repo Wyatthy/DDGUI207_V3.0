@@ -34,10 +34,13 @@ MonitorPage::MonitorPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal, Da
     server = new SocketServer(&sem,&sharedQue,&lock,terminal);//监听线程
     // connect(server, SIGNAL(sigSignalVisualize(QVector<float>&)),this,SLOT(slotSignalVisualize(QVector<float>&)));
 
+    atecPerformer = new ATECResultParser();
+    connect(atecPerformer, SIGNAL(sigATECResult(QVector<QVector<float>>,QVector<float>,int,int,QVariant)),
+            this,SLOT(slotShowATECResult(QVector<QVector<float>>,QVector<float>,int,int,QVariant)));
 
     connect(ui->startListen, &QPushButton::clicked, this, &MonitorPage::startListen);
     connect(ui->simulateSignal, &QPushButton::clicked, this, &MonitorPage::simulateSend);
-    connect(ui->stopListen, &QPushButton::clicked,[this]() { 
+    connect(ui->stopListen, &QPushButton::clicked,[this]() {
         stopSend();
     });
     connect(this, SIGNAL(startOrstop_sig(bool)), client, SLOT(startOrstop_slot(bool)));
@@ -49,13 +52,13 @@ void MonitorPage::startListen(){
         //qDebug()<<"modelInfo->selectedType=="<<QString::fromStdString(modelInfo->selectedType);
         return;
     }
-    std::string dataType = projectsInfo->dataTypeOfSelectedProject;
-    std::string modelType = projectsInfo->modelTypeOfSelectedProject;
+    currtDataType = projectsInfo->dataTypeOfSelectedProject;
+    currtModelType = projectsInfo->modelTypeOfSelectedProject;
 
-    if(modelType == "ABFC"|| modelType == "ATEC" || modelType == "OPTI" || modelType == "CIL" || modelType == "OPTI_CAM"){
+    if(currtModelType == "ABFC" || currtModelType == "OPTI" || currtModelType == "Incremental" || currtModelType == "OPTI_CAM"){
         QMessageBox::warning(NULL, "实时监测", "监听失败,当前工程属性不支持");
         return;
-    }if(dataType == "IMAGE"){
+    }if(currtDataType == "IMAGE"){
         QMessageBox::warning(NULL, "实时监测", "监听失败,当前工程属性不支持");
         return;
     }
@@ -65,35 +68,66 @@ void MonitorPage::startListen(){
     QString flag = "";
     std::string datasetlPath = projectsInfo->pathOfSelectedDataset;
     // 准备CustomDataset，把CustomDataset单个样本的长度传给server
-    if(dataType == "RCS" || dataType == "IMAGE"){
+    if(currtDataType == "RCS"){
         windowsLength = QString::fromStdString(
-            projectsInfo->getAllAttri(dataType,projectsInfo->nameOfSelectedProject)["Model_WindowsLength"]);
+            projectsInfo->getAllAttri(currtDataType,projectsInfo->nameOfSelectedProject)["Model_WindowsLength"]);
         windowsStep = QString::fromStdString(
-            projectsInfo->getAllAttri(dataType,projectsInfo->nameOfSelectedProject)["Model_WindowsStep"]);
-        if(dataType == "RCS") flag = "RCS_infer_param"+windowsLength+"_param"+windowsStep;
-        else if(dataType == "IMAGE") flag = "IMAGE_infer"+windowsLength+"_param"+windowsStep;
+            projectsInfo->getAllAttri(currtDataType,projectsInfo->nameOfSelectedProject)["Model_WindowsStep"]);
+        flag = "RCS_infer_param"+windowsLength+"_param"+windowsStep;
     }
     myDataset = CustomDataset(datasetlPath, false, ".mat", class2label, -1, flag);
+
+    terminal->print("开始监听,等待模型及数据载入中...");
+    if(currtModelType == "ATEC"){//不会启用server、client和inferThread进程
+        //如果没有工程下没有test_result(尽量还是重新推理一下?)
+        //ATECdataset = CustomDataset(datasetlPath, false, ".mat", class2label, -1, flag);
+        emit startOrstop_sig(true);
+        atecPerformer->setHRRPDataset(myDataset);
+
+        std::string mapFeaDatasetlPath = projectsInfo->pathOfSelectedProject + "/test_result";
+        std::string tradFeaDatasetlPath = projectsInfo->pathOfSelectedProject +"/"+
+                    QString::fromStdString(projectsInfo->nameOfSelectedDataset).split("/").last().toStdString() + "_feature";
+        if(!std::filesystem::exists(std::filesystem::u8path(tradFeaDatasetlPath)) ||
+           !std::filesystem::exists(std::filesystem::u8path(mapFeaDatasetlPath)))
+        {
+            QMessageBox::warning(NULL, "实时监测", "监听失败,当前ATEC工程不存在特征数据集");
+            return;
+        }
+        mapFeaDataset = new MatDataProcess_atec(mapFeaDatasetlPath);
+        // mapFeaDataset = CustomDataset(mapFeaDatasetlPath, false, ".mat", class2label, -1, "mapFeaDataset");
+        tradFeaDataset = CustomDataset(tradFeaDatasetlPath, false, ".mat", class2label, -1, "");
+        atecPerformer->setMapFeaDataset(mapFeaDataset);
+        atecPerformer->setTradFeaDataset(tradFeaDataset);
+
+        slotEnableSimulateSignal();//提示可以“发送”了
+        return;
+    }
     server->setInputLen(myDataset.data[0].size());
     server->start();
-    terminal->print("开始监听,等待模型及数据载入中...");
     inferThread->start();
     emit startOrstop_sig(true);
 }
 
 void MonitorPage::simulateSend(){
-    client->setMyDataset(myDataset);
-    client->start();
+    if(currtModelType == "ATEC"){
+        atecPerformer->start();
+    }else{
+        client->setMyDataset(myDataset);
+        client->start();
+    }
     ui->stopListen->setEnabled(true);
 }
 
 void MonitorPage::stopSend(){
     emit startOrstop_sig(false);
-    //停止线程
-    client->quit();
-    //打断线程中的死循环
-//    client->startOrstop_slot();
-    client->stopThread();
+    if(currtModelType == "ATEC"){
+        atecPerformer->quit();
+        atecPerformer->stopThread();
+    }else{
+        client->quit();
+        client->stopThread();
+    }
+
 }
 
 
@@ -208,9 +242,9 @@ void MonitorPage::signalVisualize(QVector<float> dataFrameQ){
     QLabel *imageLabel_sig=new QLabel(ui->scrollArea_7);
     std::string currtDataType = projectsInfo->dataTypeOfSelectedProject;
     // qDebug()<<"dataFrameQ.size() === "<<dataFrameQ.size()<<"currtDataType = "<<QString::fromStdString(currtDataType);
-    imageLabel_sig->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);  
+    imageLabel_sig->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     Chart *previewChart = new Chart(imageLabel_sig,QString::fromStdString(currtDataType),"");
-    previewChart->drawImageWithSingleSignal(imageLabel_sig,dataFrameQ);  
+    previewChart->drawImageWithSingleSignal(imageLabel_sig,dataFrameQ);
 
     /*=================热图==============*/
     QLabel *imageLabel_hot=new QLabel(ui->scrollArea_7);
@@ -245,4 +279,58 @@ void MonitorPage::slotShowRealClass(int realLabel){//client触发
 
 MonitorPage::~MonitorPage(){
 
+}
+
+void MonitorPage::slotShowATECResult(QVector<QVector<float>> feaFrames, QVector<float> hrrpFrame,
+                                     int predIdx, int realIdx, QVariant qv
+){
+    removeLayout2(ui->verticalLayout_hotShow);
+
+    /*=================特征==============*/
+    QLabel *imageLabel_fea=new QLabel(ui->scrollArea_7);
+    // qDebug()<<"dataFrameQ.size() === "<<dataFrameQ.size()<<"currtDataType = "<<QString::fromStdString(currtDataType);
+    imageLabel_fea->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+    Chart *previewChart = new Chart(imageLabel_fea,"","");
+    previewChart->diyParams("特征对比","Sample Index","Value",{"mapping feature","traditional feature"});
+    previewChart->drawImageWithMultipleVector(imageLabel_fea,feaFrames,"RTI");
+
+    imageLabel_fea->setMinimumHeight(300);
+    imageLabel_fea->setMaximumWidth(700);
+    ui->verticalLayout_hotShow->addWidget(imageLabel_fea);
+
+    /*=================HRRP==============*/
+    QLabel *imageLabel_sig=new QLabel(ui->scrollArea_7);
+    // qDebug()<<"dataFrameQ.size() === "<<dataFrameQ.size()<<"currtDataType = "<<QString::fromStdString(currtDataType);
+    imageLabel_sig->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+    Chart *previewChartB = new Chart(imageLabel_sig,"HRRP","");
+    previewChartB->drawImageWithSingleSignal(imageLabel_sig, hrrpFrame);
+
+    imageLabel_sig->setMinimumHeight(300);
+    imageLabel_sig->setMaximumWidth(700);
+    ui->verticalLayout_hotShow->addWidget(imageLabel_sig);
+
+
+    /*=================柱状图==============*/
+    std::vector<float> degrees=qv.value<std::vector<float>>();
+    for(int i=0;i<degrees.size();i++){
+        degrees[i]=round(degrees[i] * 100) / 100;
+    }
+    Chart *tempChart = new Chart(ui->label_mE_chartGT,"","");//就调用一下它的方法
+    QString predClass = QString::fromStdString(label2class[predIdx]);
+    QWidget *tempWidget=tempChart->drawDisDegreeChart(predClass,degrees,label2class);
+    removeLayout2(ui->horizontalLayout_degreeChart2);
+    ui->horizontalLayout_degreeChart2->addWidget(tempWidget);
+    ui->label_monitor_predClass->setText(QString::fromStdString(label2class[predIdx]));
+    ui->label_monitor_realClass->setText(QString::fromStdString(label2class[realIdx]));
+
+
+    qDebug()<<"(MonitorPage::slotShowATECResult)"<<ui->label_monitor_realClass->text()<<predClass;
+    this->inferedNum ++;
+    if(realIdx == predIdx){
+        this->rightNum++;
+    }
+    qDebug()<<"(MonitorPage::slotShowATECResult) right=="<<this->rightNum<<"   infered_num="<<this->inferedNum;
+    QString monitor_acc= QString::number(this->rightNum*100/this->inferedNum);
+    qDebug()<<"(MonitorPage::slotShowATECResult) monitor_acc="<<monitor_acc;
+    ui->monitor_acc->setText(QString("%1").arg(monitor_acc)+"%");
 }
