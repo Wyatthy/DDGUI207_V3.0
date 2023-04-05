@@ -1,6 +1,7 @@
 # coding=utf-8
 import os
 import urllib.parse
+import shutil
 import torch, sys
 from torch import optim
 import torch.nn.functional as F
@@ -103,6 +104,8 @@ class Pretrain:
         train_dataloader = DataLoader(train_dataset, shuffle=True, batch_size=self.batchSize, num_workers=1)
         test_dataloader = DataLoader(test_dataset, shuffle=False, batch_size=self.batchSize, num_workers=1)
 
+        modelSavePath = self.model_save_path+"/"+self.model_save_path.split("/")[-1] + "_pretrain.pt"
+
         self.model.to(device)
         self.model.train()
         best_acc = 0
@@ -145,17 +148,30 @@ class Pretrain:
                         os.makedirs(model_path)
                     torch.save(state, model_path + "Pretrain.pt")
 
-                    show_confusion_matrix(self.folder_names, confusion_matrix, self.work_dir)
-                    classification_report_txt = open(self.work_dir + "/verification_classification_report.txt", 'w')
+                    show_confusion_matrix(self.folder_names, confusion_matrix, self.work_dir,True)
+                    classification_report_txt = open(self.work_dir + "/pretrain_verification_classification_report.txt", 'w')
                     classification_report_txt.write(classification_report(Y_val, Y_pred, digits=4))
                     classification_report_txt.close()
                 print('epoch: {} is finished. accuracy is: {}'.format(i + 1, test_accuracy))
                 sys.stdout.flush()
                 acc_list.append(test_accuracy)
-        show_accplot(len(acc_list), acc_list, self.work_dir)
+        show_accplot(len(acc_list), acc_list, self.work_dir,True)
         state = {'model': self.model.state_dict()}
         torch.save(state, model_path + "Pretrain.pt")
-        mycopyfile(model_path + "Pretrain.pt", self.model_save_path)
+        shutil.copyfile(model_path + "Pretrain.pt", modelSavePath )
+
+        onnx_save_path = self.work_dir + "/pretrain.onnx"
+        example_tensor = torch.randn(1, 1, self.dataDimension, 1).to(device)
+        torch.onnx.export(self.model,  # model being run
+            example_tensor,  # model input (or a tuple for multiple inputs)
+            onnx_save_path,
+            verbose=False,  # store the trained parameter weights inside the model file
+            training=False,
+            do_constant_folding=True,
+            input_names=['input'],
+            output_names=['output']
+            )
+        # mycopyfile(model_path + "Pretrain.pt", modelSavePath )
 
         # res = torch.load(model_path + "/pretrain_" + str(oldClassNumber) + ".pt")
         # model.load_state_dict(res['model'])
@@ -203,7 +219,8 @@ class IncrementTrain:
         self.work_dir = work_dir
         self.folder_names = folder_names
         self.dataDimension = dataDimension
-
+        # 倒数第二个/之前的路径
+        self.saveFilePath = os.path.split(os.path.split(work_dir)[0])[0]
     def compute_loss(self, model, signals, target, classNumber):
         output = model(signals)  # ( , 20)
         target = getOneHot(target, classNumber)  # ( , 20)
@@ -407,30 +424,29 @@ class IncrementTrain:
                     torch.save(state, model_path + 'increment.pt')
                     save_model_path = model_path + 'incrementModel.pt'
                     torch.save(state, save_model_path)
-                    mycopyfile(save_model_path, self.work_dir)
+                    # mycopyfile(save_model_path, self.work_dir)
+                    shutil.copyfile(save_model_path, self.saveFilePath + "/"+"incrementModel.pt")
 
-                    onnx_save_path = self.work_dir + "/model/"+"incrementModel.onnx"
+                    onnx_save_path = self.saveFilePath + "/incrementModel.onnx"
                     example_tensor = torch.randn(1, 1, self.dataDimension, 1).to(device)
-                    # torch.onnx.export(self.model,  # model being run
-                    #     example_tensor,  # model input (or a tuple for multiple inputs)
-                    #     onnx_save_path,
-                    #     verbose=False,  # store the trained parameter weights inside the model file
-                    #     training=False,
-                    #     do_constant_folding=True,
-                    #     input_names=['input'],
-                    #     output_names=['output'],
-                    #     mode=mode
-                    #     )
-                    # classification_report_txt = open(self.work_dir + '/verification_classification_report.txt', 'w')
-                    # classification_report_txt.write(classification_report(Y_val, Y_pred, digits=4))
-                    # classification_report_txt.close()
-                    show_confusion_matrix(self.folder_names, confusion_matrix, self.work_dir)
+                    torch.onnx.export(self.model,  # model being run
+                        example_tensor,  # model input (or a tuple for multiple inputs)
+                        onnx_save_path,
+                        verbose=False,  # store the trained parameter weights inside the model file
+                        training=False,
+                        do_constant_folding=True,
+                        input_names=['input'],
+                        output_names=['output']
+                        )
+
+
+                    show_confusion_matrix(self.folder_names, confusion_matrix, self.saveFilePath,False)
                 if (i + 1) % 2 == 0:
                     print('epoch: {} is finished. accuracy is: {}'.format(i + 1, test_accuracy))
                     sys.stdout.flush()
                 acc_list.append(test_accuracy)
             # torch.save(state, model_path + "increment_" + str(num_class) + ".pt")
-            show_accplot(len(acc_list), acc_list, self.work_dir)
+            show_accplot(len(acc_list), acc_list, self.saveFilePath,False)
             # res = torch.load(model_path + "/pretrain_" + str(oldClassNumber) + ".pt")
             # model.load_state_dict(res['model'])
             self.save_memory(train_dataset, num_class, self.memorySize)

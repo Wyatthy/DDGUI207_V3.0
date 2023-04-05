@@ -46,7 +46,7 @@ ModelEvalPage::ModelEvalPage(Ui_MainWindow *main_ui, BashTerminal *bash_terminal
     // this->pythonApiPath = "./lib/algorithm/optimizeInfer/optimizeInfer.py";
 
     //混淆矩阵模块的py嵌入
-    Py_SetPythonHome(L"D:/win_anaconda");
+    Py_SetPythonHome(L"H:/WIN_LIB/Anaconda3");
     Py_Initialize();
     _import_array();
     PyRun_SimpleString("import sys");
@@ -109,6 +109,7 @@ void ModelEvalPage::refreshGlobalInfo(){
     }
     // 基本信息更新
     ui->label_mE_dataset->setText(QString::fromStdString(projectsInfo->nameOfSelectedDataset));
+
     ui->label_mE_model->setText(QString::fromStdString(projectsInfo->nameOfSelectedModel_forInfer));
     //ui->label_mE_batch->setText(QString::fromStdString(modelInfo->getAttri(modelInfo->selectedType, modelInfo->selectedName, "batch")));
     if((projectsInfo->pathOfSelectedModel_forInfer!=choicedModelPATH) ||

@@ -3,9 +3,10 @@
 #include <string.h>
 #include <string>
 #include <io.h>
-#include<algorithm>
+#include <algorithm>
 #include <fstream>
-#include <QObject>
+#include <QDir>
+#include <QFile>
 using namespace std;
 
 // 为了兼容win与linux双平台
@@ -180,4 +181,22 @@ bool SearchFolder::getDirs(vector<string> &dirs, string folderPath){
 bool SearchFolder::exist(const std::string& name) {
   struct stat buffer;
   return (stat (name.c_str(), &buffer) == 0);
+}
+
+
+void SearchFolder::copyDir(QString src, QString dst)
+{
+    QDir dir(src);
+    if (! dir.exists())
+        return;
+ 
+    foreach (QString d, dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+        QString dst_path = dst + QDir::separator() + d;
+        dir.mkpath(dst_path);
+        copyDir(src+ QDir::separator() + d, dst_path);//use recursion
+    }
+ 
+    foreach (QString f, dir.entryList(QDir::Files)) {
+        QFile::copy(src + QDir::separator() + f, dst + QDir::separator() + f);
+    }
 }

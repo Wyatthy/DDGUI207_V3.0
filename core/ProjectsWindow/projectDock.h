@@ -98,9 +98,6 @@ private:
     QString lastProjectDataType = "";
     // 不同平台下文件夹搜索工具
     SearchFolder *dirTools = new SearchFolder();
-    bool copyFile(const QString &srcFilePath, const QString &tgtFilePath);
-    // bool copyDir(const QString &srcDirPath, const QString &tgtDirPath);
-    void copyDir(QString src, QString dst);
     QString makeNewProject(QString name, QMap<QString, QString> path);
     void ProjectDockMessage(QString projectName,QString projectPath);
     void updateDatasetInfo(QString projectName,QString projectPath);

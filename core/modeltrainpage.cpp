@@ -10,6 +10,7 @@ ModelTrainPage::ModelTrainPage(Ui_MainWindow *main_ui, BashTerminal *bash_termin
     modelInfo(globalModelInfo),
     projectsInfo(globalProjectInfo)
 {
+    ui->widget_newClass->setVisible(false);
     ui->widget_cilRelate->setVisible(false);
     ui->dataNumPercentEdit->setValidator(new QRegularExpressionValidator(QRegularExpression("^0\\.[0-9]{0,1}[1-9]$")));
     ui->preTrainEpochEdit->setValidator(new QRegularExpressionValidator(QRegularExpression("^[1-9][0-9]{1,3}[1-9]$")));
@@ -41,6 +42,8 @@ ModelTrainPage::ModelTrainPage(Ui_MainWindow *main_ui, BashTerminal *bash_termin
 
 
 void ModelTrainPage::refreshGlobalInfo(){
+    ui->widget_normalTrain->setVisible(true);
+    ui->widget_newClass->setVisible(false);
     ui->widget_cilRelate->setVisible(false);
     ui->widget_windowRelate->setVisible(false);
     ui->widget_abfcRelate->setVisible(false);
@@ -51,12 +54,15 @@ void ModelTrainPage::refreshGlobalInfo(){
     ui->trainBatchEdit->setText("16");
     ui->trainEpochEdit->setText("500");
     //below for CIL
-    ui->cil_data_dimension_box->clear();
-    ui->cil_data_dimension_box->addItem(QString::number(128));
-    ui->cil_data_dimension_box->addItem(QString::number(256));
-    ui->cil_data_dimension_box->addItem(QString::number(39));
+    // ui->cil_data_dimension_box->clear();
+    // ui->cil_data_dimension_box->addItem(QString::number(128));
+    // ui->cil_data_dimension_box->addItem(QString::number(256));
+    // ui->cil_data_dimension_box->addItem(QString::number(39));
     ui->dataNumPercentEdit->setText("1.0");
     ui->preTrainEpochEdit->setText("3");
+    ui->lineEdit_pretrainBatch->setText("16");
+    ui->lineEdit_newclassBatch->setText("16");
+    ui->lineEdit_newclassEpoch->setText("3");
     //below for window
     ui->windowsLength->setText("32");
     ui->windowsStep->setText("10");
@@ -134,6 +140,8 @@ void ModelTrainPage::refreshTrainResult(){
 }
 
 void ModelTrainPage::changeTrainType(){
+    ui->widget_normalTrain->setVisible(true);
+    ui->widget_newClass->setVisible(false);
     ui->widget_cilRelate->setVisible(false);
     ui->widget_windowRelate->setVisible(false);
     ui->widget_abfcRelate->setVisible(false);
@@ -157,6 +165,8 @@ void ModelTrainPage::changeTrainType(){
         ui->tabWidget->addTab(ui->trainpage_featrend,"特征趋势");
 
     }else if(shotModelType=="Incremental"){
+        ui->widget_normalTrain->setVisible(false);
+        ui->widget_newClass->setVisible(true);
         ui->widget_cilRelate->setVisible(true);
         while (cliListWidget->count() > 0){
             QListWidgetItem *item = cliListWidget->takeItem(0);
@@ -172,13 +182,13 @@ void ModelTrainPage::changeTrainType(){
             cliListWidget->addItem(pItem);
             cliListWidget->setItemWidget(pItem, pCheckBox);
         }
-        if (ui->comboBoxasdf->model() != cliListWidget->model()){
-            ui->comboBoxasdf->setModel(cliListWidget->model());
-            ui->comboBoxasdf->setView(cliListWidget);
-            ui->comboBoxasdf->setLineEdit(cliLineEdit);
-            ui->comboBoxasdf->setMinimumWidth(100);
-            cliLineEdit->setReadOnly(true);
-        }
+        // if (ui->comboBoxasdf->model() != cliListWidget->model()){
+        //     ui->comboBoxasdf->setModel(cliListWidget->model());
+        //     ui->comboBoxasdf->setView(cliListWidget);
+        //     ui->comboBoxasdf->setLineEdit(cliLineEdit);
+        //     ui->comboBoxasdf->setMinimumWidth(100);
+        //     cliLineEdit->setReadOnly(true);
+        // }
         selectedCategories = "";
         for (int i = 0; i < cliListWidget->count()-1; i++) {
             QListWidgetItem *item = cliListWidget->item(i);
@@ -222,7 +232,7 @@ void ModelTrainPage::startTrain(){
     //below for CIL
     reduce_sample = ui->dataNumPercentEdit->text();
     pretrain_epoch = ui->preTrainEpochEdit->text();
-    cil_data_dimension = ui->cil_data_dimension_box->currentText();
+    // cil_data_dimension = ui->cil_data_dimension_box->currentText();
     selectedCategories = "";
     for (int i = 0; i < cliListWidget->count(); i++) {
         QListWidgetItem *item = cliListWidget->item(i);
@@ -284,7 +294,6 @@ void ModelTrainPage::startTrain(){
             " --pretrain_epoch "    + pretrain_epoch + \
             " --increment_epoch "   + epoch + \
             " --model_name "        + saveModelName + \
-            " --data_dimension "    + cil_data_dimension + \
             " --old_class_names " + selectedCategories;
         }
     }
@@ -513,10 +522,6 @@ void ModelTrainPage::selectNewData(){
 }
 
 void ModelTrainPage::oldClassTrain(){
-    // if(shotModelType == ""){
-    //     QMessageBox::information(NULL, "模型训练", "请先从下拉框中选择欲训练模型");
-    //     return;
-    // }
     this->trainingProjectName = projectsInfo->nameOfSelectedProject;
     this->trainingProjectPath = projectsInfo->pathOfSelectedProject;
     this->trainingDataType = projectsInfo->dataTypeOfSelectedProject;
@@ -529,12 +534,10 @@ void ModelTrainPage::oldClassTrain(){
     QDateTime dateTime(QDateTime::currentDateTime());
     time = dateTime.toString("yyyy-MM-dd-hh-mm-ss");
     //Common parm
-    batchSize = ui->trainBatchEdit->text();
-    epoch = ui->trainEpochEdit->text();
+    batchSize = ui->lineEdit_pretrainBatch->text();
     //below for CIL
-    reduce_sample = ui->dataNumPercentEdit->text();
     pretrain_epoch = ui->preTrainEpochEdit->text();
-    cil_data_dimension = ui->cil_data_dimension_box->currentText();
+    // cil_data_dimension = ui->cil_data_dimension_box->currentText();
     selectedCategories = "";
     for (int i = 0; i < cliListWidget->count(); i++) {
         QListWidgetItem *item = cliListWidget->item(i);
@@ -553,13 +556,12 @@ void ModelTrainPage::oldClassTrain(){
             // old_class_num=old_class_num==""?"5":old_class_num;
             pretrain_epoch=pretrain_epoch==""?"1":pretrain_epoch;
             saveModelName=saveModelName==""?"model":saveModelName;
-
+            // QString oldDataPath = projectPath + "/增量学习/旧类数据";
             cmd="activate PT && python ./api/bashs/incremental_403/old_train.py --work_dir "+projectPath+ \
             " --time "              + time + \
-            " --reduce_sample "     + reduce_sample + \
+            " --batch_size "        + batchSize + \
             " --pretrain_epoch "    + pretrain_epoch + \
-            " --model_name "        + saveModelName + \
-            " --data_dimension "    + cil_data_dimension;
+            " --model_name "        + saveModelName;
         }
     qDebug()<<"(ModelTrainPage::startTrain) cmd="<<cmd;
     execuCmd(cmd);
@@ -568,5 +570,93 @@ void ModelTrainPage::oldClassTrain(){
 
 void ModelTrainPage::newClassTrain(){
 
-}
+    if (newClassDatasetPATH == ""){
+        QMessageBox::information(NULL, "模型训练", "请先选择新类数据集");
+        return;
+    }
+    this->trainingProjectName = projectsInfo->nameOfSelectedProject;
+    this->trainingProjectPath = projectsInfo->pathOfSelectedProject;
+    this->trainingDataType = projectsInfo->dataTypeOfSelectedProject;
+    
+    qDebug()<<"shotModelType===="<<QString::fromStdString(shotModelType);
+    if(shotModelType == "OPTI" || shotModelType == "OPTI_CAM"){
+        QMessageBox::information(NULL, "模型训练", "优化模型暂不支持训练");
+        return;
+    }
+    QDateTime dateTime(QDateTime::currentDateTime());
+    time = dateTime.toString("yyyy-MM-dd-hh-mm-ss");
+    //Common parm
+    batchSize = ui->lineEdit_newclassBatch->text();
+    epoch = ui->lineEdit_newclassEpoch->text();
+    //below for CIL
+    reduce_sample = ui->dataNumPercentEdit->text();
+    // cil_data_dimension = ui->cil_data_dimension_box->currentText();
+    selectedCategories = "";
+    for (int i = 0; i < cliListWidget->count(); i++) {
+        QListWidgetItem *item = cliListWidget->item(i);
+        //将QWidget 转化为QCheckBox  获取第i个item 的控件
+        QCheckBox *checkbox = static_cast<QCheckBox *>(cliListWidget->itemWidget(item));
+        if(checkbox->isChecked()){
+            QString checkboxStr = checkbox->text();
+            selectedCategories = selectedCategories + checkboxStr + ";";
+        }
+    }
 
+    uiInitial();
+    QString localNewDataPath = projectPath + "/增量学习/新类数据集";
+    QString oldAndNewDataPath = projectPath + "/增量学习/新旧类拼接数据集";
+    dirTools->copyDir(newClassDatasetPATH, localNewDataPath);
+    QString trainPath =  projectPath + "/train";
+    // 类别数目是trainPath下的文件夹数量
+    QStringList folders = QDir(trainPath).entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+    int old_class_num = folders.size();
+    // 构建新旧类数据集,把旧类数据集下三个文件夹的数据复制到新类数据集下
+    QMap<QString, QString> oldClassDataMap;
+    oldClassDataMap.insert("train", trainPath);
+    oldClassDataMap.insert("val", projectPath + "/val");
+    oldClassDataMap.insert("test", projectPath + "/test");
+
+    QMap<QString, QString> newClassDataMap;
+    newClassDataMap.insert("train", localNewDataPath + "/train");
+    newClassDataMap.insert("val", localNewDataPath + "/val");
+    newClassDataMap.insert("test", localNewDataPath + "/test");
+
+    QMap<QString, QString> newOldDataMap;
+    newOldDataMap.insert("train", oldAndNewDataPath + "/train");
+    newOldDataMap.insert("val", oldAndNewDataPath + "/val");
+    newOldDataMap.insert("test", oldAndNewDataPath + "/test");
+
+    // 遍历把旧类和新类三个文件夹train\val\test数据放到oldAndNewDataPath对应文件夹下
+    QMapIterator<QString, QString> i(oldClassDataMap);
+    dirTools->copyDir(oldClassDataMap.value("train"), newOldDataMap.value("train"));
+    dirTools->copyDir(oldClassDataMap.value("val"), newOldDataMap.value("val"));
+    dirTools->copyDir(oldClassDataMap.value("test"), newOldDataMap.value("test"));
+    dirTools->copyDir(newClassDataMap.value("train"), newOldDataMap.value("train"));
+    dirTools->copyDir(newClassDataMap.value("val"), newOldDataMap.value("val"));
+    dirTools->copyDir(newClassDataMap.value("test"), newOldDataMap.value("test"));
+    
+
+    // localNewDataPath = 
+    // 复制新类数据集到本地
+
+    //下面根据各种凭据判断当前活动工程使用哪种模型训练
+        if(shotModelType == "Incremental"){
+            reduce_sample=reduce_sample==""?"1.0":reduce_sample;
+            // old_class_num=old_class_num==""?"5":old_class_num;
+            pretrain_epoch=pretrain_epoch==""?"1":pretrain_epoch;
+            saveModelName=saveModelName==""?"model":saveModelName;
+            cmd="activate PT && python ./api/bashs/incremental_403/new_train.py --work_dir "+localNewDataPath+ \
+            " --increment_epoch "  + epoch + \
+            " --batch_size "        + batchSize + \
+            " --time "              + time + \
+            " --reduce_sample "     + reduce_sample + \
+            " --old_class "          + QString::number(old_class_num) + \
+            " --model_name "        + saveModelName;
+        }
+
+
+    qDebug()<<"(ModelTrainPage::startTrain) cmd="<<cmd;
+    execuCmd(cmd);
+    trainningModelType = shotModelType;
+
+}

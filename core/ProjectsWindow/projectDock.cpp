@@ -7,7 +7,6 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <time.h>
-#include <QFile>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
 
@@ -361,7 +360,7 @@ void ProjectDock::onAction_modifyProject(){
 
 
         if(newProjectPath != rightSelPath){
-            copyDir(rightSelPath,newProjectPath);
+            dirTools->copyDir(rightSelPath,newProjectPath);
             renameFiles(newProjectPath,QString::fromStdString(rightSelName),projectNaming);
             // 删除源路径下的四个文件夹
             QDir dir(newProjectPath);
@@ -530,10 +529,10 @@ QString ProjectDock::makeNewProject(QString name, QMap<QString, QString> path){
         dirPathList.append(dirPath);
     }
     // 将inputPath中的四个路径下的文件拷贝到projectDir下的四个文件夹中
-    copyDir(path["train_path"], dirPathList[0]);
-    copyDir(path["test_path"], dirPathList[1]);
-    copyDir(path["val_path"], dirPathList[2]);
-    copyDir(path["unknown_test"], dirPathList[3]);
+    dirTools->copyDir(path["train_path"], dirPathList[0]);
+    dirTools->copyDir(path["test_path"], dirPathList[1]);
+    dirTools->copyDir(path["val_path"], dirPathList[2]);
+    dirTools->copyDir(path["unknown_test"], dirPathList[3]);
     return projectDir;
 }
 
@@ -605,23 +604,6 @@ bool ProjectDock::isFileLocked(QString fpath){
 
 }
 
-void ProjectDock::copyDir(QString src, QString dst)
-{
-    QDir dir(src);
-    if (! dir.exists())
-        return;
- 
-    foreach (QString d, dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
-        QString dst_path = dst + QDir::separator() + d;
-        dir.mkpath(dst_path);
-        copyDir(src+ QDir::separator() + d, dst_path);//use recursion
-    }
- 
-    foreach (QString f, dir.entryList(QDir::Files)) {
-        QFile::copy(src + QDir::separator() + f, dst + QDir::separator() + f);
-    }
-}
-
 void ProjectDock::onAction_Delete(){
     QMessageBox confirmMsg;
     confirmMsg.setText(QString::fromStdString("确认要删除所选文件吗"+rightSelName));
@@ -689,7 +671,7 @@ void ProjectDock::onAction_ShotProject(){
     else if(tempProjectName.find("abfc") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "ABFC";
     else if(tempProjectName.find("cam") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "OPTI_CAM";
     else if(tempProjectName.find("优化") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "OPTI";
-    else if(tempProjectName.find("增量") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "CIL";
+    else if(tempProjectName.find("增量") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "Incremental";
     else if(tempProjectName.find("baseline") != std::string::npos) projectsInfo->modelTypeOfSelectedProject = "BASE";
     else projectsInfo->modelTypeOfSelectedProject = "TRAD";
 
@@ -718,6 +700,7 @@ void ProjectDock::onAction_ShotProject(){
             projectsInfo->pathOfSelectedModel_forInfer = project_path.toStdString() + "/" + filename.toStdString();
         }
     }
+
     //OPTI最特殊 直接找最后一个hdf5作为推理模型
     if(projectsInfo->modelTypeOfSelectedProject == "OPTI" || projectsInfo->modelTypeOfSelectedProject == "OPTI_CAM"){
         foreach(QString filename, files) {
@@ -743,6 +726,24 @@ void ProjectDock::onAction_ShotProject(){
     //shot后默认测试集为train
     projectsInfo->pathOfSelectedDataset = project_path.toStdString() + "/train";
     projectsInfo->nameOfSelectedDataset = project_path.split('/').last().toStdString() + "/train";
+    if(projectsInfo->modelTypeOfSelectedProject == "Incremental")
+    {
+        foreach(QString filename, files) {
+            // 取filename的文件名，且去掉后缀
+            QString tempFileName = filename.split('/').last();
+            tempFileName = tempFileName.split('.').first();
+            if (tempFileName == QString::fromStdString(rightSelName)) {
+                projectsInfo->pathOfSelectedModel_forInfer = project_path.toStdString() + "/" + filename.toStdString();
+                qDebug() << QString::fromStdString(projectsInfo->pathOfSelectedModel_forInfer);
+                projectsInfo->pathOfSelectedDataset = project_path.toStdString() + "/增量学习/新旧类拼接数据集/train";
+                projectsInfo->nameOfSelectedDataset = project_path.split('/').last().toStdString() + "/增量学习/新旧类拼接数据集/train";
+                projectsInfo->nameOfSelectedModel_forInfer = 
+                QString::fromStdString(projectsInfo->pathOfSelectedModel_forInfer).split('/').last().toStdString();
+                qDebug()<<"projectsInfo->nameOfSelectedModel_forInfer =="<<QString::fromStdString(projectsInfo->nameOfSelectedModel_forInfer);
+            }
+        }
+    }
+
 
     projectsInfo->classNamesOfSelectedDataset.clear();
     QStringList folders = QDir(QString::fromStdString(projectsInfo->pathOfSelectedDataset)).entryList(QDir::Dirs | QDir::NoDotAndDotDot);
@@ -787,7 +788,7 @@ void ProjectDock::onAction_AddProject(){
         // qDebug() << "添加的工程路径：" << currentProjPath;
         // 如果工程文件不存在，就复制过去
         if (!QDir(currentProjPath).exists()){
-            copyDir(projectPath,currentProjPath);
+            dirTools->copyDir(projectPath,currentProjPath);
             makeProjectDock(projectNameQ, currentProjPath);
         }else{
                 // qDebug() << "覆盖工程的源路径：" << projectPath;
@@ -802,7 +803,7 @@ void ProjectDock::onAction_AddProject(){
                     // if (button == QMessageBox::No) {
                     //     return;
                     // }
-                    copyDir(projectPath,currentProjPath);
+                    dirTools->copyDir(projectPath,currentProjPath);
                     makeProjectDock(projectNameQ, currentProjPath);
                 }
         }

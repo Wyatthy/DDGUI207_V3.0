@@ -303,7 +303,7 @@ def ConfusionMatrix(true, pred_label):
 
 
 # 绘制混淆矩阵
-def show_confusion_matrix(classes, confusion_matrix, work_dir):
+def show_confusion_matrix(classes, confusion_matrix, work_dir,pretrain=False):
     plt.figure()
     proportion = []
     length = len(confusion_matrix)
@@ -341,21 +341,27 @@ def show_confusion_matrix(classes, confusion_matrix, work_dir):
     plt.ylabel('True label', fontsize=16)
     plt.xlabel('Predict label', fontsize=16)
     plt.tight_layout()
-    plt.savefig(work_dir+'/verification_confusion_matrix.jpg', dpi=1000)
+    if pretrain:
+        plt.savefig(work_dir+'/pretrain_verification_confusion_matrix.jpg', dpi=1000)
+    else:
+        plt.savefig(work_dir+'/verification_confusion_matrix.jpg', dpi=1000)
     # plt.show()
 
 
-def show_accplot(epoch, acc, work_dir):
+def show_accplot(epoch, acc, work_dir, pretrain=False):
     x = np.arange(epoch+1)[1:]
     plt.figure()
-    plt.plot(x, acc)
-    plt.scatter(x, acc)
+    plt.plot(x, acc, linewidth=0.7)
+    plt.scatter(x, acc, s=0.7)
     plt.grid()
     plt.title('Verification accuracy', fontsize=16)
     plt.ylabel('Accuracy', fontsize=16)
     plt.xlabel('Epoch', fontsize=16)
     plt.tight_layout()
-    plt.savefig(work_dir+'/verification_accuracy.jpg', dpi=1000)
+    if pretrain:
+        plt.savefig(work_dir+'/pretrain_verification_accuracy.jpg', dpi=1000)
+    else:
+        plt.savefig(work_dir+'/verification_accuracy.jpg', dpi=1000)
 
 
 def generator_model_documents(args):
@@ -363,30 +369,38 @@ def generator_model_documents(args):
     doc = Document()  # 创建DOM文档对象
     root = doc.createElement('ModelInfo') # 创建根元素
     doc.appendChild(root)
-    
-    model_type = doc.createElement('INCRE')
+    print("args.work_dir = ",args.work_dir)
+    project_path = os.path.split(os.path.split(args.work_dir)[0])[0]
+    projectName = project_path.split('/')[-1]
+    print("projectName = ",projectName)
+    model_type = doc.createElement('HRRP')
     # model_type.setAttribute('typeID','1')
     root.appendChild(model_type)
 
-    model_item = doc.createElement(args.model_name+'.trt')
+    model_item = doc.createElement(projectName)
     # model_item.setAttribute('nameID','1')
     model_type.appendChild(model_item)
 
     model_infos = {
-        'name': str(args.model_name),
-        'type': 'INCRE',
-        'algorithm': 'AlexNet',
-        'framework': 'Pytorch',
-        'accuracy': str(args.accuracy),
-        'trainDataset': args.raw_data_path.split("/")[-1],
-        'inDataDimension': str(args.data_dimension),
-        'preTrainEpoch': str(args.pretrain_epoch),
-        'incrementEpoch': str(args.increment_epoch),
-        'oldClassNum': str(args.old_class),
-        'classNum': str(args.classNum),
-        'PATH': os.path.abspath(os.path.join(args.modeldir, args.model_name+'.trt')),
-        'batch': '32',
-        'note': '-'
+        'Model_DataType':"HRRP",
+        'Model_Name':projectName,
+        'Model_Algorithm':'Incremental',
+        'Model_AlgorithmType':'小样本增量学习模型',   
+        'Model_AccuracyOnTrain':'-',
+        'Model_AccuracyOnVal':'-',
+        'Model_Framework':'Pytorch',
+        'Model_TrainDataset':args.work_dir.split("/")[-1],
+        'Model_PretrainEpoch':str(args.pretrain_epoch),
+        'Model_IncrementEpoch':str(args.increment_epoch),
+        'Model_TrainLR':'1e-4',
+        # 'Model_NumClassCategories':str(args.all_class), 
+        'Model_Path':os.path.abspath(os.path.join(project_path,projectName+'.trt')),
+        'Model_TrainBatchSize':str(args.batch_size),
+        # 'Model_NamesOfOldClass':args.old_class_names,
+        # 'Model_ClassNames':args.train_classname,
+        'Model_Note':'-',
+        'Model_Type':"Incremental",
+        'ProjectType':"HRRP"
     } 
 
     for key in model_infos.keys():
@@ -394,11 +408,7 @@ def generator_model_documents(args):
         info_text = doc.createTextNode(model_infos[key])  # 元素内容写入
         info_item.appendChild(info_text)
         model_item.appendChild(info_item)
-
-    with open(os.path.join(args.modeldir, args.model_name+'.xml'), 'w') as f:
+    print(os.path.join(project_path, projectName + '.xml'))
+    with open(os.path.join(project_path, projectName + '.xml'), 'w', encoding='utf-8') as f:
         doc.writexml(f, indent='\t', newl='\n', addindent='\t', encoding='utf-8')
-
-    shutil.copy(args.work_dir+"/"+args.model_name+".trt", os.path.join(args.modeldir, args.model_name+'.trt'))
-    shutil.copy(args.work_dir+"/model/incrementModel.pt", os.path.join(args.modeldir, args.model_name+'.pt'))
-    shutil.copy(args.work_dir+"/"+"confusion_matrix.jpg", os.path.join(args.modeldir, 'confusion_matrix.jpg'))
-    shutil.copy(args.work_dir+"/"+"verification_accuracy.jpg", os.path.join(args.modeldir, 'verification_accuracy.jpg'))
+    # shutil.copy("../sources/modelIMG/Incremental.png",args.work_dir + '/'+projectName+'.png')

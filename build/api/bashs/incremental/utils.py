@@ -365,7 +365,7 @@ def generator_model_documents(args):
     doc.appendChild(root)
     print("args.work_dir = ",args.work_dir)
 
-    projectName = args.work_dir.split('/')[-1];
+    projectName = args.work_dir.split('/')[-1]
     print("projectName = ",projectName)
     model_type = doc.createElement('HRRP')
     # model_type.setAttribute('typeID','1')

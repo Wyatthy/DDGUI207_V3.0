@@ -53,7 +53,7 @@ def inference(args):
     os.chdir(current_path)
     create_dir()
     args.old_class = oldclass_num
-    class_name = read_project_new(project_path, args.old_class)
+    class_name = read_project_new(args.work_dir, args.old_class)
     args.all_class = len(class_name) + args.old_class
     args.increment_epoch = increment_epoch
     args.learning_rate = learning_rate
@@ -64,10 +64,10 @@ def inference(args):
     args.batch_size = batch_size
     args.reduce_sample = reduce_sample
     args.data_dimension = data_dimension
-    args.raw_data_path = project_path
-    args.work_dir = project_path
+    args.raw_data_path = args.work_dir
+    args.work_dir = args.work_dir
     args.test_ratio = test_ratio
-    args.modeldir = project_path
+    args.modeldir = args.work_dir
 
     # 合并旧类新类名称
     oldclass_name = open(data_path + '/oldclass_name.txt', 'r', encoding='utf-8').read().splitlines()
@@ -96,7 +96,7 @@ def inference(args):
     timeArray = time.localtime(time.time())
     otherStyleTime = time.strftime("%Y-%m-%d %H:%M:%S", timeArray)
 
-    logFile = open(args.work_dir + "/verification_classification_report.txt", 'w')
+    logFile = open(project_path + "/verification_classification_report.txt", 'w')
     logFile.write("\n" + str(otherStyleTime) + "\n" +
                   str(args) + "\n" +
                   "increment_consume_time: " + str(increment_end - increment_start) + "\n" +
@@ -106,21 +106,15 @@ def inference(args):
 
 
 if __name__ == '__main__':
-    # project_path = 'D:/基于HRRP的Resnet50网络/增量学习/旧类数据'
-    # oldclass_num = 6  # 旧类数目
-    # increment_epoch = 5  # 增量学习轮数
-    # learning_rate = 1e-4  # 学习率
-    # # task_size = 1  # 增量学习中一次新增多少类
-    # batch_size = 32
-    # data_dimension = 128  # 数据维度
-    # memory_size = 2000
-    # bound = 0.3
-    # random_seed = 2022
-    # reduce_sample = 1.0
-    # test_ratio = 0.5
 
-    project_path = args.work_dir
-    oldclass_num = args.oldclass_num
+    project_path = os.path.split(os.path.split(args.work_dir)[0])[0]
+    projectName = args.work_dir.split('/')[-3]
+    print('projectName',projectName)
+    args.model_name = projectName
+
+
+
+    oldclass_num = args.old_class
     increment_epoch = args.increment_epoch
     learning_rate = args.learning_rate
     # task_size = args.task_size
@@ -134,3 +128,15 @@ if __name__ == '__main__':
 
     save_params(project_path)
     inference(args)
+
+    generator_model_documents(args)
+
+    cmd_onnx2trt="trtexec.exe --explicitBatch --workspace=3072 --minShapes=input:1x1x"+\
+                str(data_dimension)+"x1 --optShapes=input:20x1x"+\
+                str(data_dimension)+"x1 --maxShapes=input:512x1x"+\
+                str(data_dimension)+"x1 --onnx="+project_path + \
+                "/incrementModel.onnx "+" --saveEngine="+\
+                project_path + "/"+ args.model_name+".trt --fp16"
+    os.system(cmd_onnx2trt)
+
+    print("Train Ended:")

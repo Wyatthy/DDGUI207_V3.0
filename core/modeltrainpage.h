@@ -18,7 +18,7 @@
 #include "./lib/guiLogic/projectsInfo.h"
 #include "./lib/dataprocess/MatDataProcess_ATECfea.h"
 #include "core/projectsWindow/chart.h"
-
+#include "core/ProjectsWindow/projectDock.h"
 
 #include "./lib/guiLogic/tools/searchFolder.h"
 

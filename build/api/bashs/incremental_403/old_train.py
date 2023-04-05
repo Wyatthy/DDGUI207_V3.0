@@ -31,7 +31,7 @@ args = argparser.parse_args()
 
 # 保存参数
 def save_params(project_path):
-    params_txt = open(project_path+'/params_save.txt', 'w')
+    params_txt = open(project_path+'/pretrain_params_save.txt', 'w')
     params_txt.write('project_path: ' + str(project_path) + '\n')
     params_txt.write('pretrain_epoch: ' + str(pretrain_epoch) + '\n')
     params_txt.write('learning_rate: ' + str(learning_rate) + '\n')
@@ -85,17 +85,9 @@ def inference(args):
 
 if __name__ == '__main__':
     project_path = args.work_dir
-    # project_path = 'D:/Engineering/HRRP_project/HRRP数据/增量测试/数据维度测试/'
-    # pretrain_epoch = 2  # 预训练轮数
-    # learning_rate = 1e-4  # 学习率
-    # batch_size = 32
-    # data_dimension = 128  # 数据维度
-    # memory_size = 2000
-    # bound = 0.3
-    # random_seed = 2022
-    # reduce_sample = 1.0
-    # test_ratio = 0.5
-
+    projectName = args.work_dir.split('/')[-1]
+    print('projectName',projectName)
+    args.model_name = projectName
     pretrain_epoch = args.pretrain_epoch
     learning_rate = args.learning_rate
     batch_size = args.batch_size
@@ -109,3 +101,11 @@ if __name__ == '__main__':
 
     save_params(project_path)
     inference(args)
+    cmd_onnx2trt="trtexec.exe --explicitBatch --workspace=3072 --minShapes=input:1x1x"+\
+                str(data_dimension)+"x1 --optShapes=input:20x1x"+\
+                str(data_dimension)+"x1 --maxShapes=input:512x1x"+\
+                str(data_dimension)+"x1 --onnx="+args.work_dir + \
+                "/pretrain.onnx "+" --saveEngine="+\
+                args.work_dir + "/"+ args.model_name+"_pretrain.trt --fp16"
+    os.system(cmd_onnx2trt)
+    print("Train Ended:")

@@ -110,8 +110,8 @@ if __name__ == '__main__':
     print('pid$',pid,"pid$")
     sys.stdout.flush()
     project_path = args.work_dir
-    projectName = args.work_dir.split('/')[-1];
-    args.model_name = projectName;
+    projectName = args.work_dir.split('/')[-1]
+    args.model_name = projectName
     oldclass_name_select = args.old_class_names.split(';')
     folder_path = project_path + '/train'  # 所有文件夹所在路径
     file_name = os.listdir(folder_path)  # 读取所有文件夹，将文件夹名存在列表中

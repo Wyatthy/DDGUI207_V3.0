@@ -9,6 +9,7 @@
 #include <dirent.h>//for opendir&mkdir
 #include <filesystem>//for judge path exists
 #include <sstream>
+#include <QObject>
 class SearchFolder{
     public:
         SearchFolder(){};
@@ -25,6 +26,8 @@ class SearchFolder{
         bool exist(const std::string& name);
         // 判断是否是文件夹
         bool isDir(std::string rpath);
+        // 复制文件
+        void copyDir(QString src, QString dst);
     private:
 
 };
