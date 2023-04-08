@@ -346,7 +346,7 @@ void  ModelEvalPage::testOneSample(){
     }
 
     //如果使用未知类别集测试,则调python测
-    if(projectsInfo->typeOfSelectedDataset == "unknown_test"){
+    if(projectsInfo->typeOfSelectedDataset == "unknown"){
         //TODO 未知类的单样本测试还没弄  需要各个unknown_test.py支持
         return;
         QString command;
@@ -474,7 +474,7 @@ void  ModelEvalPage::testOneSample(){
         degrees[i]=round(degrees[i] * 100) / 100;
     }
     // 绘制隶属度柱状图
-    if(modelType == "CIL"){
+    if(modelType == "Incremental"){
         disDegreeChart(predClass, degrees, label2class_cil);
     }else disDegreeChart(predClass, degrees, label2class);
 
@@ -505,9 +505,9 @@ void ModelEvalPage::testAllSample(){
     }
 
     //如果使用未知类别集测试,则调python测
-    if(projectsInfo->typeOfSelectedDataset == "unknown_test"){
+    if(projectsInfo->typeOfSelectedDataset == "unknown"){
         QString command;
-        if(modelType=="OPTI" || modelType=="OPTI_CAM" || modelType == "CIL"){
+        if(modelType=="OPTI" || modelType=="OPTI_CAM" || modelType == "Incremental"){
             QMessageBox::warning(NULL, "提示", "当前模型暂不支持未知类别测试");
             return;
         }
@@ -809,7 +809,7 @@ void ModelEvalPage::processDatasetInferFinished(){
         else if(logs.contains("Error") || logs.contains("Errno")){
             qDebug()<<"(ModelEvalPage::processDatasetInferFinished) 模型推理失败";
             terminal->print("模型推理失败");
-            QMessageBox::warning(NULL,"错误","something wrong!");
+            QMessageBox::warning(NULL,"错误","测试失败!");
             qDebug()<<"(ModelEvalPage::processDatasetInferFinished) Logs:"<<logs;
         }
     }

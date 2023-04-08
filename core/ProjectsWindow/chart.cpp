@@ -88,27 +88,62 @@ void Chart::drawHRRPimage(QLabel* chartLabel, int emIdx, int windowlen, int wind
     int N = mxGetN(pMxArray);  //列数 样本个数
     int allDataNum=(N-windowlen)/windowstep+1;
     emIdx = emIdx>allDataNum?allDataNum:emIdx;//说明是随机数
+    windowlen = 128;
+    emIdx = 1;
+    std::vector<std::vector<double>> dataT(M,std::vector<double>(N));
 
     cv::Mat mat(windowlen, M, CV_64FC1);
 
-    for(int i=0;i<windowlen;i++){
-        for(int j=0;j<M;j++){
-            mat.at<double>(i, j) = matdata[((emIdx-1)*windowstep+i)*M+j];
+    // for(int i=0;i<windowlen;i++){
+    //     for(int j=0;j<M;j++){
+    //         mat.at<double>(i, j) = matdata[((emIdx-1)*windowstep+i)*M+j];
+    //     }
+    // }
+
+    for (int i=0;i<N;i++){
+        for (int j=0;j<M;j++){
+            dataT[j][i] = matdata[i*M + j];
         }
     }
 
-    cv::Mat mat8bit;
-    cv::normalize(mat, mat8bit, 0, 255, cv::NORM_MINMAX, CV_8UC1);
-    // 调用applyColorMap函数将灰度图转换为热图
-    cv::Mat heatmap;
-    cv::applyColorMap(mat8bit, heatmap, cv::COLORMAP_JET);
-    QImage qImage = matToQImage(heatmap);
-    // 将图像缩放以适合QLabel大小
-    QPixmap pixmap = QPixmap::fromImage(qImage).scaled(chartLabel->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation);
-    // 在QLabel中显示QPixmap
-    // chartLabel->setPixmap(pixmap);
-    QLabel *label = new QLabel(chartLabel);
-    label->setPixmap(pixmap);
+    QImage image(N,M,QImage::Format_RGB32);
+    double minVal = dataT[0][9];
+    double maxVal = dataT[0][0];
+
+    for (int row = 0;row < M;row++){
+        for (int col = 0;col < N;col++){
+            if (dataT[row][col] < minVal){
+                minVal = dataT[row][col];
+            }
+            if (dataT[row][col] > maxVal){
+                maxVal = dataT[row][col];
+            }
+        }
+    }
+
+    QColor minColor(Qt::black);
+    QColor maxColor(Qt::white);
+    QVector<QColor> colorMap;
+    for(int i=0;i<=10;i++){
+        double t = (double)i /10.0;
+        QColor color = QColor::fromHsvF(0.66 - 0.66*t,1.0,t*t);
+        colorMap.push_back(color);
+    }
+    for (int row = 0;row < M;row++){
+        for (int col = 0;col < N;col++){
+            double val = dataT[row][col];
+            int index = (int)(10.0*(val - minVal)/(maxVal - minVal));
+            if(index<0) index = 0;
+            if(index>10) index = 10;
+            QColor color = colorMap[index];
+            image.setPixelColor(col,row,color);
+        }
+    }
+
+    QPixmap pixmap = QPixmap::fromImage(image);
+    QLabel *label = new QLabel();
+    pixmap = pixmap.scaled(QSize(500,300),Qt::IgnoreAspectRatio,Qt::FastTransformation);
+    chartLabel->setPixmap(pixmap);
     
     QHBoxLayout *pHLayout = (QHBoxLayout *)chartLabel->layout();
     if(!chartLabel->layout()){
@@ -507,19 +542,19 @@ void Chart::setAxis(QString _xname, qreal _xmin, qreal _xmax, int _xtickc, \
     yname = _yname; ymin = _ymin; ymax = _ymax; ytickc = _ytickc;
 
     axisX->setRange(xmin, xmax);    //设置范围
-    axisX->setLabelsVisible(false);   //设置刻度的格式
+    axisX->setLabelsVisible(true);   //设置刻度的格式
     axisX->setGridLineVisible(true);   //网格线可见
     axisX->setTickCount(xtickc);       //设置多少个大格
     axisX->setMinorTickCount(1);   //设置每个大格里面小刻度线的数目
     axisX->setTitleText(xname);  //设置描述
-    axisX->setTitleVisible(false);
+    axisX->setTitleVisible(true);
     axisY->setRange(ymin, ymax);
-    axisY->setLabelsVisible(false);
+    axisY->setLabelsVisible(true);
     axisY->setGridLineVisible(true);
     axisY->setTickCount(ytickc);
     axisY->setMinorTickCount(1);
     axisY->setTitleText(yname);
-    axisY->setTitleVisible(false);
+    axisY->setTitleVisible(true);
     qchart->addAxis(axisX, Qt::AlignBottom); //下：Qt::AlignBottom  上：Qt::AlignTop
     qchart->addAxis(axisY, Qt::AlignLeft);   //左：Qt::AlignLeft    右：Qt::AlignRight
     qchart->setContentsMargins(-10, -10, -10, -10);  //设置外边界全部为0
@@ -529,7 +564,7 @@ void Chart::setAxis(QString _xname, qreal _xmin, qreal _xmax, int _xtickc, \
 
 void Chart::buildChart(QList<QPointF> pointlist){
     //创建数据源
-    qDebug()<<"AAAAAAAAAAAAAAAAAAApointlist.size()=="<<pointlist.size();
+    // qDebug()<<"AAAAAAAAAAAAAAAAAAApointlist.size()=="<<pointlist.size();
     series->setPen(QPen(Qt::blue,0.5,Qt::SolidLine));
     series->clear();
     points.clear();
@@ -538,7 +573,7 @@ void Chart::buildChart(QList<QPointF> pointlist){
         points.append(QPointF(pointlist.at(i).x(), pointlist.at(i).y()));
     }
 
-    qchart->setAnimationOptions(QChart::SeriesAnimations);//设置曲线动画模式
+    // qchart->setAnimationOptions(QChart::SeriesAnimations);//设置曲线动画模式
     qchart->legend()->hide(); //隐藏图例
     qchart->addSeries(series);//输入数据
     qchart->setAxisX(axisX, series);

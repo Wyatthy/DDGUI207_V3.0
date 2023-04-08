@@ -81,10 +81,13 @@ void ProjectDock::minMatNum(int &minNum,QString matPath){
         qDebug()<<"(Chart::readHRRPmat)pMxArray变量没找到!!!!";
         return;
     }
+
+    int N = mxGetN(pMxArray);  //N 列数
     int windowlen = 16;
     int windowstep = 1;
-    int N = mxGetN(pMxArray);  //N 列数
-    if(projectsInfo->dataTypeOfSelectedProject == "RCS" || projectsInfo->dataTypeOfSelectedProject == "IMAGE"){
+    std::string tempdataType = projectsInfo->getAllAttri(leftSelType,leftSelRootName)["ProjectType"];
+
+    if(tempdataType == "RCS" || tempdataType == "IMAGE"){
         N = (N-windowlen)/windowstep+1;
     }
     if(N<minNum) minNum = N;
@@ -218,19 +221,19 @@ void ProjectDock::drawExample(){
     }
     int examIdx=1;
     if(examIdx_str==""){
-        examIdx=randomIdx;
-        ui->projectDock_examIdx->setText(QString::number(randomIdx));
+        examIdx=1;
+        ui->projectDock_examIdx->setText(QString::number(examIdx));
     }
     else examIdx = examIdx_str.toInt();
 
     int maxIndex = 1000000;
     minMatNum(maxIndex,selectedMatFilePath);
     if (maxIndex > 0)
-        ui->label_dock_maxIdx->setText(QString::fromStdString(to_string(maxIndex-1)));
-    qDebug() << "maxIndex: " << maxIndex-1;
+        ui->label_dock_maxIdx->setText(QString::fromStdString(to_string(maxIndex)));
+    qDebug() << "maxIndex: " << maxIndex;
     QIntValidator *validator = new QIntValidator(ui->projectDock_examIdx);
     validator->setBottom(1);
-    validator->setTop(maxIndex-1);
+    validator->setTop(maxIndex);
     ui->projectDock_examIdx->setValidator(validator);
 
     //绘图
@@ -239,7 +242,7 @@ void ProjectDock::drawExample(){
     ui->label_datasetDock_examChart->clear();
     Chart *previewChart = new Chart(ui->label_datasetDock_examChart,dataType_draw,matFilePath);
     if(dataType_draw == "RCS" || dataType_draw == "IMAGE"){
-        previewChart->drawImage(ui->label_datasetDock_examChart,-1,1,1);//-1表示取全部数据，而不用窗口
+        previewChart->drawImage(ui->label_datasetDock_examChart,-1);//-1表示取全部数据，而不用窗口
     }
     else previewChart->drawImage(ui->label_datasetDock_examChart,examIdx);
     //ui->projectDock_examIdx->setText(std::to_string(examIdx));

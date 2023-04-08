@@ -308,7 +308,7 @@ void ModelTrainPage::startTrain(){
         if(shotModelType == "ABFC")
             cmd="activate tf24 && python ./api/bashs/ABFC/train.py --data_dir "+projectPath+ \
                 " --batch_size "+batchSize+" --max_epochs "+epoch+" --fea_num "+ fea_num+ \
-                " --fea_start "+ fea_start + " --data_type FEATURE";
+                " --fea_start "+ fea_start + " --fea_step " + fea_step + " --data_type FEATURE";
         else if(shotModelType == "ATEC")
             cmd="activate tf24 && python ./api/bashs/ATEC/train.py --data_dir "+projectPath+ \
                 " --batch_size "+batchSize+" --max_epochs "+epoch;
